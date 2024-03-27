@@ -23,6 +23,14 @@ app.post('/usersregister', async (req, res) => {
     const db = client.db('f3_ecommerce');
     const collection = db.collection('users');
 
+    // Check if the email already exists
+    const existingUser = await collection.findOne({ email });
+    if (existingUser) {
+      // Close the MongoDB connection
+      await client.close();
+      return res.status(400).json({ error: 'User with this email already exists' });
+    }
+
     // Create a document with user data
     const userDocument = {
       email,
@@ -48,6 +56,7 @@ app.post('/usersregister', async (req, res) => {
     res.status(500).json({ error: 'An error occurred while saving user data' });
   }
 });
+
 
 app.post("/validateWalletAddress", async (req, res) => {
     try {
