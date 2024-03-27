@@ -109,40 +109,52 @@ app.post("/validateWalletAddress", async (req, res) => {
     }
   });
 
-app.post('/loginuser', async (req, res) => {
+  app.post('/login', async (req, res) => {
     try {
-      // Extract email and password from request body
-      const { email, password } = req.body;
-  
-      // const email = 'rajputvinita623@gmail.com'
-      // const password = '123@Rajpt'
-      // Connect to MongoDB
-      await client.connect();
-  
-      // Access the appropriate database and collection
-      const db = client.db('f3_ecommerce');
-      const collection = db.collection('users');
-  
-      // Check if the email exists
-      const user = await collection.findOne({ email });
-  
-      if (!user) {
-        return res.status(401).json({ error: 'Email not found' });
-      }
-  
-      // Check if the password matches
-      if (user.password !== password) {
-        return res.status(400).json({ error: 'Incorrect password' });
-      }
-  
-      // Successful login
-      res.status(200).json({ message: 'Login successful' });
+        // Extract email and password from request body
+        const email = req.body.email;
+        const password = req.body.password;
+
+        // Connect to MongoDB
+        const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+        await client.connect();
+
+        // Access the appropriate database and collection
+        const db = client.db('f3_ecommerce');
+        const collection = db.collection('users');
+
+        // Check if the email exists
+        const user = await collection.findOne({ email });
+
+        if (!user) {
+            return res.status(401).json({ error: 'Email not found' });
+        }
+
+        // Check if the password matches
+        if (user.password !== password) {
+            return res.status(400).json({ error: 'Incorrect password' });
+        }
+
+        // Successful login
+        // Construct the user object to send back (excluding password)
+        const userToSend = {
+            email: user.email,
+            storeName: user.storeName,
+            walletAddress: user.walletAddress,
+            cityAddress: user.cityAddress,
+            localAddress: user.localAddress,
+            usdRate: user.usdtRate,
+            country: user.country
+        };
+
+        // Send the user data along with the success message
+        res.status(200).json({ message: 'Login successful', user: userToSend });
     } catch (error) {
-      console.error('Error during login:', error);
-      res.status(500).json({ error: 'An error occurred during login' });
+        console.error('Error during login:', error);
+        res.status(500).json({ error: 'An error occurred during login' });
     } finally {
-      // Close the MongoDB connection
-      await client.close();
+        // Close the MongoDB connection
+        await client.close();
     }
 });
 
