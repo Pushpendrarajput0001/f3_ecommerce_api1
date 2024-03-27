@@ -9,6 +9,8 @@ const MONGO_URI = 'mongodb+srv://andy:markf3ecommerce@atlascluster.gjlv4np.mongo
 // Middleware to parse JSON body
 app.use(bodyParser.json());
 
+const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+
 // API endpoint to save user data
 app.post('/usersregister', async (req, res) => {
   try {
@@ -106,6 +108,44 @@ app.post("/validateWalletAddress", async (req, res) => {
       return res.status(400).send("Insufficient funds");
     }
   });
+
+app.post('/loginuser', async (req, res) => {
+    try {
+      // Extract email and password from request body
+      const { email, password } = req.body;
+  
+      // const email = 'rajputvinita623@gmail.com'
+      // const password = '123@Rajpt'
+      // Connect to MongoDB
+      await client.connect();
+  
+      // Access the appropriate database and collection
+      const db = client.db('f3_ecommerce');
+      const collection = db.collection('users');
+  
+      // Check if the email exists
+      const user = await collection.findOne({ email });
+  
+      if (!user) {
+        return res.status(401).json({ error: 'Email not found' });
+      }
+  
+      // Check if the password matches
+      if (user.password !== password) {
+        return res.status(400).json({ error: 'Incorrect password' });
+      }
+  
+      // Successful login
+      res.status(200).json({ message: 'Login successful' });
+    } catch (error) {
+      console.error('Error during login:', error);
+      res.status(500).json({ error: 'An error occurred during login' });
+    } finally {
+      // Close the MongoDB connection
+      await client.close();
+    }
+});
+
 
 // Start the server and bind it to a specific IP address
 app.listen(PORT, '192.168.29.149', () => {
