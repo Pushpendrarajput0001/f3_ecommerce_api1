@@ -1,11 +1,13 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const { MongoClient } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb'); // Change from ObjectID to ObjectId
 
 const app = express();
 const PORT = 3000;
 const MONGO_URI = 'mongodb+srv://andy:markf3ecommerce@atlascluster.gjlv4np.mongodb.net/?retryWrites=true&w=majority&appName=AtlasCluster';
 
+app.use(bodyParser.json({ limit: '50mb', extended: true }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 // Middleware to parse JSON body
 app.use(bodyParser.json());
 
@@ -61,106 +63,160 @@ app.post('/usersregister', async (req, res) => {
 
 
 app.post("/validateWalletAddress", async (req, res) => {
-    try {
-      const web3 = new Web3('https://bsc-dataseed.binance.org/'); // Replace with your desired network URL
-  
-      // Define the transaction parameters
-      const tokenAbi = require('./abif3.json'); // Replace with the ABI of your token contract
-      const contractAddress = '0xfB265e16e882d3d32639253ffcfC4b0a2E861467';
-      const contract = new web3.eth.Contract(tokenAbi, contractAddress);
-      const decimals = 18; // Replace with the number of decimal places for your token
-      const fromAddress = '0x7157830B5f342F7d927b6CE465C5284B9115b558';
-      const toAddress = req.body.receiverAddress;
-  
-      // Parse the token amount from the request
-      const tokenAmount = parseFloat(req.body.token);
-  
-      // Check if the tokenAmount is a valid number
-      if (isNaN(tokenAmount)) {
-        return res.status(400).send("Invalid token amount");
-      }
-  
-      // Convert tokenAmount to the smallest unit (wei)
-      const amountWithDecimals = web3.utils.toBN(
-        web3.utils.toWei(tokenAmount.toString(), 'ether')
-      );
-  
-      // Get the gas required for the token transfer
-      const gas = await contract.methods.transfer(toAddress, amountWithDecimals).estimateGas({ from: fromAddress });
-      console.log("Gas " + gas);
-  
-      // Get the current gas price
-      const gasPrice = await web3.eth.getGasPrice();
-  
-      // Calculate the total gas fee in wei
-      const gasFee = gas * gasPrice;
-  
-      // Convert gas fee from wei to Ether
-      const gasFeeInEth = web3.utils.fromWei(gasFee.toString(), 'ether');
-      console.log(`Gas fee: ${gasFeeInEth} BNB`);
-  
-      const result = {
-        gasFee: gasFeeInEth
-      };
-  
-      return res.status(200).send(result);
-    } catch (err) {
-      return res.status(400).send("Insufficient funds");
+  try {
+    const web3 = new Web3('https://bsc-dataseed.binance.org/'); // Replace with your desired network URL
+
+    // Define the transaction parameters
+    const tokenAbi = require('./abif3.json'); // Replace with the ABI of your token contract
+    const contractAddress = '0xfB265e16e882d3d32639253ffcfC4b0a2E861467';
+    const contract = new web3.eth.Contract(tokenAbi, contractAddress);
+    const decimals = 18; // Replace with the number of decimal places for your token
+    const fromAddress = '0x7157830B5f342F7d927b6CE465C5284B9115b558';
+    const toAddress = req.body.receiverAddress;
+
+    // Parse the token amount from the request
+    const tokenAmount = parseFloat(req.body.token);
+
+    // Check if the tokenAmount is a valid number
+    if (isNaN(tokenAmount)) {
+      return res.status(400).send("Invalid token amount");
     }
-  });
 
-  app.post('/login', async (req, res) => {
-    try {
-        // Extract email and password from request body
-        const email = req.body.email;
-        const password = req.body.password;
+    // Convert tokenAmount to the smallest unit (wei)
+    const amountWithDecimals = web3.utils.toBN(
+      web3.utils.toWei(tokenAmount.toString(), 'ether')
+    );
 
-        // Connect to MongoDB
-        const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
-        await client.connect();
+    // Get the gas required for the token transfer
+    const gas = await contract.methods.transfer(toAddress, amountWithDecimals).estimateGas({ from: fromAddress });
+    console.log("Gas " + gas);
 
-        // Access the appropriate database and collection
-        const db = client.db('f3_ecommerce');
-        const collection = db.collection('users');
+    // Get the current gas price
+    const gasPrice = await web3.eth.getGasPrice();
 
-        // Check if the email exists
-        const user = await collection.findOne({ email });
+    // Calculate the total gas fee in wei
+    const gasFee = gas * gasPrice;
 
-        if (!user) {
-            return res.status(401).json({ error: 'Email not found' });
-        }
+    // Convert gas fee from wei to Ether
+    const gasFeeInEth = web3.utils.fromWei(gasFee.toString(), 'ether');
+    console.log(`Gas fee: ${gasFeeInEth} BNB`);
 
-        // Check if the password matches
-        if (user.password !== password) {
-            return res.status(400).json({ error: 'Incorrect password' });
-        }
+    const result = {
+      gasFee: gasFeeInEth
+    };
 
-        // Successful login
-        // Construct the user object to send back (excluding password)
-        const userToSend = {
-            email: user.email,
-            storeName: user.storeName,
-            walletAddress: user.walletAddress,
-            cityAddress: user.cityAddress,
-            localAddress: user.localAddress,
-            usdRate: user.usdtRate,
-            country: user.country
-        };
+    return res.status(200).send(result);
+  } catch (err) {
+    return res.status(400).send("Insufficient funds");
+  }
+});
 
-        // Send the user data along with the success message
-        res.status(200).json({ message: 'Login successful', user: userToSend });
-    } catch (error) {
-        console.error('Error during login:', error);
-        res.status(500).json({ error: 'An error occurred during login' });
-    } finally {
-        // Close the MongoDB connection
-        await client.close();
+app.post('/login', async (req, res) => {
+  try {
+    // Extract email and password from request body
+    const email = req.body.email;
+    const password = req.body.password;
+
+    // Connect to MongoDB
+    const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    await client.connect();
+
+    // Access the appropriate database and collection
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Check if the email exists
+    const user = await collection.findOne({ email });
+
+    if (!user) {
+      return res.status(401).json({ error: 'Email not found' });
     }
+
+    // Check if the password matches
+    if (user.password !== password) {
+      return res.status(400).json({ error: 'Incorrect password' });
+    }
+
+    // Successful login
+    // Construct the user object to send back (excluding password)
+    const userToSend = {
+      email: user.email,
+      storeName: user.storeName,
+      walletAddress: user.walletAddress,
+      cityAddress: user.cityAddress,
+      localAddress: user.localAddress,
+      usdRate: user.usdtRate,
+      country: user.country
+    };
+
+    // Send the user data along with the success message
+    res.status(200).json({ message: 'Login successful', user: userToSend });
+  } catch (error) {
+    console.error('Error during login:', error);
+    res.status(500).json({ error: 'An error occurred during login' });
+  } finally {
+    // Close the MongoDB connection
+    await client.close();
+  }
+});
+
+app.post('/productsAdd', async (req, res) => {
+  const DB_NAME = 'f3_ecommerce';
+  const COLLECTION_NAME = 'users';
+  
+  try {
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true });
+    const db = client.db(DB_NAME);
+    const collection = db.collection(COLLECTION_NAME);
+
+    // Extract product data and images from request body
+    const { email, productName, startedPrice, f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected, description, images } = req.body;
+
+    // Convert base64 images to buffer
+    const imageBuffers = images.map(image => Buffer.from(image, 'base64'));
+
+    // Create document to insert into MongoDB
+    const productDocument = {
+      _id: new ObjectId(), // Use ObjectId instead of ObjectID
+      productName,
+      startedPrice: parseFloat(startedPrice),
+      f3MarketPrice: parseFloat(f3MarketPrice),
+      growthContribution: parseFloat(growthContribution),
+      numberOfStocks: parseInt(numberOfStocks),
+      unitItemSelected,
+      description,
+      images: imageBuffers
+    };
+
+    // Find the user by email
+    const user = await collection.findOne({ email });
+
+    if (!user) {
+      // If user not found, return error
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Add the product to the user's products array
+    if (!user.products) {
+      user.products = [];
+    }
+    user.products.push(productDocument);
+
+    // Update the user's document in the collection
+    await collection.updateOne({ email }, { $set: user });
+
+    client.close();
+
+    res.status(201).json({ message: 'Product added successfully', productId: productDocument._id });
+  } catch (error) {
+    console.error('Error adding product:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 
 // Start the server and bind it to a specific IP address
 app.listen(PORT, '192.168.29.149', () => {
-    console.log(`Server is running on http://192.168.29.149:${PORT}`);
-  });
-  
+  console.log(`Server is running on http://192.168.29.149:${PORT}`);
+});
+
