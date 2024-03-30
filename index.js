@@ -236,6 +236,65 @@ app.get('/userLocations', async (req, res) => {
   }
 });
 
+app.get('/userLocationsWithProducts', async (req, res) => {
+  try {
+    // Connect to MongoDB
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find users who have products associated with them
+    const usersWithProducts = await collection.find({ products: { $exists: true, $not: { $size: 0 } } }).toArray();
+
+    const countryMap = new Map();
+
+    usersWithProducts.forEach(user => {
+      const { country, cityAddress, localAddress } = user;
+
+      const countryKey = country.toLowerCase();
+      const cityKey = cityAddress.toLowerCase();
+
+      if (!countryMap.has(countryKey)) {
+        countryMap.set(countryKey, new Map());
+      }
+
+      const cityMap = countryMap.get(countryKey);
+
+      if (!cityMap.has(cityKey)) {
+        cityMap.set(cityKey, []);
+      }
+
+      const localAddresses = cityMap.get(cityKey);
+      if (!localAddresses.includes(localAddress)) {
+        localAddresses.push(localAddress);
+      }
+    });
+
+    const countries = [];
+
+    countryMap.forEach((cityMap, country) => {
+      const countryName = country.charAt(0).toUpperCase() + country.slice(1);
+      const countryObj = { country: countryName, cities: [] };
+
+      cityMap.forEach((locals, city) => {
+        const cityName = city.charAt(0).toUpperCase() + city.slice(1);
+        const cityObj = { name: cityName, locals: locals };
+        countryObj.cities.push(cityObj);
+      });
+
+      countries.push(countryObj);
+    });
+
+    // Close MongoDB connection
+    await client.close();
+
+    res.status(200).json({ data: countries });
+  } catch (error) {
+    console.error('Error retrieving user countries and cities:', error);
+    res.status(500).json({ error: 'An error occurred while fetching user locations' });
+  }
+});
+
 app.get('/allProducts', async (req, res) => {
   try {
     // Connect to MongoDB
