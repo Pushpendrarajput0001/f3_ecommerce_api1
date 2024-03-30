@@ -122,7 +122,7 @@ app.post('/productsAdd', async (req, res) => {
     const collection = db.collection(COLLECTION_NAME);
 
     // Extract product data and images from request body
-    const { email, productName, startedPrice, f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected, description,totalsolds, images } = req.body;
+    const { email, productName, startedPrice, f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected, description,totalsolds, images, storeId, storeName } = req.body;
 
     // Convert base64 images to buffer
     const imageBuffers = images.map(image => Buffer.from(image, 'base64'));
@@ -138,6 +138,8 @@ app.post('/productsAdd', async (req, res) => {
       unitItemSelected,
       description,
       totalsolds,
+      storeId,
+      storeName,
       images: imageBuffers
     };
 
