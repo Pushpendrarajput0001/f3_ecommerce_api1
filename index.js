@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const { MongoClient, ObjectId } = require('mongodb'); // Change from ObjectID to ObjectId
+const sharp = require('sharp');
 
 const app = express();
 const PORT = 3000;
@@ -122,14 +123,22 @@ app.post('/productsAdd', async (req, res) => {
     const collection = db.collection(COLLECTION_NAME);
 
     // Extract product data and images from request body
-    const { email, productName, startedPrice, f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected, description,totalsolds, images, storeId, storeName } = req.body;
+    const { email, productName, startedPrice, f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected, description, totalsolds, images, storeId, storeName } = req.body;
 
-    // Convert base64 images to buffer
-    const imageBuffers = images.map(image => Buffer.from(image, 'base64'));
+    // Resize and compress images
+    const compressedImages = await Promise.all(images.map(async (image) => {
+      // Resize and compress image using sharp
+      compressedBuffer = await sharp(Buffer.from(image, 'base64'))
+      .resize({ width: 150 }) // Set desired width (you can adjust this as needed)
+      .png({ quality: 25 }) // Set desired PNG quality (you can adjust this as needed)
+      .toBuffer();
+
+      return compressedBuffer.toString('base64');
+    }));
 
     // Create document to insert into MongoDB
     const productDocument = {
-      _id: new ObjectId(), // Use ObjectId instead of ObjectID
+      _id: new ObjectId(),
       productName,
       startedPrice: parseFloat(startedPrice),
       f3MarketPrice: parseFloat(f3MarketPrice),
@@ -140,7 +149,7 @@ app.post('/productsAdd', async (req, res) => {
       totalsolds,
       storeId,
       storeName,
-      images: imageBuffers
+      images: compressedImages
     };
 
     // Find the user by email
@@ -253,6 +262,47 @@ app.get('/allProducts', async (req, res) => {
   } catch (error) {
     console.error('Error retrieving all products:', error);
     res.status(500).json({ error: 'An error occurred while fetching all products' });
+  }
+});
+
+app.get('/filteredProducts', async (req, res) => {
+  try {
+    const { country, city, localAddress } = req.query;
+
+    // Connect to MongoDB
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Construct the filter based on the provided query parameters
+    const filter = {};
+    if (country) {
+      filter['address.country'] = country;
+    }
+    if (city) {
+      filter['address.city'] = city;
+    }
+    if (localAddress) {
+      filter['address.local'] = localAddress;
+    }
+
+    // Find users with matching filters and retrieve their products
+    const usersWithMatchingAddress = await collection.find(filter).toArray();
+    const matchingProducts = usersWithMatchingAddress.reduce((products, user) => {
+      if (user.products && user.products.length > 0) {
+        products.push(...user.products);
+      }
+      return products;
+    }, []);
+
+    // Close MongoDB connection
+    await client.close();
+
+    // Send response with filtered products
+    res.status(200).json({ products: matchingProducts });
+  } catch (error) {
+    console.error('Error retrieving filtered products:', error);
+    res.status(500).json({ error: 'An error occurred while fetching filtered products' });
   }
 });
 
