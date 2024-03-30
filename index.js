@@ -277,13 +277,13 @@ app.get('/filteredProducts', async (req, res) => {
     // Construct the filter based on the provided query parameters
     const filter = {};
     if (country) {
-      filter['address.country'] = country;
+      filter['country'] = country;
     }
     if (city) {
-      filter['address.city'] = city;
+      filter['cityAddress'] = city;
     }
     if (localAddress) {
-      filter['address.local'] = localAddress;
+      filter['localAddress'] = localAddress;
     }
 
     // Find users with matching filters and retrieve their products
@@ -305,6 +305,7 @@ app.get('/filteredProducts', async (req, res) => {
     res.status(500).json({ error: 'An error occurred while fetching filtered products' });
   }
 });
+
 
 
 // Start the server and bind it to a specific IP address
