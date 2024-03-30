@@ -17,7 +17,7 @@ const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTop
 app.post('/usersregister', async (req, res) => {
   try {
     // Extract user data from request body
-    const { email, password, storeName, walletAddress, cityAddress, localAddress, usdtRate, country } = req.body;
+    const { email, password, storeName, walletAddress, cityAddress, localAddress, usdtRate, country,storeId } = req.body;
 
     // Connect to MongoDB
     const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -44,6 +44,7 @@ app.post('/usersregister', async (req, res) => {
       cityAddress,
       localAddress,
       usdtRate,
+      storeId,
       country
     };
 
@@ -58,55 +59,6 @@ app.post('/usersregister', async (req, res) => {
   } catch (error) {
     console.error('Error saving user data:', error);
     res.status(500).json({ error: 'An error occurred while saving user data' });
-  }
-});
-
-app.post("/validateWalletAddress", async (req, res) => {
-  try {
-    const web3 = new Web3('https://bsc-dataseed.binance.org/'); // Replace with your desired network URL
-
-    // Define the transaction parameters
-    const tokenAbi = require('./abif3.json'); // Replace with the ABI of your token contract
-    const contractAddress = '0xfB265e16e882d3d32639253ffcfC4b0a2E861467';
-    const contract = new web3.eth.Contract(tokenAbi, contractAddress);
-    const decimals = 18; // Replace with the number of decimal places for your token
-    const fromAddress = '0x7157830B5f342F7d927b6CE465C5284B9115b558';
-    const toAddress = req.body.receiverAddress;
-
-    // Parse the token amount from the request
-    const tokenAmount = parseFloat(req.body.token);
-
-    // Check if the tokenAmount is a valid number
-    if (isNaN(tokenAmount)) {
-      return res.status(400).send("Invalid token amount");
-    }
-
-    // Convert tokenAmount to the smallest unit (wei)
-    const amountWithDecimals = web3.utils.toBN(
-      web3.utils.toWei(tokenAmount.toString(), 'ether')
-    );
-
-    // Get the gas required for the token transfer
-    const gas = await contract.methods.transfer(toAddress, amountWithDecimals).estimateGas({ from: fromAddress });
-    console.log("Gas " + gas);
-
-    // Get the current gas price
-    const gasPrice = await web3.eth.getGasPrice();
-
-    // Calculate the total gas fee in wei
-    const gasFee = gas * gasPrice;
-
-    // Convert gas fee from wei to Ether
-    const gasFeeInEth = web3.utils.fromWei(gasFee.toString(), 'ether');
-    console.log(`Gas fee: ${gasFeeInEth} BNB`);
-
-    const result = {
-      gasFee: gasFeeInEth
-    };
-
-    return res.status(200).send(result);
-  } catch (err) {
-    return res.status(400).send("Insufficient funds");
   }
 });
 
@@ -141,6 +93,7 @@ app.post('/login', async (req, res) => {
     const userToSend = {
       email: user.email,
       storeName: user.storeName,
+      storeId : user.storeId,
       walletAddress: user.walletAddress,
       cityAddress: user.cityAddress,
       localAddress: user.localAddress,
