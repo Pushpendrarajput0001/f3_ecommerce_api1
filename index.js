@@ -61,7 +61,6 @@ app.post('/usersregister', async (req, res) => {
   }
 });
 
-
 app.post("/validateWalletAddress", async (req, res) => {
   try {
     const web3 = new Web3('https://bsc-dataseed.binance.org/'); // Replace with your desired network URL
@@ -170,7 +169,7 @@ app.post('/productsAdd', async (req, res) => {
     const collection = db.collection(COLLECTION_NAME);
 
     // Extract product data and images from request body
-    const { email, productName, startedPrice, f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected, description, images } = req.body;
+    const { email, productName, startedPrice, f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected, description,totalsolds, images } = req.body;
 
     // Convert base64 images to buffer
     const imageBuffers = images.map(image => Buffer.from(image, 'base64'));
@@ -185,6 +184,7 @@ app.post('/productsAdd', async (req, res) => {
       numberOfStocks: parseInt(numberOfStocks),
       unitItemSelected,
       description,
+      totalsolds,
       images: imageBuffers
     };
 
@@ -211,6 +211,93 @@ app.post('/productsAdd', async (req, res) => {
   } catch (error) {
     console.error('Error adding product:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/userLocations', async (req, res) => {
+  try {
+    await client.connect();
+
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find users who have products associated with them
+    const usersWithProducts = await collection.find({ products: { $exists: true, $not: { $size: 0 } } }).toArray();
+
+    const countryMap = new Map();
+
+    usersWithProducts.forEach(user => {
+      const { country, cityAddress, localAddress } = user;
+
+      const countryKey = country.toLowerCase();
+      const cityKey = cityAddress.toLowerCase();
+
+      if (!countryMap.has(countryKey)) {
+        countryMap.set(countryKey, new Map());
+      }
+
+      const cityMap = countryMap.get(countryKey);
+
+      if (!cityMap.has(cityKey)) {
+        cityMap.set(cityKey, []);
+      }
+
+      const localAddresses = cityMap.get(cityKey);
+      if (!localAddresses.includes(localAddress)) {
+        localAddresses.push(localAddress);
+      }
+    });
+
+    const countries = [];
+
+    countryMap.forEach((cityMap, country) => {
+      const countryName = country.charAt(0).toUpperCase() + country.slice(1);
+      const countryObj = { country: countryName, cities: [] };
+
+      cityMap.forEach((locals, city) => {
+        const cityName = city.charAt(0).toUpperCase() + city.slice(1);
+        const cityObj = { name: cityName, locals: locals };
+        countryObj.cities.push(cityObj);
+      });
+
+      countries.push(countryObj);
+    });
+
+    res.status(200).json({ data: countries });
+  } catch (error) {
+    console.error('Error retrieving user countries and cities:', error);
+    res.status(500).json({ error: 'An error occurred while fetching user locations' });
+  } finally {
+    await client.close();
+  }
+});
+
+app.get('/allProducts', async (req, res) => {
+  try {
+    // Connect to MongoDB
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find all users with products
+    const usersWithProducts = await collection.find({ products: { $exists: true, $not: { $size: 0 } } }).toArray();
+
+    // Extract all products from users
+    let allProducts = [];
+    usersWithProducts.forEach(user => {
+      if (user.products && Array.isArray(user.products)) {
+        allProducts = allProducts.concat(user.products);
+      }
+    });
+
+    // Close MongoDB connection
+    await client.close();
+
+    // Send response with all products
+    res.status(200).json({ products: allProducts });
+  } catch (error) {
+    console.error('Error retrieving all products:', error);
+    res.status(500).json({ error: 'An error occurred while fetching all products' });
   }
 });
 
