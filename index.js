@@ -141,7 +141,7 @@ app.post('/productsAdd', async (req, res) => {
 
     // Create document to insert into MongoDB
     const productDocument = {
-      _id: new ObjectId(),
+      _id: new ObjectId().toString(),
       productName,
       startedPrice,
       f3MarketPrice: parseFloat(f3MarketPrice),
@@ -480,8 +480,8 @@ app.get('/userCartProducts', async (req, res) => {
     const cartProducts = [];
     await Promise.all(productIds.map(async (productId) => {
       // Find product in all users
-      const product = await collection.findOne({ 'products._id': ObjectId(productId) }, { projection: { 'products.$': 1 } });
-      if (product && product.products.length > 0) {
+      const product = await collection.findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
+      if (product && product.products && product.products.length > 0) {
         cartProducts.push(product.products[0]);
       }
     }));
@@ -496,8 +496,6 @@ app.get('/userCartProducts', async (req, res) => {
     res.status(500).json({ error: 'An error occurred while fetching user cart products' });
   }
 });
-
-
 
 
 // Start the server and bind it to a specific IP address
