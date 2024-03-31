@@ -196,20 +196,17 @@ app.get('/userLocations', async (req, res) => {
     usersWithProducts.forEach(user => {
       const { country, cityAddress, localAddress } = user;
 
-      const countryKey = country.toLowerCase();
-      const cityKey = cityAddress.toLowerCase();
-
-      if (!countryMap.has(countryKey)) {
-        countryMap.set(countryKey, new Map());
+      if (!countryMap.has(country)) {
+        countryMap.set(country, new Map());
       }
 
-      const cityMap = countryMap.get(countryKey);
+      const cityMap = countryMap.get(country);
 
-      if (!cityMap.has(cityKey)) {
-        cityMap.set(cityKey, []);
+      if (!cityMap.has(cityAddress)) {
+        cityMap.set(cityAddress, []);
       }
 
-      const localAddresses = cityMap.get(cityKey);
+      const localAddresses = cityMap.get(cityAddress);
       if (!localAddresses.includes(localAddress)) {
         localAddresses.push(localAddress);
       }
@@ -218,12 +215,10 @@ app.get('/userLocations', async (req, res) => {
     const countries = [];
 
     countryMap.forEach((cityMap, country) => {
-      const countryName = country.charAt(0).toUpperCase() + country.slice(1);
-      const countryObj = { country: countryName, cities: [] };
+      const countryObj = { country: country, cities: [] };
 
       cityMap.forEach((locals, city) => {
-        const cityName = city.charAt(0).toUpperCase() + city.slice(1);
-        const cityObj = { name: cityName, locals: locals };
+        const cityObj = { name: city, locals: locals };
         countryObj.cities.push(cityObj);
       });
 
@@ -367,6 +362,9 @@ app.get('/filteredProducts', async (req, res) => {
     res.status(500).json({ error: 'An error occurred while fetching filtered products' });
   }
 });
+
+
+
 
 // Start the server and bind it to a specific IP address
 app.listen(PORT, '192.168.29.149', () => {
