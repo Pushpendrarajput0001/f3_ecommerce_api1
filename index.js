@@ -1,6 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const { MongoClient, ObjectId } = require('mongodb'); // Change from ObjectID to ObjectId
+const { MongoClient, ObjectId } = require('mongodb');
 const sharp = require('sharp');
 
 const app = express();
@@ -131,17 +131,17 @@ app.post('/productsAdd', async (req, res) => {
     // Resize and compress images
     const compressedImages = await Promise.all(images.map(async (image) => {
       // Resize and compress image using sharp
-      compressedBuffer = await sharp(Buffer.from(image, 'base64'))
-      .resize({ width: 150 }) // Set desired width (you can adjust this as needed)
-      .png({ quality: 25 }) // Set desired PNG quality (you can adjust this as needed)
-      .toBuffer();
+      const compressedBuffer = await sharp(Buffer.from(image, 'base64'))
+        .resize({ width: 150 }) // Set desired width (you can adjust this as needed)
+        .png({ quality: 25 }) // Set desired PNG quality (you can adjust this as needed)
+        .toBuffer();
 
       return compressedBuffer.toString('base64');
     }));
 
     // Create document to insert into MongoDB
     const productDocument = {
-      _id: new ObjectId(),
+      _id: new ObjectId().toString(), // Convert ObjectId to string
       productName,
       startedPrice,
       f3MarketPrice: parseFloat(f3MarketPrice),
@@ -398,6 +398,102 @@ app.get('/specificStoreProducts', async (req, res) => {
   } catch (error) {
     console.error('Error retrieving filtered products:', error);
     res.status(500).json({ error: 'An error occurred while fetching filtered products' });
+  }
+});
+
+app.post('/addProductToCart', async (req, res) => {
+  try {
+    const { email, productId } = req.body;
+
+    // Connect to MongoDB
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by email
+    const user = await collection.findOne({ email });
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    // Check if userCarts map exists, if not create it
+    if (!user.userCarts) {
+      user.userCarts = {}; // Create userCarts object
+    }
+
+    // Check if product already exists in the user's cart
+    if (user.userCarts[productId]) {
+      // If product already exists, send error response with status code 401
+      res.status(401).json({ error: 'Product already exists in the cart' });
+      return;
+    }
+
+    // Add product to user's cart
+    user.userCarts[productId] = 1; // Default quantity is 1
+
+    // Update the user document in the database
+    await collection.updateOne(
+      { email },
+      { $set: { userCarts: user.userCarts } }
+    );
+
+    // Close MongoDB connection
+    await client.close();
+
+    // Send response
+    res.status(200).json({ message: 'Product added to cart successfully' });
+  } catch (error) {
+    console.error('Error adding product to cart:', error);
+    res.status(500).json({ error: 'An error occurred while adding product to cart' });
+  }
+});
+
+app.get('/userCartProducts', async (req, res) => {
+  try {
+    const { email } = req.query;
+
+    // Connect to MongoDB
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by email
+    const user = await collection.findOne({ email });
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    // Check if user has products in their cart
+    if (!user.userCarts || Object.keys(user.userCarts).length === 0) {
+      res.status(401).json({ error: 'No products in cart' });
+      return;
+    }
+
+    // Extract product IDs from user's cart
+    const productIds = Object.keys(user.userCarts);
+
+    // Find product details for the product IDs in the user's cart
+    const cartProducts = [];
+    await Promise.all(productIds.map(async (productId) => {
+      // Find product in all users
+      const product = await collection.findOne({ 'products._id': ObjectId(productId) }, { projection: { 'products.$': 1 } });
+      if (product && product.products.length > 0) {
+        cartProducts.push(product.products[0]);
+      }
+    }));
+
+    // Close MongoDB connection
+    await client.close();
+
+    // Send response with cart products
+    res.status(200).json({ products: cartProducts });
+  } catch (error) {
+    console.error('Error fetching user cart products:', error);
+    res.status(500).json({ error: 'An error occurred while fetching user cart products' });
   }
 });
 
