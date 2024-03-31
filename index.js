@@ -363,6 +363,44 @@ app.get('/filteredProducts', async (req, res) => {
   }
 });
 
+app.get('/specificStoreProducts', async (req, res) => {
+  try {
+    const { storeIdOrName } = req.query;
+
+    // Connect to MongoDB
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Construct the filter based on the provided store ID or store name
+    const filter = {};
+    if (storeIdOrName) {
+      filter['$or'] = [
+        { 'storeId': storeIdOrName },
+        { 'storeName': storeIdOrName }
+      ];
+    }
+
+    // Find users with matching store ID or store name and retrieve their products
+    const usersWithMatchingStore = await collection.find(filter).toArray();
+    const matchingProducts = usersWithMatchingStore.reduce((products, user) => {
+      if (user.products && user.products.length > 0) {
+        products.push(...user.products);
+      }
+      return products;
+    }, []);
+
+    // Close MongoDB connection
+    await client.close();
+
+    // Send response with filtered products
+    res.status(200).json({ products: matchingProducts });
+  } catch (error) {
+    console.error('Error retrieving filtered products:', error);
+    res.status(500).json({ error: 'An error occurred while fetching filtered products' });
+  }
+});
+
 
 
 
