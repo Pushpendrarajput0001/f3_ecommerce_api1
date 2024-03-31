@@ -368,8 +368,6 @@ app.get('/filteredProducts', async (req, res) => {
   }
 });
 
-
-
 // Start the server and bind it to a specific IP address
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`);
