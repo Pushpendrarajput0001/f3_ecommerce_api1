@@ -131,17 +131,17 @@ app.post('/productsAdd', async (req, res) => {
     // Resize and compress images
     const compressedImages = await Promise.all(images.map(async (image) => {
       // Resize and compress image using sharp
-      const compressedBuffer = await sharp(Buffer.from(image, 'base64'))
-        .resize({ width: 150 }) // Set desired width (you can adjust this as needed)
-        .png({ quality: 25 }) // Set desired PNG quality (you can adjust this as needed)
-        .toBuffer();
+      compressedBuffer = await sharp(Buffer.from(image, 'base64'))
+      .resize({ width: 150 }) // Set desired width (you can adjust this as needed)
+      .png({ quality: 25 }) // Set desired PNG quality (you can adjust this as needed)
+      .toBuffer();
 
       return compressedBuffer.toString('base64');
     }));
 
     // Create document to insert into MongoDB
     const productDocument = {
-      _id: new ObjectId().toString(), // Convert ObjectId to string
+      _id: new ObjectId(),
       productName,
       startedPrice,
       f3MarketPrice: parseFloat(f3MarketPrice),
@@ -450,7 +450,7 @@ app.post('/addProductToCart', async (req, res) => {
   }
 });
 
-pp.get('/userCartProducts', async (req, res) => {
+app.get('/userCartProducts', async (req, res) => {
   try {
     const { email } = req.query;
 
@@ -480,8 +480,8 @@ pp.get('/userCartProducts', async (req, res) => {
     const cartProducts = [];
     await Promise.all(productIds.map(async (productId) => {
       // Find product in all users
-      const product = await collection.findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
-      if (product && product.products && product.products.length > 0) {
+      const product = await collection.findOne({ 'products._id': ObjectId(productId) }, { projection: { 'products.$': 1 } });
+      if (product && product.products.length > 0) {
         cartProducts.push(product.products[0]);
       }
     }));
@@ -496,6 +496,7 @@ pp.get('/userCartProducts', async (req, res) => {
     res.status(500).json({ error: 'An error occurred while fetching user cart products' });
   }
 });
+
 
 
 
