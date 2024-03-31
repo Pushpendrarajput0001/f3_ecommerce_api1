@@ -142,7 +142,7 @@ app.post('/productsAdd', async (req, res) => {
     const productDocument = {
       _id: new ObjectId(),
       productName,
-      startedPrice: parseFloat(startedPrice),
+      startedPrice,
       f3MarketPrice: parseFloat(f3MarketPrice),
       growthContribution: parseFloat(growthContribution),
       numberOfStocks: parseInt(numberOfStocks),
