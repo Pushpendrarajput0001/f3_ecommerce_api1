@@ -499,14 +499,12 @@ app.get('/userCartProducts', async (req, res) => {
 
 app.post('/deleteCartProduct', async (req, res) => {
   try {
-    const { email, productId } = req.body;
+    const { email, productIds } = req.body; 
 
-    // Connect to MongoDB
     const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
     const db = client.db('f3_ecommerce');
     const collection = db.collection('users');
 
-    // Find the user by email
     const user = await collection.findOne({ email });
 
     if (!user) {
@@ -514,32 +512,26 @@ app.post('/deleteCartProduct', async (req, res) => {
       return;
     }
 
-    // Check if userCarts map exists
     if (!user.userCarts) {
       res.status(400).json({ error: 'User has no items in the cart' });
       return;
     }
 
-    // Check if product exists in the user's cart
-    if (!user.userCarts[productId]) {
-      // If product doesn't exist, send error response with status code 404
-      res.status(404).json({ error: 'Product not found in the cart' });
-      return;
-    }
+    productIds.forEach(productId => {
+      if (!user.userCarts[productId]) {
+        res.status(404).json({ error: `Product ${productId} not found in the cart` });
+        return;
+      }
+      delete user.userCarts[productId];
+    });
 
-    // Delete product from user's cart
-    delete user.userCarts[productId];
-
-    // Update the user document in the database
     await collection.updateOne(
       { email },
       { $set: { userCarts: user.userCarts } }
     );
 
-    // Close MongoDB connection
     await client.close();
 
-    // Send response
     res.status(200).json({ message: 'Product(s) removed from cart successfully' });
   } catch (error) {
     console.error('Error removing product from cart:', error);
