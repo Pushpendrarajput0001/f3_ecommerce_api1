@@ -764,6 +764,42 @@ app.get('/deleteCheckoutapprovalsStore', async (req, res) => {
   }
 });
 
+app.post('/updateProductAfterCheckoutApproval', async (req, res) => {
+  try {
+    const {products} = req.body;
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('products');
+
+    for (const product of products) {
+      const { productId, newStocks, newSolds } = product;
+
+      //const query = { _id: productId, storeId };
+      const existingProduct = await collection.findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
+
+
+      if (!existingProduct) {
+        res.status(404).json({ error: `Product ${productId} not found in store ${storeId}` });
+        return;
+      }
+
+      existingProduct.numberOfStocks = newStocks;
+      existingProduct.totalsolds = newSolds;
+
+      await collection.updateOne(query, { $set: { stocks: newStocks, solds: newSolds } });
+    }
+
+    // Close MongoDB connection
+    await client.close();
+
+    // Send response
+    res.status(200).json({ message: 'Products updated successfully' });
+  } catch (error) {
+    console.error('Error updating products:', error);
+    res.status(500).json({ error: 'An error occurred while updating products' });
+  }
+});
 
 
 
