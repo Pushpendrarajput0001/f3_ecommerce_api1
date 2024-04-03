@@ -658,8 +658,8 @@ app.get('/getBuyCheckedOutApproval', async (req, res) => {
 app.get('/getBuyerProductsById', async (req, res) => {
   try {
     const { buyerId, sellerId } = req.query;
-
-    log
+    console.log('Buyer ID:', buyerId);
+    console.log('Seller ID:', sellerId);
 
     // Connect to MongoDB
     const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -676,14 +676,19 @@ app.get('/getBuyerProductsById', async (req, res) => {
 
     // Check if the buyer has checkout approvals
     const checkoutApprovalMap = buyer.checkoutapproval;
+    console.log('Type of checkoutApprovalMap:', typeof checkoutApprovalMap);
+    console.log('Checkout Approval Map:', checkoutApprovalMap);
     if (!checkoutApprovalMap) {
       res.status(404).json({ error: 'Checkout approvals not found for the buyer' });
       return;
     }
 
     // Find checkout approvals for the specified seller
+    console.log('Seller ID:', sellerId);
+    console.log('Checkout Approvals for Seller:', checkoutApprovalMap[sellerId]);
     const sellerCheckoutApprovalsArray = checkoutApprovalMap[sellerId];
-    console.log(sellerCheckoutApprovalsArray);
+    console.log('Type of sellerCheckoutApprovalsArray:', typeof sellerCheckoutApprovalsArray);
+    console.log('Seller Checkout Approvals Array:', sellerCheckoutApprovalsArray);
     if (!sellerCheckoutApprovalsArray || sellerCheckoutApprovalsArray.length === 0) {
       res.status(404).json({ error: 'No checkout approvals found for the specified seller' });
       return;
@@ -718,6 +723,7 @@ app.get('/getBuyerProductsById', async (req, res) => {
     res.status(500).json({ error: 'An error occurred while retrieving buyer products by ID' });
   }
 });
+
 
 
 
