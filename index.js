@@ -561,28 +561,21 @@ app.post('/addCheckoutApproval', async (req, res) => {
       user.checkoutapproval = {}; // Create checkoutapproval object
     }
 
-    // Group products by storeId
-    const productsByStoreId = {};
+    // Iterate through products to add or replace in the checkoutapproval map
     products.forEach(product => {
       const { productId, quantity, totalPrice, storeId } = product;
-      
-      // Create new document for checkoutapproval
-      const checkoutApprovalDocument = {
+
+      // Check if checkoutapproval for the storeId already exists
+      if (!user.checkoutapproval[storeId]) {
+        user.checkoutapproval[storeId] = [];
+      }
+
+      // Add new product
+      user.checkoutapproval[storeId].push({
         productId,
         quantity,
         totalPrice
-      };
-
-      // Add checkoutapproval document to user's checkoutapproval map
-      if (!productsByStoreId[storeId]) {
-        productsByStoreId[storeId] = [];
-      }
-      productsByStoreId[storeId].push(checkoutApprovalDocument);
-    });
-
-    // Add products grouped by storeId to checkoutapproval map
-    Object.keys(productsByStoreId).forEach(storeId => {
-      user.checkoutapproval[storeId] = productsByStoreId[storeId];
+      });
     });
 
     // Update the user document in the database
@@ -601,6 +594,7 @@ app.post('/addCheckoutApproval', async (req, res) => {
     res.status(500).json({ error: 'An error occurred while adding checkout approvals' });
   }
 });
+
 
 app.get('/getBuyCheckedOutApproval', async (req, res) => {
   try {
