@@ -766,28 +766,29 @@ app.get('/deleteCheckoutapprovalsStore', async (req, res) => {
 
 app.post('/updateProductAfterCheckoutApproval', async (req, res) => {
   try {
-    const {products} = req.body;
+    const { products } = req.body;
 
     const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
     const db = client.db('f3_ecommerce');
-    const collection = db.collection('products');
+    const collection = db.collection('users');
 
     for (const product of products) {
       const { productId, newStocks, newSolds } = product;
 
-      //const query = { _id: productId, storeId };
+      // Find the product by productId
       const existingProduct = await collection.findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
 
-
       if (!existingProduct) {
-        res.status(404).json({ error: `Product ${productId} not found in store ${storeId}` });
+        res.status(404).json({ error: `Product ${productId} not found in store` });
         return;
       }
 
-      existingProduct.numberOfStocks = newStocks;
-      existingProduct.totalsolds = newSolds;
+      // Update the product's stocks and solds fields
+      existingProduct.products[0].numberOfStocks = newStocks;
+      existingProduct.products[0].totalsolds = newSolds;
 
-      await collection.updateOne(query, { $set: { stocks: newStocks, solds: newSolds } });
+      // Update the product in the database
+      await collection.updateOne({ 'products._id': productId }, { $set: { 'products.$.numberOfStocks': newStocks, 'products.$.totalsolds': newSolds } });
     }
 
     // Close MongoDB connection
@@ -800,7 +801,6 @@ app.post('/updateProductAfterCheckoutApproval', async (req, res) => {
     res.status(500).json({ error: 'An error occurred while updating products' });
   }
 });
-
 
 
 // Start the server and bind it to a specific IP address
