@@ -707,7 +707,7 @@ app.get('/getBuyerProductsById', async (req, res) => {
       // Add product details along with quantity and totalPrice
       products.push({
         _id: productId,
-        quantity,
+        totalQuantity : quantity,
         totalPrice,
         productName: productDetails.products[0].productName,
         startedPrice: productDetails.products[0].startedPrice,
