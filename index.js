@@ -728,6 +728,41 @@ app.get('/getBuyerProductsById', async (req, res) => {
   }
 });
 
+app.get('/deleteCheckoutapprovalsStore', async (req, res) => {
+  try {
+    const { storeId, buyerId } = req.query; 
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    const user = await collection.findOne({ storeId: buyerId });
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    if (!user.checkoutapproval || !user.checkoutapproval[storeId]) {
+      res.status(400).json({ error: `No checkout approvals found for storeId: ${storeId}` });
+      return;
+    }
+
+    delete user.checkoutapproval[storeId];
+
+    await collection.updateOne(
+      { _id: buyerId },
+      { $set: { checkoutapproval: user.checkoutapproval } }
+    );
+
+    await client.close();
+
+    res.status(200).json({ message: `Checkout approvals for storeId: ${storeId} removed successfully` });
+  } catch (error) {
+    console.error('Error removing checkout approvals:', error);
+    res.status(500).json({ error: 'An error occurred while removing checkout approvals' });
+  }
+});
 
 
 
