@@ -695,7 +695,7 @@ app.get('/getBuyerProductsById', async (req, res) => {
     }
 
     // Prepare an array to store product details
-    const productsDetails = [];
+    const products = [];
 
     // Iterate over each checkout approval in the seller's array
     for (const checkoutApproval of sellerCheckoutApprovalsArray) {
@@ -705,24 +705,35 @@ app.get('/getBuyerProductsById', async (req, res) => {
       const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
 
       // Add product details along with quantity and totalPrice
-      productsDetails.push({
-        productId,
-        totalQuantity: quantity,
+      products.push({
+        _id: productId,
+        quantity,
         totalPrice,
-        ...productDetails
+        productName: productDetails.products[0].productName,
+        startedPrice: productDetails.products[0].startedPrice,
+        f3MarketPrice: productDetails.products[0].f3MarketPrice,
+        growthContribution: productDetails.products[0].growthContribution,
+        numberOfStocks: productDetails.products[0].numberOfStocks,
+        unitItemSelected: productDetails.products[0].unitItemSelected,
+        description: productDetails.products[0].description,
+        totalsolds: productDetails.products[0].totalsolds,
+        storeId: productDetails.products[0].storeId,
+        storeName: productDetails.products[0].storeName,
+        images: productDetails.products[0].images
       });
     }
 
     // Close MongoDB connection
     await client.close();
 
-    // Send response with productsDetails array
-    res.status(200).json({ products: productsDetails });
+    // Send response with products array
+    res.status(200).json({ products });
   } catch (error) {
     console.error('Error retrieving buyer products by ID:', error);
     res.status(500).json({ error: 'An error occurred while retrieving buyer products by ID' });
   }
 });
+
 
 
 
