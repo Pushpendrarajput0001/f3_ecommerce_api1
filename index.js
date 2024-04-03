@@ -684,7 +684,7 @@ app.get('/getBuyerProductsById', async (req, res) => {
     console.log('Type of sellerCheckoutApprovalsArray:', typeof sellerCheckoutApprovalsArray);
     console.log('Seller Checkout Approvals Array:', sellerCheckoutApprovalsArray);
     if (!sellerCheckoutApprovalsArray || sellerCheckoutApprovalsArray.length === 0) {
-      res.status(404).json({ error: 'No checkout approvals found for the specified seller' });
+      res.status(405).json({ error: 'No checkout approvals found for the specified seller' });
       return;
     }
 
@@ -751,7 +751,7 @@ app.get('/deleteCheckoutapprovalsStore', async (req, res) => {
     delete user.checkoutapproval[storeId];
 
     await collection.updateOne(
-      { _id: buyerId },
+      { storeId: buyerId },
       { $set: { checkoutapproval: user.checkoutapproval } }
     );
 
