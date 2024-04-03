@@ -679,7 +679,7 @@ app.get('/getBuyerProductsById', async (req, res) => {
     console.log('Type of checkoutApprovalMap:', typeof checkoutApprovalMap);
     console.log('Checkout Approval Map:', checkoutApprovalMap);
     if (!checkoutApprovalMap) {
-      res.status(404).json({ error: 'Checkout approvals not found for the buyer' });
+      res.status(402).json({ error: 'Checkout approvals not found for the buyer' });
       return;
     }
 
