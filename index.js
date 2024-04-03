@@ -539,6 +539,122 @@ app.post('/deleteCartProduct', async (req, res) => {
   }
 });
 
+app.post('/addCheckoutApproval', async (req, res) => {
+  try {
+    const { email, products } = req.body;
+
+    // Connect to MongoDB
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by email
+    const user = await collection.findOne({ email });
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    // Check if checkoutapproval map exists, if not create it
+    if (!user.checkoutapproval) {
+      user.checkoutapproval = {}; // Create checkoutapproval object
+    }
+
+    // Group products by storeId
+    const productsByStoreId = {};
+    products.forEach(product => {
+      const { productId, quantity, totalPrice, storeId } = product;
+      
+      // Create new document for checkoutapproval
+      const checkoutApprovalDocument = {
+        productId,
+        quantity,
+        totalPrice
+      };
+
+      // Add checkoutapproval document to user's checkoutapproval map
+      if (!productsByStoreId[storeId]) {
+        productsByStoreId[storeId] = [];
+      }
+      productsByStoreId[storeId].push(checkoutApprovalDocument);
+    });
+
+    // Add products grouped by storeId to checkoutapproval map
+    Object.keys(productsByStoreId).forEach(storeId => {
+      user.checkoutapproval[storeId] = productsByStoreId[storeId];
+    });
+
+    // Update the user document in the database
+    await collection.updateOne(
+      { email },
+      { $set: { checkoutapproval: user.checkoutapproval } }
+    );
+
+    // Close MongoDB connection
+    await client.close();
+
+    // Send response
+    res.status(200).json({ message: 'Checkout approvals added successfully' });
+  } catch (error) {
+    console.error('Error adding checkout approvals:', error);
+    res.status(500).json({ error: 'An error occurred while adding checkout approvals' });
+  }
+});
+
+app.get('/getBuyCheckedOutApproval', async (req, res) => {
+  try {
+    const { email } = req.query;
+
+    // Connect to MongoDB
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by email
+    const user = await collection.findOne({ email });
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    // Retrieve checkoutapproval object from user document
+    const checkoutapproval = user.checkoutapproval;
+
+    // Prepare an array to store the details of all products
+    const productsDetails = [];
+
+    // Iterate over each storeId in the checkoutapproval map
+    for (const products of Object.values(checkoutapproval)) {
+      // Iterate over each product in the store
+      for (const product of Object.values(products)) {
+        const { productId, quantity, totalPrice } = product;
+
+        // Fetch product details from MongoDB
+        const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
+
+        // Add product details along with quantity and totalPrice
+        productsDetails.push({
+          productId,
+          quantity,
+          totalPrice,
+          ...productDetails
+        });
+      }
+    }
+
+    // Close MongoDB connection
+    await client.close();
+
+    // Send response with productsDetails array
+    res.status(200).json(productsDetails);
+  } catch (error) {
+    console.error('Error retrieving checkout approvals:', error);
+    res.status(500).json({ error: 'An error occurred while retrieving checkout approvals' });
+  }
+});
+
 
 // Start the server and bind it to a specific IP address
 app.listen(PORT, '192.168.29.149', () => {
