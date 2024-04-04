@@ -700,6 +700,7 @@ app.get('/getSellerProductsCheckoutById', async (req, res) => {
             unitItemSelected: productDetails.products[0].unitItemSelected,
             description: productDetails.products[0].description,
             totalsolds: productDetails.products[0].totalsolds,
+            storeId : productDetails.products[0].storeId,
             storeIdBuyer: user.storeId, // Add storeId from the current user
             storeName: productDetails.products[0].storeName,
             images: productDetails.products[0].images
