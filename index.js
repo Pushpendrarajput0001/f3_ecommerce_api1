@@ -825,11 +825,21 @@ app.get('/deleteAndapprovalcheckoutsStore', async (req, res) => {
     // Copy the full array of store products
     const store_products = user.checkoutapproval[storeId];
 
-    // Save the full array with the same storeId in the new map named approvalcheckout
+    // If approvalcheckout does not exist, create an empty object
     if (!user.approvalcheckout) {
       user.approvalcheckout = {};
     }
-    user.approvalcheckout[storeId] = store_products;
+
+    // If approvalcheckout does not have storeId as key or its value is not an array, create an empty array
+    if (!user.approvalcheckout[storeId] || !Array.isArray(user.approvalcheckout[storeId])) {
+      user.approvalcheckout[storeId] = [];
+    }
+
+    // Add new products to the existing array
+    user.approvalcheckout[storeId] = [
+      ...user.approvalcheckout[storeId],
+      ...store_products
+    ];
 
     // Delete the store from the checkoutapproval
     delete user.checkoutapproval[storeId];
