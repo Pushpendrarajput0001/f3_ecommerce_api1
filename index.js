@@ -649,72 +649,63 @@ app.get('/getBuyCheckedOutApproval', async (req, res) => {
   }
 });
 
-app.get('/getBuyerProductsById', async (req, res) => {
+app.get('/getSellerProductsCheckoutById', async (req, res) => {
   try {
-    const { buyerId, sellerId } = req.query;
-    console.log('Buyer ID:', buyerId);
-    console.log('Seller ID:', sellerId);
+    const { sellerId } = req.query;
+    console.log('Requested Seller ID:', sellerId);
 
     // Connect to MongoDB
     const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
     const db = client.db('f3_ecommerce');
     const collection = db.collection('users');
 
-    // Find the buyer by storeId
-    const buyer = await collection.findOne({ storeId: buyerId });
+    // Find all users with checkout approvals
+    const usersWithCheckoutApprovals = await collection.find({ 'checkoutapproval': { $exists: true } }).toArray();
 
-    if (!buyer) {
-      res.status(404).json({ error: 'Buyer not found' });
+    if (!usersWithCheckoutApprovals || usersWithCheckoutApprovals.length === 0) {
+      res.status(404).json({ error: 'No users found with checkout approvals' });
       return;
     }
 
-    // Check if the buyer has checkout approvals
-    const checkoutApprovalMap = buyer.checkoutapproval;
-    console.log('Type of checkoutApprovalMap:', typeof checkoutApprovalMap);
-    console.log('Checkout Approval Map:', checkoutApprovalMap);
-    if (!checkoutApprovalMap) {
-      res.status(402).json({ error: 'Checkout approvals not found for the buyer' });
-      return;
-    }
-
-    // Find checkout approvals for the specified seller
-    console.log('Seller ID:', sellerId);
-    console.log('Checkout Approvals for Seller:', checkoutApprovalMap[sellerId]);
-    const sellerCheckoutApprovalsArray = checkoutApprovalMap[sellerId];
-    console.log('Type of sellerCheckoutApprovalsArray:', typeof sellerCheckoutApprovalsArray);
-    console.log('Seller Checkout Approvals Array:', sellerCheckoutApprovalsArray);
-    if (!sellerCheckoutApprovalsArray || sellerCheckoutApprovalsArray.length === 0) {
-      res.status(405).json({ error: 'No checkout approvals found for the specified seller' });
-      return;
-    }
+    console.log('Users with Checkout Approvals:', usersWithCheckoutApprovals);
 
     // Prepare an array to store product details
     const products = [];
 
-    // Iterate over each checkout approval in the seller's array
-    for (const checkoutApproval of sellerCheckoutApprovalsArray) {
-      const { productId, quantity, totalPrice } = checkoutApproval;
+    // Iterate over each user with checkout approvals
+    for (const user of usersWithCheckoutApprovals) {
+      console.log('User:', user);
+      
+      if (user.checkoutapproval[sellerId]) {
+        const sellerCheckoutApprovalsArray = user.checkoutapproval[sellerId];
+        console.log('Checkout Approvals for Seller:', sellerCheckoutApprovalsArray);
+        
+        // Iterate over each checkout approval in the seller's array
+        for (const checkoutApproval of sellerCheckoutApprovalsArray) {
+          const { productId, quantity, totalPrice } = checkoutApproval;
 
-      // Fetch product details from MongoDB
-      const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
+          // Fetch product details from MongoDB
+          const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
 
-      // Add product details along with quantity and totalPrice
-      products.push({
-        _id: productId,
-        totalQuantity : quantity,
-        totalPrice,
-        productName: productDetails.products[0].productName,
-        startedPrice: productDetails.products[0].startedPrice,
-        f3MarketPrice: productDetails.products[0].f3MarketPrice,
-        growthContribution: productDetails.products[0].growthContribution,
-        numberOfStocks: productDetails.products[0].numberOfStocks,
-        unitItemSelected: productDetails.products[0].unitItemSelected,
-        description: productDetails.products[0].description,
-        totalsolds: productDetails.products[0].totalsolds,
-        storeId: productDetails.products[0].storeId,
-        storeName: productDetails.products[0].storeName,
-        images: productDetails.products[0].images
-      });
+          // Add product details along with quantity, totalPrice, and storeId
+          products.push({
+            _id: productId,
+            totalQuantity : quantity,
+            totalPrice,
+            productName: productDetails.products[0].productName,
+            startedPrice: productDetails.products[0].startedPrice,
+            f3MarketPrice: productDetails.products[0].f3MarketPrice,
+            growthContribution: productDetails.products[0].growthContribution,
+            numberOfStocks: productDetails.products[0].numberOfStocks,
+            unitItemSelected: productDetails.products[0].unitItemSelected,
+            description: productDetails.products[0].description,
+            totalsolds: productDetails.products[0].totalsolds,
+            storeIdBuyer: user.storeId, // Add storeId from the current user
+            storeName: productDetails.products[0].storeName,
+            images: productDetails.products[0].images
+          });
+        }
+      }
     }
 
     // Close MongoDB connection
@@ -723,8 +714,8 @@ app.get('/getBuyerProductsById', async (req, res) => {
     // Send response with products array
     res.status(200).json({ products });
   } catch (error) {
-    console.error('Error retrieving buyer products by ID:', error);
-    res.status(500).json({ error: 'An error occurred while retrieving buyer products by ID' });
+    console.error('Error retrieving seller products by ID:', error);
+    res.status(500).json({ error: 'An error occurred while retrieving seller products by ID' });
   }
 });
 
