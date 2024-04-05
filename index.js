@@ -960,7 +960,7 @@ app.get('/getSellerSectionApprovedCheckout', async (req, res) => {
         
         // Iterate over each checkout approval in the seller's array
         for (const approvalcheckout of sellerApprovalsCheckoutArray) {
-          const { productId, quantity, totalPrice } = approvalcheckout;
+          const { productId, quantity, totalPrice,paymentRequestedTimestamp } = approvalcheckout;
 
           // Fetch product details from MongoDB
           const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
