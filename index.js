@@ -704,6 +704,7 @@ app.get('/getSellerProductsCheckoutById', async (req, res) => {
             totalsolds: productDetails.products[0].totalsolds,
             storeId : productDetails.products[0].storeId,
             storeIdBuyer: user.storeId,
+            walletAddressBuyer : user.walletAddress,
             flagWord : productDetails.products[0].flagWord,
             storeName: productDetails.products[0].storeName,
             images: productDetails.products[0].images
@@ -923,6 +924,79 @@ app.get('/getBuyersSectionProductcheckout', async (req, res) => {
   } catch (error) {
     console.error('Error retrieving buyer products by ID:', error);
     res.status(500).json({ error: 'An error occurred while retrieving buyer products by ID' });
+  }
+});
+
+app.get('/getSellerSectionApprovedCheckout', async (req, res) => {
+  try {
+    const { sellerId } = req.query;
+    console.log('Requested Seller ID:', sellerId);
+
+    // Connect to MongoDB
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find all users with checkout approvals
+    const usersWithApprovalsCheckout = await collection.find({ 'approvalcheckout': { $exists: true } }).toArray();
+
+    if (!usersWithApprovalsCheckout || usersWithApprovalsCheckout.length === 0) {
+      res.status(404).json({ error: 'No users found with checkout approvals' });
+      return;
+    }
+
+    console.log('Users with Checkout Approvals:', usersWithApprovalsCheckout);
+
+    // Prepare an array to store product details
+    const products = [];
+
+    // Iterate over each user with checkout approvals
+    for (const user of usersWithApprovalsCheckout) {
+      console.log('User:', user);
+      
+      if (user.approvalcheckout[sellerId]) {
+        const sellerApprovalsCheckoutArray = user.approvalcheckout[sellerId];
+        console.log('Approvals Checkout for Seller:', sellerApprovalsCheckoutArray);
+        
+        // Iterate over each checkout approval in the seller's array
+        for (const approvalcheckout of sellerApprovalsCheckoutArray) {
+          const { productId, quantity, totalPrice } = approvalcheckout;
+
+          // Fetch product details from MongoDB
+          const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
+
+          // Add product details along with quantity, totalPrice, and storeId
+          products.push({
+            _id: productId,
+            totalQuantity : quantity,
+            totalPrice,
+            productName: productDetails.products[0].productName,
+            startedPrice: productDetails.products[0].startedPrice,
+            f3MarketPrice: productDetails.products[0].f3MarketPrice,
+            growthContribution: productDetails.products[0].growthContribution,
+            numberOfStocks: productDetails.products[0].numberOfStocks,
+            unitItemSelected: productDetails.products[0].unitItemSelected,
+            description: productDetails.products[0].description,
+            totalsolds: productDetails.products[0].totalsolds,
+            storeId : productDetails.products[0].storeId,
+            storeIdBuyer: user.storeId,
+            walletAddressBuyer : user.walletAddress,
+            flagWord : productDetails.products[0].flagWord,
+            storeName: productDetails.products[0].storeName,
+            images: productDetails.products[0].images
+          });
+        }
+      }
+    }
+
+    // Close MongoDB connection
+    await client.close();
+
+    // Send response with products array
+    res.status(200).json({ products });
+  } catch (error) {
+    console.error('Error retrieving seller products by ID:', error);
+    res.status(500).json({ error: 'An error occurred while retrieving seller products by ID' });
   }
 });
 
