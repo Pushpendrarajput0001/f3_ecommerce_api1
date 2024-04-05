@@ -1000,6 +1000,79 @@ app.get('/getSellerSectionApprovedCheckout', async (req, res) => {
   }
 });
 
+app.get('/getBuyersSectionApprovedCheckout', async (req, res) => {
+  try {
+    const { buyerId } = req.query;
+    console.log('Buyer ID:', buyerId);
+
+    // Connect to MongoDB
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the buyer by buyerId
+    const buyer = await collection.findOne({ storeId: buyerId });
+
+    if (!buyer) {
+      res.status(404).json({ error: 'Buyer not found' });
+      return;
+    }
+
+    // Check if the buyer has checkout approvals
+    const approvalCheckoutMap = buyer.approvalcheckout;
+    console.log('Type of checkoutApprovalMap:', typeof approvalCheckoutMap);
+    console.log('Checkout Approval Map:', approvalCheckoutMap);
+    if (!approvalCheckoutMap) {
+      res.status(402).json({ error: 'Checkout approvals not found for the buyer' });
+      return;
+    }
+
+    // Prepare an array to store product details
+    const products = [];
+
+    // Iterate over each store's checkout approval
+    for (const sellerId in approvalCheckoutMap) {
+      const sellerCheckoutApprovalsArray = approvalCheckoutMap[sellerId];
+
+      // Iterate over each checkout approval in the seller's array
+      for (const approvalcheckout of sellerCheckoutApprovalsArray) {
+        const { productId, quantity, totalPrice } = approvalcheckout;
+
+        // Fetch product details from MongoDB
+        const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
+
+        // Add product details along with quantity and totalPrice
+        products.push({
+          _id: productId,
+          totalQuantity : quantity,
+          totalPrice,
+          productName: productDetails.products[0].productName,
+          startedPrice: productDetails.products[0].startedPrice,
+          f3MarketPrice: productDetails.products[0].f3MarketPrice,
+          growthContribution: productDetails.products[0].growthContribution,
+          numberOfStocks: productDetails.products[0].numberOfStocks,
+          unitItemSelected: productDetails.products[0].unitItemSelected,
+          description: productDetails.products[0].description,
+          totalsolds: productDetails.products[0].totalsolds,
+          storeId: productDetails.products[0].storeId,
+          flagWord : productDetails.products[0].flagWord,
+          storeName: productDetails.products[0].storeName,
+          images: productDetails.products[0].images
+        });
+      }
+    }
+
+    // Close MongoDB connection
+    await client.close();
+
+    // Send response with products array
+    res.status(200).json({ products });
+  } catch (error) {
+    console.error('Error retrieving buyer products by ID:', error);
+    res.status(500).json({ error: 'An error occurred while retrieving buyer products by ID' });
+  }
+});
+
 
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`);
