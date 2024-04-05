@@ -18,7 +18,7 @@ const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTop
 app.post('/usersregister', async (req, res) => {
   try {
     // Extract user data from request body
-    const { email, password, storeName, walletAddress, cityAddress, localAddress, usdtRate, country,storeId,currencySymbol,currencyCode } = req.body;
+    const { email, password, storeName, walletAddress, cityAddress, localAddress, usdtRate, country,storeId,currencySymbol,currencyCode,flagWord } = req.body;
 
     // Connect to MongoDB
     const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -47,6 +47,7 @@ app.post('/usersregister', async (req, res) => {
       usdtRate,
       currencySymbol,
       currencyCode,
+      flagWord,
       storeId,
       country
     };
@@ -101,6 +102,7 @@ app.post('/login', async (req, res) => {
       cityAddress: user.cityAddress,
       localAddress: user.localAddress,
       usdRate: user.usdtRate,
+      flagWord : user.flagWord,
       currencySymbol : user.currencySymbol,
       country: user.country
     };
@@ -126,7 +128,7 @@ app.post('/productsAdd', async (req, res) => {
     const collection = db.collection(COLLECTION_NAME);
 
     // Extract product data and images from request body
-    const { email, productName, startedPrice, f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected, description, totalsolds, images, storeId, storeName } = req.body;
+    const { email, productName, startedPrice, f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected, description, totalsolds, images, storeId, storeName,flagWord } = req.body;
 
     // Resize and compress images
     const compressedImages = await Promise.all(images.map(async (image) => {
@@ -152,6 +154,7 @@ app.post('/productsAdd', async (req, res) => {
       totalsolds,
       storeId,
       storeName,
+      flagWord,
       images: compressedImages
     };
 
@@ -595,7 +598,6 @@ app.post('/addCheckoutApproval', async (req, res) => {
   }
 });
 
-
 app.get('/getBuyCheckedOutApproval', async (req, res) => {
   try {
     const { email } = req.query;
@@ -701,7 +703,8 @@ app.get('/getSellerProductsCheckoutById', async (req, res) => {
             description: productDetails.products[0].description,
             totalsolds: productDetails.products[0].totalsolds,
             storeId : productDetails.products[0].storeId,
-            storeIdBuyer: user.storeId, // Add storeId from the current user
+            storeIdBuyer: user.storeId,
+            flagWord : productDetails.products[0].flagWord,
             storeName: productDetails.products[0].storeName,
             images: productDetails.products[0].images
           });
@@ -905,6 +908,7 @@ app.get('/getBuyersSectionProductcheckout', async (req, res) => {
           description: productDetails.products[0].description,
           totalsolds: productDetails.products[0].totalsolds,
           storeId: productDetails.products[0].storeId,
+          flagWord : productDetails.products[0].flagWord,
           storeName: productDetails.products[0].storeName,
           images: productDetails.products[0].images
         });
