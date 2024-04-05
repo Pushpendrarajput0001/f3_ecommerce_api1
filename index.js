@@ -970,6 +970,7 @@ app.get('/getSellerSectionApprovedCheckout', async (req, res) => {
             _id: productId,
             totalQuantity : quantity,
             totalPrice,
+            paymentRequestedTimestamp,
             productName: productDetails.products[0].productName,
             startedPrice: productDetails.products[0].startedPrice,
             f3MarketPrice: productDetails.products[0].f3MarketPrice,
@@ -1072,6 +1073,72 @@ app.get('/getBuyersSectionApprovedCheckout', async (req, res) => {
     res.status(500).json({ error: 'An error occurred while retrieving buyer products by ID' });
   }
 });
+
+app.get('/updateRequestApprovedCheckout', async (req, res) => {
+  try {
+    const { storeId, sellerId, paymentRequestedTimestamp } = req.query;
+
+    console.log('Request received:', storeId, sellerId, paymentRequestedTimestamp);
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by storeId
+    const user = await collection.findOne({ storeId });
+
+    if (!user) {
+      console.log(`User with storeId ${storeId} not found`);
+      res.status(404).json({ error: `User with storeId ${storeId} not found` });
+      return;
+    }
+
+    // Ensure that approvalcheckout is an object
+    if (typeof user.approvalcheckout !== 'object' || !user.approvalcheckout.hasOwnProperty(sellerId)) {
+      console.log(`Seller with sellerId ${sellerId} not found in approvalcheckout object`);
+      res.status(404).json({ error: `Seller with sellerId ${sellerId} not found in approvalcheckout object` });
+      return;
+    }
+
+    // Get the array corresponding to the sellerId
+    const sellerArray = user.approvalcheckout[sellerId];
+
+    // Check if paymentRequested and paymentRequestedTimestamp already exist in any object of the array
+    const isAlreadyRequested = sellerArray.some((sellerObject) => {
+      return sellerObject.paymentRequested === 'Yes' || sellerObject.paymentRequestedTimestamp === paymentRequestedTimestamp;
+    });
+
+    if (isAlreadyRequested) {
+      console.log(`Payment has already been requested for sellerId ${sellerId}`);
+      res.status(405).json({ error: `Payment has already been requested for sellerId ${sellerId}` });
+      return;
+    }
+
+    // Iterate over each object in the sellerArray and add the strings
+    sellerArray.forEach((sellerObject) => {
+      if (!sellerObject.paymentRequested && !sellerObject.paymentRequestedTimestamp) {
+        sellerObject.paymentRequested = 'Yes';
+        sellerObject.paymentRequestedTimestamp = paymentRequestedTimestamp;
+      }
+    });
+
+    // Update the user in the database
+    await collection.updateOne({ storeId }, { $set: { [`approvalcheckout.${sellerId}`]: sellerArray } });
+
+    // Close MongoDB connection
+    await client.close();
+
+    console.log(`Payment requested flag updated successfully for all sellers in storeId ${storeId}`);
+
+    // Send response
+    res.status(200).json({ message: 'Payment requested flag updated successfully for all sellers' });
+  } catch (error) {
+    console.error('Error updating payment requested flag:', error);
+    res.status(500).json({ error: 'An error occurred while updating payment requested flag' });
+  }
+});
+
+
 
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`);
