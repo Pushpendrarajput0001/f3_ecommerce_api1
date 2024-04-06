@@ -1122,7 +1122,7 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
 
     // Copy the sellerArray to paymentRequestSeller map and remove paymentRequested fields
     const copiedSellerArray = sellerArray.map((sellerObject) => {
-      const { paymentRequested, paymentRequestedTimestamp, ...rest } = sellerObject;
+      const { paymentRequested, paymentRequestedTimestamp,paymentRequestedBuyer, paymentRequestedTimestampBuyer, ...rest } = sellerObject;
       return rest;
     });
     user.paymentRequestSeller[sellerId] = copiedSellerArray;
@@ -1201,7 +1201,7 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
 
     // Copy the sellerArray to paymentRequestBuyer map and remove paymentRequested fields
     const copiedSellerArray = sellerArray.map((sellerObject) => {
-      const { paymentRequestedBuyer, paymentRequestedTimestampBuyer, ...rest } = sellerObject;
+      const { paymentRequestedBuyer, paymentRequestedTimestampBuyer,paymentRequested, paymentRequestedTimestamp, ...rest } = sellerObject;
       return rest;
     });
     user.paymentRequestBuyer[sellerId] = copiedSellerArray;
