@@ -1132,6 +1132,8 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
       if (!sellerObject.paymentRequested && !sellerObject.paymentRequestedTimestamp) {
         sellerObject.paymentRequested = 'Yes';
         sellerObject.paymentRequestedTimestamp = paymentRequestedTimestamp;
+      }else if(sellerObject.paymentRequested==='Yes'){
+        sellerObject.paymentRequestedTimestamp = paymentRequestedTimestamp;
       }
     });
 
@@ -1211,6 +1213,8 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
       if (!sellerObject.paymentRequestedBuyer && !sellerObject.paymentRequestedTimestampBuyer) {
         sellerObject.paymentRequestedBuyer = 'Yes';
         sellerObject.paymentRequestedTimestampBuyer = paymentRequestedTimestamp;
+      }else if(sellerObject.paymentRequestedBuyer === 'Yes'){
+        sellerObject.paymentRequestedTimestampBuyer = paymentRequestedTimestamp
       }
     });
 
