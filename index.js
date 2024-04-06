@@ -1110,7 +1110,18 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
     });
 
     if (isAlreadyRequested) {
-      console.log(`Payment has already been requested for sellerId ${sellerId}`);
+      sellerArray.forEach((sellerObject) => {
+        if (sellerObject.paymentRequested === 'Yes') {
+          sellerObject.paymentRequestedTimestamp = paymentRequestedTimestamp;
+        }
+      });
+
+      // Update the user in the database
+      await collection.updateOne({ storeId }, { $set: { [`approvalcheckout.${sellerId}`]: sellerArray } });
+
+      console.log(`Payment requested timestamp updated successfully for sellerId ${sellerId}`);
+
+      //console.log(`Payment has already been requested for sellerId ${sellerId}`);
       res.status(405).json({ error: `Payment has already been requested for sellerId ${sellerId}` });
       return;
     }
@@ -1191,24 +1202,33 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
     });
 
     if (isAlreadyRequested) {
-      console.log(`Payment has already been requested for sellerId ${sellerId}`);
-      res.status(405).json({ error: `Payment has already been requested for sellerId ${sellerId}` });
-      return;
+      // Update payment requested timestamp
+      sellerArray.forEach((sellerObject) => {
+        if (sellerObject.paymentRequestedBuyer === 'Yes') {
+          sellerObject.paymentRequestedTimestampBuyer = paymentRequestedTimestamp;
+        }
+      });
+
+      // Update the user in the database
+      await collection.updateOne({ storeId }, { $set: { [`approvalcheckout.${sellerId}`]: sellerArray } });
+
+      console.log(`Payment requested timestamp updated successfully for sellerId ${sellerId}`);
+
+      // Send response indicating payment has already been requested
+      return res.status(405).json({ error: `Payment has already been requested for sellerId ${sellerId}` });
     }
 
-    // Create a new map named paymentRequestBuyer if it doesn't exist
     if (!user.paymentRequestBuyer) {
       user.paymentRequestBuyer = {};
     }
 
-    // Copy the sellerArray to paymentRequestBuyer map and remove paymentRequested fields
     const copiedSellerArray = sellerArray.map((sellerObject) => {
       const { paymentRequestedBuyer, paymentRequestedTimestampBuyer,paymentRequested, paymentRequestedTimestamp, ...rest } = sellerObject;
       return rest;
     });
+
     user.paymentRequestBuyer[sellerId] = copiedSellerArray;
 
-    // Iterate over each object in the sellerArray and add the strings
     sellerArray.forEach((sellerObject) => {
       if (!sellerObject.paymentRequestedBuyer && !sellerObject.paymentRequestedTimestampBuyer) {
         sellerObject.paymentRequestedBuyer = 'Yes';
