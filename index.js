@@ -1120,8 +1120,12 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
       user.paymentRequestSeller = {};
     }
 
-    // Copy the sellerArray to paymentRequestSeller map
-    user.paymentRequestSeller[sellerId] = sellerArray;
+    // Copy the sellerArray to paymentRequestSeller map and remove paymentRequested fields
+    const copiedSellerArray = sellerArray.map((sellerObject) => {
+      const { paymentRequested, paymentRequestedTimestamp, ...rest } = sellerObject;
+      return rest;
+    });
+    user.paymentRequestSeller[sellerId] = copiedSellerArray;
 
     // Iterate over each object in the sellerArray and add the strings
     sellerArray.forEach((sellerObject) => {
@@ -1132,7 +1136,10 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
     });
 
     // Update the user in the database
-    await collection.updateOne({ storeId }, { $set: { [`approvalcheckout.${sellerId}`]: sellerArray, paymentRequestSeller: user.paymentRequestSeller } });
+    await collection.updateOne(
+      { storeId },
+      { $set: { [`approvalcheckout.${sellerId}`]: sellerArray, paymentRequestSeller: user.paymentRequestSeller } }
+    );
 
     // Close MongoDB connection
     await client.close();
@@ -1192,8 +1199,12 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
       user.paymentRequestBuyer = {};
     }
 
-    // Copy the sellerArray to paymentRequestBuyer map
-    user.paymentRequestBuyer[sellerId] = sellerArray;
+    // Copy the sellerArray to paymentRequestBuyer map and remove paymentRequested fields
+    const copiedSellerArray = sellerArray.map((sellerObject) => {
+      const { paymentRequestedBuyer, paymentRequestedTimestampBuyer, ...rest } = sellerObject;
+      return rest;
+    });
+    user.paymentRequestBuyer[sellerId] = copiedSellerArray;
 
     // Iterate over each object in the sellerArray and add the strings
     sellerArray.forEach((sellerObject) => {
@@ -1204,7 +1215,10 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
     });
 
     // Update the user in the database
-    await collection.updateOne({ storeId }, { $set: { [`approvalcheckout.${sellerId}`]: sellerArray, paymentRequestBuyer: user.paymentRequestBuyer } });
+    await collection.updateOne(
+      { storeId },
+      { $set: { [`approvalcheckout.${sellerId}`]: sellerArray, paymentRequestBuyer: user.paymentRequestBuyer } }
+    );
 
     // Close MongoDB connection
     await client.close();
@@ -1218,6 +1232,7 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
     res.status(500).json({ error: 'An error occurred while updating payment requested flag' });
   }
 });
+
 
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`);
