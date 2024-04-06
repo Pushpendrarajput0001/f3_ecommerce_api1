@@ -1037,7 +1037,7 @@ app.get('/getBuyersSectionApprovedCheckout', async (req, res) => {
 
       // Iterate over each checkout approval in the seller's array
       for (const approvalcheckout of sellerCheckoutApprovalsArray) {
-        const { productId, quantity, totalPrice } = approvalcheckout;
+        const { productId, quantity, totalPrice,paymentRequestedTimestampBuyer } = approvalcheckout;
 
         // Fetch product details from MongoDB
         const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
@@ -1047,6 +1047,7 @@ app.get('/getBuyersSectionApprovedCheckout', async (req, res) => {
           _id: productId,
           totalQuantity : quantity,
           totalPrice,
+          paymentRequestedTimestampBuyer,
           productName: productDetails.products[0].productName,
           startedPrice: productDetails.products[0].startedPrice,
           f3MarketPrice: productDetails.products[0].f3MarketPrice,
@@ -1114,6 +1115,14 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
       return;
     }
 
+    // Create a new map named paymentRequestSeller if it doesn't exist
+    if (!user.paymentRequestSeller) {
+      user.paymentRequestSeller = {};
+    }
+
+    // Copy the sellerArray to paymentRequestSeller map
+    user.paymentRequestSeller[sellerId] = sellerArray;
+
     // Iterate over each object in the sellerArray and add the strings
     sellerArray.forEach((sellerObject) => {
       if (!sellerObject.paymentRequested && !sellerObject.paymentRequestedTimestamp) {
@@ -1123,7 +1132,7 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
     });
 
     // Update the user in the database
-    await collection.updateOne({ storeId }, { $set: { [`approvalcheckout.${sellerId}`]: sellerArray } });
+    await collection.updateOne({ storeId }, { $set: { [`approvalcheckout.${sellerId}`]: sellerArray, paymentRequestSeller: user.paymentRequestSeller } });
 
     // Close MongoDB connection
     await client.close();
@@ -1178,6 +1187,14 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
       return;
     }
 
+    // Create a new map named paymentRequestBuyer if it doesn't exist
+    if (!user.paymentRequestBuyer) {
+      user.paymentRequestBuyer = {};
+    }
+
+    // Copy the sellerArray to paymentRequestBuyer map
+    user.paymentRequestBuyer[sellerId] = sellerArray;
+
     // Iterate over each object in the sellerArray and add the strings
     sellerArray.forEach((sellerObject) => {
       if (!sellerObject.paymentRequestedBuyer && !sellerObject.paymentRequestedTimestampBuyer) {
@@ -1187,7 +1204,7 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
     });
 
     // Update the user in the database
-    await collection.updateOne({ storeId }, { $set: { [`approvalcheckout.${sellerId}`]: sellerArray } });
+    await collection.updateOne({ storeId }, { $set: { [`approvalcheckout.${sellerId}`]: sellerArray, paymentRequestBuyer: user.paymentRequestBuyer } });
 
     // Close MongoDB connection
     await client.close();
