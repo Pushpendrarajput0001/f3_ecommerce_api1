@@ -1168,10 +1168,9 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
       return;
     }
 
-    if (!user.paymentRequestSeller) {
+    if (typeof user.paymentRequestSeller === 'undefined') {
       user.paymentRequestSeller = {};
     }
-
     const copiedSellerArray = sellerArray.map((sellerObject) => {
       const { paymentRequested, paymentRequestedTimestamp,paymentRequestedBuyer, paymentRequestedTimestampBuyer, ...rest } = sellerObject;
       return rest;
@@ -1184,13 +1183,13 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
         sellerObject.paymentRequestedTimestamp = paymentRequestedTimestamp;
         sellerObject.totalF3Amount = totalF3Amount;
         sellerObject.totalGc = totalGc;
-        sellerObject.storeIdProduct = storeId;
-      }else if(sellerObject.paymentRequested==='Yes'){
+        sellerObject.storeIdProduct = sellerId;
+      } else if (sellerObject.paymentRequested === 'Yes') {
         sellerObject.paymentRequestedTimestamp = paymentRequestedTimestamp;
       }
     });
-
-    // Update the user in the database
+    
+    // Update the user in the database with the updated paymentRequestSeller
     await collection.updateOne(
       { storeId },
       { $set: { [`approvalcheckout.${sellerId}`]: sellerArray, paymentRequestSeller: user.paymentRequestSeller } }
@@ -1277,7 +1276,7 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
         sellerObject.paymentRequestedTimestampBuyer = paymentRequestedTimestamp;
         sellerObject.totalF3Amount = totalF3Amount;
         sellerObject.totalGc = totalGc;
-        sellerObject.storeIdProduct = storeId;
+        sellerObject.storeIdProduct = sellerId;
       }else if(sellerObject.paymentRequestedBuyer === 'Yes'){
         sellerObject.paymentRequestedTimestampBuyer = paymentRequestedTimestamp
       }
