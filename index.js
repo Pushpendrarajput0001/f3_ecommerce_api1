@@ -1305,6 +1305,57 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
   }
 });
 
+app.get('/getRequestsOfPayments', async (req, res) => {
+  try {
+    const { walletAddress } = req.query;
+
+    console.log('Request received:', walletAddress);
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by walletAddress
+    const user = await collection.findOne({ walletAddress });
+
+    if (!user) {
+      console.log(`User with walletAddress ${walletAddress} not found`);
+      return res.status(404).json({ error: `User with walletAddress ${walletAddress} not found` });
+    }
+
+    const response = {};
+
+    // Check if paymentRequestSeller object exists
+    if (user.paymentRequestSeller) {
+      let sellerWalletAddress = null;
+      const storeId = Object.keys(user.paymentRequestSeller)[0]; // Assuming there's only one storeId
+      const sellerUserData = await collection.findOne({ storeId });
+      if (sellerUserData) {
+        sellerWalletAddress = sellerUserData.walletAddress;
+      }
+      response.paymentRequestSeller = { data: user.paymentRequestSeller, requestType: 'seller', sellerWalletAddress };
+    }
+
+    // Check if paymentRequestBuyer object exists
+    if (user.paymentRequestBuyer) {
+      response.paymentRequestBuyer = { data: user.paymentRequestBuyer, requestType: 'buyer', buyerWalletAddress: walletAddress };
+    }
+
+    // Close MongoDB connection
+    await client.close();
+
+    console.log(`Payment requests retrieved successfully for walletAddress ${walletAddress}`);
+
+    // Send response
+    res.status(200).json(response);
+  } catch (error) {
+    console.error('Error retrieving payment requests:', error);
+    res.status(500).json({ error: 'An error occurred while retrieving payment requests' });
+  }
+});
+
+
+
 
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`);
