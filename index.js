@@ -325,7 +325,7 @@ app.get("/userBalances", async (req, res) => {
 
       // Prepare response
       const response = {
-          f3Blance: formatEther(f3Balance).toString(),
+          f3Balance: formatEther(f3Balance).toString(),
           bnbBalance: formatEther(bnbBalance).toString() 
       };
 
