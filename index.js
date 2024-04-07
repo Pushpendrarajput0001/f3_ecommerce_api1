@@ -1184,6 +1184,7 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
         sellerObject.paymentRequestedTimestamp = paymentRequestedTimestamp;
         sellerObject.totalF3Amount = totalF3Amount;
         sellerObject.totalGc = totalGc;
+        sellerObject.storeIdProduct = storeId;
       }else if(sellerObject.paymentRequested==='Yes'){
         sellerObject.paymentRequestedTimestamp = paymentRequestedTimestamp;
       }
@@ -1276,6 +1277,7 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
         sellerObject.paymentRequestedTimestampBuyer = paymentRequestedTimestamp;
         sellerObject.totalF3Amount = totalF3Amount;
         sellerObject.totalGc = totalGc;
+        sellerObject.storeIdProduct = storeId;
       }else if(sellerObject.paymentRequestedBuyer === 'Yes'){
         sellerObject.paymentRequestedTimestampBuyer = paymentRequestedTimestamp
       }
