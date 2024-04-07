@@ -1125,15 +1125,14 @@ app.get('/getBuyersSectionApprovedCheckout', async (req, res) => {
 
 app.get('/updateRequestApprovedCheckout', async (req, res) => {
   try {
-    const { storeId, sellerId, paymentRequestedTimestamp } = req.query;
+    const { storeId, sellerId, paymentRequestedTimestamp,totalF3Amount,totalGc } = req.query;
 
-    console.log('Request received:', storeId, sellerId, paymentRequestedTimestamp);
+    console.log('Request received:', storeId, sellerId, paymentRequestedTimestamp,totalF3Amount,totalGc);
 
     const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
     const db = client.db('f3_ecommerce');
     const collection = db.collection('users');
 
-    // Find the user by storeId
     const user = await collection.findOne({ storeId });
 
     if (!user) {
@@ -1142,17 +1141,14 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
       return;
     }
 
-    // Ensure that approvalcheckout is an object
     if (typeof user.approvalcheckout !== 'object' || !user.approvalcheckout.hasOwnProperty(sellerId)) {
       console.log(`Seller with sellerId ${sellerId} not found in approvalcheckout object`);
       res.status(404).json({ error: `Seller with sellerId ${sellerId} not found in approvalcheckout object` });
       return;
     }
 
-    // Get the array corresponding to the sellerId
     const sellerArray = user.approvalcheckout[sellerId];
 
-    // Check if paymentRequested and paymentRequestedTimestamp already exist in any object of the array
     const isAlreadyRequested = sellerArray.some((sellerObject) => {
       return sellerObject.paymentRequested === 'Yes' || sellerObject.paymentRequestedTimestamp === paymentRequestedTimestamp;
     });
@@ -1163,34 +1159,31 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
           sellerObject.paymentRequestedTimestamp = paymentRequestedTimestamp;
         }
       });
-
-      // Update the user in the database
+      
       await collection.updateOne({ storeId }, { $set: { [`approvalcheckout.${sellerId}`]: sellerArray } });
 
       console.log(`Payment requested timestamp updated successfully for sellerId ${sellerId}`);
 
-      //console.log(`Payment has already been requested for sellerId ${sellerId}`);
       res.status(405).json({ error: `Payment has already been requested for sellerId ${sellerId}` });
       return;
     }
 
-    // Create a new map named paymentRequestSeller if it doesn't exist
     if (!user.paymentRequestSeller) {
       user.paymentRequestSeller = {};
     }
 
-    // Copy the sellerArray to paymentRequestSeller map and remove paymentRequested fields
     const copiedSellerArray = sellerArray.map((sellerObject) => {
       const { paymentRequested, paymentRequestedTimestamp,paymentRequestedBuyer, paymentRequestedTimestampBuyer, ...rest } = sellerObject;
       return rest;
     });
     user.paymentRequestSeller[sellerId] = copiedSellerArray;
 
-    // Iterate over each object in the sellerArray and add the strings
     sellerArray.forEach((sellerObject) => {
       if (!sellerObject.paymentRequested && !sellerObject.paymentRequestedTimestamp) {
         sellerObject.paymentRequested = 'Yes';
         sellerObject.paymentRequestedTimestamp = paymentRequestedTimestamp;
+        sellerObject.totalF3Amount = totalF3Amount;
+        sellerObject.totalGc = totalGc;
       }else if(sellerObject.paymentRequested==='Yes'){
         sellerObject.paymentRequestedTimestamp = paymentRequestedTimestamp;
       }
@@ -1217,9 +1210,9 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
 
 app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
   try {
-    const { storeId, sellerId, paymentRequestedTimestamp } = req.query;
+    const { storeId, sellerId, paymentRequestedTimestamp,totalF3Amount,totalGc } = req.query;
 
-    console.log('Request received:', storeId, sellerId, paymentRequestedTimestamp);
+    console.log('Request received:', storeId, sellerId, paymentRequestedTimestamp,totalF3Amount,totalGc);
 
     const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
     const db = client.db('f3_ecommerce');
@@ -1281,6 +1274,8 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
       if (!sellerObject.paymentRequestedBuyer && !sellerObject.paymentRequestedTimestampBuyer) {
         sellerObject.paymentRequestedBuyer = 'Yes';
         sellerObject.paymentRequestedTimestampBuyer = paymentRequestedTimestamp;
+        sellerObject.totalF3Amount = totalF3Amount;
+        sellerObject.totalGc = totalGc;
       }else if(sellerObject.paymentRequestedBuyer === 'Yes'){
         sellerObject.paymentRequestedTimestampBuyer = paymentRequestedTimestamp
       }
