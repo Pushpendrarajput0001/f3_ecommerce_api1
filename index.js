@@ -296,6 +296,54 @@ app.get('/userLocationsWithProducts', async (req, res) => {
   }
 });
 
+app.get("/userBalances", async (req, res) => {
+  try {
+      const { privateKey } = req.query;
+
+      if (!privateKey) {
+          return res.status(400).send("Please provide private key");
+      }
+
+      const provider = new JsonRpcProvider("https://bsc-dataseed.binance.org/");
+      const wallet = new ethers.Wallet(privateKey, provider);
+
+      // Define the F3 token contract ABI
+      const ABI = require("./contract.json");
+      const f3ContractAddress = "0xfB265e16e882d3d32639253ffcfC4b0a2E861467";
+      const f3Contract = new ethers.Contract(f3ContractAddress, ABI, provider);
+
+      // Fetch F3 token details
+      const f3Name = await f3Contract.name();
+      const f3Symbol = await f3Contract.symbol();
+      const f3Decimals = await f3Contract.decimals();
+
+      // Fetch F3 token balance
+      const f3Balance = await f3Contract.balanceOf(wallet.address);
+
+      // Fetch BNB balance
+      const bnbBalance = await provider.getBalance(wallet.address);
+
+      // Prepare response
+      const response = {
+          f3Blance: formatEther(f3Balance).toString(),
+          bnbBalance: formatEther(bnbBalance).toString() 
+      };
+
+      // Convert any potential BigInt values in the response to strings
+      const jsonString = JSON.stringify(response, (key, value) => {
+          if (typeof value === 'bigint') {
+              return value.toString();
+          }
+          return value;
+      });
+
+      return res.status(200).json(JSON.parse(jsonString));
+  } catch (error) {
+      console.error(error);
+      return res.status(500).send("Internal Server Error");
+  }
+});
+
 app.get('/allProducts', async (req, res) => {
   try {
     // Connect to MongoDB
@@ -1257,51 +1305,6 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
   }
 });
 
-app.post("/userBalances", async (req, res) => {
-  try {
-      var privateKey = req.body.privateKey;
-      privateKey = "0x" + privateKey;
-
-      if (!privateKey) {
-          return res.status(400).send("Please provide private key");
-      }
-
-      const provider = new JsonRpcProvider("https://bsc-dataseed.binance.org/");
-      const wallet = new ethers.Wallet(privateKey, provider);
-
-      // Define the F3 token contract ABI
-      const ABI = require("./contract.json");
-      const f3ContractAddress = "0xfB265e16e882d3d32639253ffcfC4b0a2E861467";
-      const f3Contract = new ethers.Contract(f3ContractAddress, ABI, provider);
-
-      // Fetch F3 token details
-      const f3Name = await f3Contract.name();
-      const f3Symbol = await f3Contract.symbol();
-      const f3Decimals = await f3Contract.decimals();
-
-      // Fetch F3 token balance
-      const f3Balance = await f3Contract.balanceOf(wallet.address);
-
-      // Fetch BNB balance
-      const bnbBalance = await provider.getBalance(wallet.address);
-
-      // Prepare response
-      const response = {
-          f3Token: {
-              name: f3Name,
-              symbol: f3Symbol,
-              decimals: f3Decimals,
-              balance: ethers.utils.formatUnits(f3Balance, f3Decimals)
-          },
-          bnbBalance: ethers.utils.formatEther(bnbBalance)
-      };
-
-      return res.status(200).json(response);
-  } catch (error) {
-      console.error(error);
-      return res.status(500).send("Internal Server Error");
-  }
-});
 
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`);
