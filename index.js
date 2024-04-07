@@ -1172,18 +1172,12 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
       user.paymentRequestSeller = {};
     }
     const copiedSellerArray = sellerArray.map((sellerObject) => {
-      const { paymentRequested, paymentRequestedTimestamp,paymentRequestedBuyer, paymentRequestedTimestampBuyer, ...rest } = sellerObject;
-      return rest;
-    });
-    user.paymentRequestSeller[sellerId] = user.approvalcheckout[sellerId].map((sellerObject) => {
-      const copy = Object.assign({}, sellerObject);
-    
-      copy.totalF3Amount = totalF3Amount;
-      copy.totalGc = totalGc;
-    
-      return copy;
+      const { paymentRequested, paymentRequestedTimestamp, paymentRequestedBuyer, paymentRequestedTimestampBuyer, ...rest } = sellerObject;
+      return { ...rest, totalF3Amount, totalGc,sellerId };
     });
     
+    user.paymentRequestSeller[sellerId] = copiedSellerArray;
+
     sellerArray.forEach((sellerObject) => {
       if (!sellerObject.paymentRequested && !sellerObject.paymentRequestedTimestamp) {
         sellerObject.paymentRequested = 'Yes';
@@ -1271,9 +1265,10 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
     }
 
     const copiedSellerArray = sellerArray.map((sellerObject) => {
-      const { paymentRequestedBuyer, paymentRequestedTimestampBuyer,paymentRequested, paymentRequestedTimestamp, ...rest } = sellerObject;
-      return rest;
+      const { paymentRequested, paymentRequestedTimestamp, paymentRequestedBuyer, paymentRequestedTimestampBuyer, ...rest } = sellerObject;
+      return { ...rest, totalF3Amount, totalGc,sellerId };
     });
+    
 
     user.paymentRequestBuyer[sellerId] = copiedSellerArray;
 
