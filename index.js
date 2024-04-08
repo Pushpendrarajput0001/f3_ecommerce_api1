@@ -1347,30 +1347,33 @@ app.get('/getRequestsOfPayments', async (req, res) => {
       console.log('Requested StoreId:', requestedStoreId);
       
       // Iterate over otherUsersWithSellerRequests to find requests for the requested storeId
-      otherUsersWithSellerRequests.forEach(otherUser => {
+      for (const otherUser of otherUsersWithSellerRequests) {
         if (otherUser.paymentRequestSeller && otherUser.paymentRequestSeller[requestedStoreId]) {
           const storeIdRequests = otherUser.paymentRequestSeller[requestedStoreId];
-          const sellerProducts = storeIdRequests.map(product => ({
-            productId: product.productId,
-            quantity: product.quantity,
-            totalPrice: product.totalPrice,
-            totalF3: product.totalF3Amount,
-            totalGc: product.totalGc,
-            sellerWalletAddress: user.walletAddress // The seller's wallet address is from the original user
-          }));
-          const sellerRequest = {
-            totalF3: storeIdRequests[0].totalF3Amount,
-            totalGc: storeIdRequests[0].totalGc,
-            storeId: requestedStoreId,
-            sellerWalletAddress: user.walletAddress, // The seller's wallet address is from the original user
-            requestType: 'seller',
-            products: sellerProducts
-          };
-          response.requests.push(sellerRequest);
+          const buyerUser = await collection.findOne({ walletAddress: otherUser.walletAddress });
+          if (buyerUser) {
+            const buyerWalletAddress = buyerUser.walletAddress;
+            const sellerProducts = storeIdRequests.map(product => ({
+              productId: product.productId,
+              quantity: product.quantity,
+              totalPrice: product.totalPrice,
+              totalF3: product.totalF3Amount,
+              totalGc: product.totalGc,
+              sellerWalletAddress: user.walletAddress, // The seller's wallet address is from the original user
+            }));
+            const sellerRequest = {
+              totalF3: storeIdRequests[0].totalF3Amount,
+              totalGc: storeIdRequests[0].totalGc,
+              storeId: requestedStoreId,
+              buyerWalletAddress: buyerWalletAddress, // Add buyer's wallet address to each product
+              sellerWalletAddress: user.walletAddress, // The seller's wallet address is from the original user
+              requestType: 'seller',
+              products: sellerProducts
+            };
+            response.requests.push(sellerRequest);
+          }
         }
-      });      
-      
-    }
+      }};
      
             
     // Check if paymentRequestBuyer object exists
@@ -1389,6 +1392,7 @@ app.get('/getRequestsOfPayments', async (req, res) => {
         totalGc: user.paymentRequestBuyer[storeId][0].totalGc,
         storeId: user.paymentRequestBuyer[storeId][0].storeIdProduct,
         sellerWalletAddress: user.paymentRequestBuyer[storeId][0].sellerId,
+        buyerWalletAddress: user.walletAddress, 
         requestType: 'buyer',
         products: buyerProducts
       };
