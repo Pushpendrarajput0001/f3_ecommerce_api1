@@ -1331,32 +1331,48 @@ app.get('/getRequestsOfPayments', async (req, res) => {
     };
 
     // Check if paymentRequestSeller object exists
-    if (user.paymentRequestSeller) {
-      const storeId = Object.keys(user.paymentRequestSeller)[0]; // Assuming there's only one storeId
-      let sellerWalletAddress = null;
-      const sellerUserData = await collection.findOne({ storeId });
-      if (sellerUserData) {
-        sellerWalletAddress = sellerUserData.walletAddress;
-      }
-      const sellerProducts = user.paymentRequestSeller[storeId].map(product => ({
-        productId: product.productId,
-        quantity: product.quantity,
-        totalPrice: product.totalPrice,
-        totalF3: product.totalF3Amount,
-        totalGc: product.totalGc,
-        sellerWalletAddress: sellerWalletAddress
-      }));
-      const sellerRequest = {
-        totalF3: user.paymentRequestSeller[storeId][0].totalF3Amount,
-        totalGc: user.paymentRequestSeller[storeId][0].totalGc,
-        storeId: storeId,
-        sellerWalletAddress: sellerWalletAddress,
-        requestType: 'seller',
-        products: sellerProducts
-      };
-      response.requests.push(sellerRequest);
-    }
+    if (!user.paymentRequestSeller) {
+      const storeId = user.storeId;
 
+      console.log(storeId);
+      // Find other users who have seller requests with the same storeId
+      const otherUsersWithSellerRequests = await collection.find({
+        'paymentRequestSeller': {
+          $exists: true,
+        }
+      }).toArray();
+      
+      const requestedStoreId = user.storeId; // Assuming user is the current user
+      
+      console.log('Requested StoreId:', requestedStoreId);
+      
+      // Iterate over otherUsersWithSellerRequests to find requests for the requested storeId
+      otherUsersWithSellerRequests.forEach(otherUser => {
+        if (otherUser.paymentRequestSeller && otherUser.paymentRequestSeller[requestedStoreId]) {
+          const storeIdRequests = otherUser.paymentRequestSeller[requestedStoreId];
+          const sellerProducts = storeIdRequests.map(product => ({
+            productId: product.productId,
+            quantity: product.quantity,
+            totalPrice: product.totalPrice,
+            totalF3: product.totalF3Amount,
+            totalGc: product.totalGc,
+            sellerWalletAddress: user.walletAddress // The seller's wallet address is from the original user
+          }));
+          const sellerRequest = {
+            totalF3: storeIdRequests[0].totalF3Amount,
+            totalGc: storeIdRequests[0].totalGc,
+            storeId: requestedStoreId,
+            sellerWalletAddress: user.walletAddress, // The seller's wallet address is from the original user
+            requestType: 'seller',
+            products: sellerProducts
+          };
+          response.requests.push(sellerRequest);
+        }
+      });      
+      
+    }
+     
+            
     // Check if paymentRequestBuyer object exists
     if (user.paymentRequestBuyer) {
       const storeId = Object.keys(user.paymentRequestBuyer)[0]; // Assuming there's only one storeId
@@ -1391,7 +1407,6 @@ app.get('/getRequestsOfPayments', async (req, res) => {
     res.status(500).json({ error: 'An error occurred while retrieving payment requests' });
   }
 });
-
 
 
 app.listen(PORT, '192.168.29.149', () => {
