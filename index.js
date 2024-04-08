@@ -1139,6 +1139,7 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
     const collection = db.collection('users');
 
     const user = await collection.findOne({ storeId });
+    const sellerUser = await collection.findOne({sellerId});
 
     if (!user) {
       console.log(`User with storeId ${storeId} not found`);
@@ -1198,7 +1199,7 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
     // Update the user in the database with the updated paymentRequestSeller
     await collection.updateOne(
       { storeId },
-      { $set: { [`approvalcheckout.${sellerId}`]: sellerArray, paymentRequestSeller: user.paymentRequestSeller } }
+      { $set: { [`approvalcheckout.${sellerId}`]: sellerArray, paymentRequestSeller: sellerUser.paymentRequestSeller } }
     );
 
     // Close MongoDB connection
