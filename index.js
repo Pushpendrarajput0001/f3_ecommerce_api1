@@ -39,7 +39,7 @@ app.post('/usersregister', async (req, res) => {
 
     if(existingUserWallet){
       await client.close();
-      return res.status(401).json({error : 'User with this wallet already exists'});
+      return res.status(401).json({error : 'User with this wallet already'})
     }
     // Create a document with user data
     const userDocument = {
@@ -1139,7 +1139,6 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
     const collection = db.collection('users');
 
     const user = await collection.findOne({ storeId });
-    const sellerUser = await collection.findOne({sellerId});
 
     if (!user) {
       console.log(`User with storeId ${storeId} not found`);
@@ -1199,7 +1198,7 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
     // Update the user in the database with the updated paymentRequestSeller
     await collection.updateOne(
       { storeId },
-      { $set: { [`approvalcheckout.${sellerId}`]: sellerArray, paymentRequestSeller: sellerUser.paymentRequestSeller } }
+      { $set: { [`approvalcheckout.${sellerId}`]: sellerArray, paymentRequestSeller: user.paymentRequestSeller } }
     );
 
     // Close MongoDB connection
