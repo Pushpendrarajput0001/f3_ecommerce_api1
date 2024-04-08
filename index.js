@@ -30,12 +30,17 @@ app.post('/usersregister', async (req, res) => {
 
     // Check if the email already exists
     const existingUser = await collection.findOne({ email });
+    const existingUserWallet = await collection.findOne({walletAddress});
     if (existingUser) {
       // Close the MongoDB connection
       await client.close();
       return res.status(400).json({ error: 'User with this email already exists' });
     }
 
+    if(existingUserWallet){
+      await client.close();
+      return res.status(401).json({error : 'User with this wallet already exists'});
+    }
     // Create a document with user data
     const userDocument = {
       email,
@@ -1321,22 +1326,57 @@ app.get('/getRequestsOfPayments', async (req, res) => {
       return res.status(404).json({ error: `User with walletAddress ${walletAddress} not found` });
     }
 
-    const response = {};
+    const response = {
+      requests: []
+    };
 
     // Check if paymentRequestSeller object exists
     if (user.paymentRequestSeller) {
-      let sellerWalletAddress = null;
       const storeId = Object.keys(user.paymentRequestSeller)[0]; // Assuming there's only one storeId
+      let sellerWalletAddress = null;
       const sellerUserData = await collection.findOne({ storeId });
       if (sellerUserData) {
         sellerWalletAddress = sellerUserData.walletAddress;
       }
-      response.paymentRequestSeller = { data: user.paymentRequestSeller, requestType: 'seller', sellerWalletAddress };
+      const sellerProducts = user.paymentRequestSeller[storeId].map(product => ({
+        productId: product.productId,
+        quantity: product.quantity,
+        totalPrice: product.totalPrice,
+        totalF3: product.totalF3Amount,
+        totalGc: product.totalGc,
+        sellerWalletAddress: sellerWalletAddress
+      }));
+      const sellerRequest = {
+        totalF3: user.paymentRequestSeller[storeId][0].totalF3Amount,
+        totalGc: user.paymentRequestSeller[storeId][0].totalGc,
+        storeId: storeId,
+        sellerWalletAddress: sellerWalletAddress,
+        requestType: 'seller',
+        products: sellerProducts
+      };
+      response.requests.push(sellerRequest);
     }
 
     // Check if paymentRequestBuyer object exists
     if (user.paymentRequestBuyer) {
-      response.paymentRequestBuyer = { data: user.paymentRequestBuyer, requestType: 'buyer', buyerWalletAddress: walletAddress };
+      const storeId = Object.keys(user.paymentRequestBuyer)[0]; // Assuming there's only one storeId
+      const buyerProducts = user.paymentRequestBuyer[storeId].map(product => ({
+        productId: product.productId,
+        quantity: product.quantity,
+        totalPrice: product.totalPrice,
+        totalF3: product.totalF3Amount,
+        totalGc: product.totalGc,
+        sellerWalletAddress: product.sellerId
+      }));
+      const buyerRequest = {
+        totalF3: user.paymentRequestBuyer[storeId][0].totalF3Amount,
+        totalGc: user.paymentRequestBuyer[storeId][0].totalGc,
+        storeId: user.paymentRequestBuyer[storeId][0].storeIdProduct,
+        sellerWalletAddress: user.paymentRequestBuyer[storeId][0].sellerId,
+        requestType: 'buyer',
+        products: buyerProducts
+      };
+      response.requests.push(buyerRequest);
     }
 
     // Close MongoDB connection
@@ -1351,7 +1391,6 @@ app.get('/getRequestsOfPayments', async (req, res) => {
     res.status(500).json({ error: 'An error occurred while retrieving payment requests' });
   }
 });
-
 
 
 
