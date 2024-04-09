@@ -1359,7 +1359,8 @@ app.get('/getRequestsOfPayments', async (req, res) => {
               totalPrice: product.totalPrice,
               totalF3: product.totalF3Amount,
               totalGc: product.totalGc,
-              sellerWalletAddress: user.walletAddress, // The seller's wallet address is from the original user
+              sellerWalletAddress: user.walletAddress, 
+              dateAndTime : product.dateAndTime
             }));
             const sellerRequest = {
               totalF3: storeIdRequests[0].totalF3Amount,
@@ -1385,7 +1386,8 @@ app.get('/getRequestsOfPayments', async (req, res) => {
         totalPrice: product.totalPrice,
         totalF3: product.totalF3Amount,
         totalGc: product.totalGc,
-        sellerWalletAddress: product.sellerId
+        sellerWalletAddress: product.sellerId,
+        dateAndTime : product.dateAndTime
       }));
       const buyerRequest = {
         totalF3: user.paymentRequestBuyer[storeId][0].totalF3Amount,
