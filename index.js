@@ -1412,6 +1412,369 @@ app.get('/getRequestsOfPayments', async (req, res) => {
   }
 });
 
+app.get('/updatePaymentRequestFlagAndMakeItApprovedSeller', async (req, res) => {
+  try {
+    const { buyerwalletAddress, dateAndTime, txhashBuyer, txhashGc, sellerStoreId } = req.query;
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by walletAddress
+    const user = await collection.findOne({ walletAddress: buyerwalletAddress });
+
+    if (!user) {
+      console.log(`User with walletAddress ${buyerwalletAddress} not found`);
+      return res.status(404).json({ error: `User with walletAddress ${buyerwalletAddress} not found` });
+    }
+
+    // Check if paymentRequestSeller object exists
+    if (user.paymentRequestSeller && user.paymentRequestSeller[sellerStoreId]) {
+      const storeIdRequests = user.paymentRequestSeller[sellerStoreId];
+
+      // Update each request object with dateAndTime, txhashBuyer, and txhashGc
+      storeIdRequests.forEach(request => {
+        request.dateAndTime = dateAndTime;
+        request.txhashBuyer = txhashBuyer;
+        request.txhashGc = txhashGc;
+      });
+      
+      // Create a copy of storeIdRequests for approvedRequestsSellers
+      const newRequestObject = {
+        'requestProducts': [...storeIdRequests]
+      };
+  
+      // Ensure approvedPaymentRequestsSeller object exists and is an array
+      user.approvedPaymentRequestsSeller = user.approvedPaymentRequestsSeller || {};
+
+      // Add or update the approved requests under sellerStoreId in approvedPaymentRequestsSeller
+      if (!Array.isArray(user.approvedPaymentRequestsSeller[sellerStoreId])) {
+        console.log(`Creating new approvedPaymentRequestsSeller array for sellerStoreId ${sellerStoreId}`);
+        user.approvedPaymentRequestsSeller[sellerStoreId] = [newRequestObject];
+      } else {
+        console.log(`Adding new request to existing approvedPaymentRequestsSeller array for sellerStoreId ${sellerStoreId}`);
+        user.approvedPaymentRequestsSeller[sellerStoreId].push(newRequestObject);
+      }
+
+      // Save the updated user data
+      await collection.updateOne({ walletAddress: buyerwalletAddress }, { $set: user });
+
+      // Close MongoDB connection
+      await client.close();
+
+      console.log(`Payment requests updated and approved successfully for walletAddress ${buyerwalletAddress}`);
+
+      // Send response
+      res.status(200).json({ message: 'Payment requests updated and approved successfully', newRequestObject });
+    } else {
+      console.log(`Payment requests not found for sellerStoreId ${sellerStoreId}`);
+      res.status(404).json({ error: `Payment requests not found for sellerStoreId ${sellerStoreId}` });
+    }
+  } catch (error) {
+    console.error('Error updating and approving payment requests:', error);
+    res.status(500).json({ error: 'An error occurred while updating and approving payment requests' });
+  }
+});
+
+app.get('/updatePaymentRequestFlagAndMakeItApprovedBuyer', async (req, res) => {
+  try {
+    const { buyerwalletAddress, dateAndTime, txhashGc, sellerStoreId } = req.query;
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by walletAddress
+    const user = await collection.findOne({ walletAddress: buyerwalletAddress });
+
+    if (!user) {
+      console.log(`User with walletAddress ${buyerwalletAddress} not found`);
+      return res.status(404).json({ error: `User with walletAddress ${buyerwalletAddress} not found` });
+    }
+
+    // Check if paymentRequestSeller object exists
+    if (user.paymentRequestBuyer && user.paymentRequestBuyer[sellerStoreId]) {
+      const storeIdRequests = user.paymentRequestBuyer[sellerStoreId];
+
+      // Update each request object with dateAndTime, txhashBuyer, and txhashGc
+      storeIdRequests.forEach(request => {
+        request.dateAndTime = dateAndTime;
+        request.txhashGc = txhashGc;
+      });
+      
+      // Create a copy of storeIdRequests for approvedRequestsSellers
+      const newRequestObject = {
+        'requestProducts': [...storeIdRequests]
+      };
+  
+      // Ensure approvedPaymentRequestsSeller object exists and is an array
+      user.approvedPaymentRequestsBuyer = user.approvedPaymentRequestsBuyer || {};
+
+      // Add or update the approved requests under sellerStoreId in approvedPaymentRequestsSeller
+      if (!Array.isArray(user.approvedPaymentRequestsBuyer[sellerStoreId])) {
+        console.log(`Creating new approvedPaymentRequestsSeller array for sellerStoreId ${sellerStoreId}`);
+        user.approvedPaymentRequestsBuyer[sellerStoreId] = [newRequestObject];
+      } else {
+        console.log(`Adding new request to existing approvedPaymentRequestsSeller array for sellerStoreId ${sellerStoreId}`);
+        user.approvedPaymentRequestsBuyer[sellerStoreId].push(newRequestObject);
+      }
+
+      // Save the updated user data
+      await collection.updateOne({ walletAddress: buyerwalletAddress }, { $set: user });
+
+      // Close MongoDB connection
+      await client.close();
+
+      console.log(`Payment requests updated and approved successfully for walletAddress ${buyerwalletAddress}`);
+
+      // Send response
+      res.status(200).json({ message: 'Payment requests updated and approved successfully', newRequestObject });
+    } else {
+      console.log(`Payment requests not found for sellerStoreId ${sellerStoreId}`);
+      res.status(404).json({ error: `Payment requests not found for sellerStoreId ${sellerStoreId}` });
+    }
+  } catch (error) {
+    console.error('Error updating and approving payment requests:', error);
+    res.status(500).json({ error: 'An error occurred while updating and approving payment requests' });
+  }
+});
+
+app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
+  try {
+    const { sellerStoreId } = req.query;
+
+    console.log('Searching for approved payment requests for sellerStoreId:', sellerStoreId);
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    const userSeller = await collection.findOne({ storeId : sellerStoreId });
+
+    const response = {
+      requests: []
+    };
+    // Find users with approvedPaymentRequestsSeller containing the specified sellerStoreId
+    const usersWithApprovedRequests = await collection.aggregate([
+      {
+        $match: {
+          'approvedPaymentRequestsSeller': { $exists: true }
+        }
+      },
+      {
+        $addFields: {
+          approvedPaymentRequestsArray: { $objectToArray: '$approvedPaymentRequestsSeller' }
+        }
+      },
+      {
+        $match: {
+          'approvedPaymentRequestsArray.k': sellerStoreId
+        }
+      }
+    ]).toArray();
+
+    const usersWithBuyerApprovedRequest = await collection.find({
+      'storeId': sellerStoreId, // Replace 'userType' with the actual field name distinguishing sellerUser
+      'approvedPaymentRequestsBuyer': {
+        $exists: true,
+      }
+    }).toArray();
+    console.log('buyerOnes',usersWithBuyerApprovedRequest)
+    console.log('Found users with approved requests:', usersWithApprovedRequests);
+
+    // Extract approved payment requests from users
+    const approvedRequests = usersWithApprovedRequests.reduce((acc, user) => {
+      if (user.approvedPaymentRequestsSeller && user.approvedPaymentRequestsSeller[sellerStoreId]) {
+        const buyerWalletAddress = user.walletAddress;
+        const sellerWalletAddress = userSeller.walletAddress
+        const storeRequests = user.approvedPaymentRequestsSeller[sellerStoreId];
+        storeRequests.forEach(storeRequest => {
+          // Add the requestType field directly to each store request object
+          const requestWithRequestType = {buyerWalletAddress,sellerWalletAddress, requestType: 'seller',...storeRequest,  };
+          acc.push(requestWithRequestType);
+        });
+      }
+      return acc;
+    }, []);
+    
+    // Pushing to response.requests is done outside of the reduce loop
+    response.requests.push(...approvedRequests);
+
+
+    const approvedRequestsBuyers = usersWithBuyerApprovedRequest.reduce((acc, user) => {
+      const buyerWalletAddress = user.walletAddress;
+      const storeRequests = user.approvedPaymentRequestsBuyer;
+      
+      // Iterate over the keys of storeRequests object
+      Object.keys(storeRequests).forEach(subRequestName => {
+          const requestsArray = storeRequests[subRequestName];
+          
+          // Iterate over the array of requests for each subRequestName
+          requestsArray.forEach(storeRequest => {
+              const requestWithRequestType = { buyerWalletAddress, requestType: 'buyer', ...storeRequest };
+              acc.push(requestWithRequestType);
+          });
+      });
+      
+      return acc;
+  }, []);
+  
+    
+    // Pushing to response.requests is done outside of the reduce loop
+    response.requests.push(...approvedRequestsBuyers);
+    
+
+    console.log('buyersOne',usersWithBuyerApprovedRequest);
+
+    console.log('Extracted approved requests:', approvedRequests, approvedRequestsBuyers);
+
+    // Close MongoDB connection
+    await client.close();
+
+    // Send response
+    res.status(200).json(response);
+  } catch (error) {
+    console.error('Error fetching approved payment requests:', error);
+    res.status(500).json({ error: 'An error occurred while fetching approved payment requests' });
+  }
+});
+
+app.get('/deleteBuyerRequestAndAddSalesHistory', async (req, res) => {
+  try {
+    const { buyerWalletAddress, storeId } = req.query;
+
+    console.log('Deleting buyer request and adding to sales history for buyerWalletAddress:', buyerWalletAddress, 'and storeId:', storeId);
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user with the specified buyerWalletAddress
+    const user = await collection.findOne({ walletAddress: buyerWalletAddress });
+    if (!user) {
+      console.log(`User with walletAddress ${buyerWalletAddress} not found`);
+      return res.status(404).json({ error: `User with walletAddress ${buyerWalletAddress} not found` });
+    }
+
+    // Find the paymentRequestBuyer map in the user document
+    const paymentRequestBuyerMap = user.paymentRequestBuyer || {};
+    const storeRequestsArray = paymentRequestBuyerMap[storeId] || [];
+
+    // Make a copy of the storeRequestsArray
+    const storeRequestsCopy = [...storeRequestsArray];
+
+    // Add the copied array to salesHistoryBuyer map
+    const salesHistoryBuyerMap = {
+      ...user.salesHistoryBuyer, // Preserve existing sales history
+      [storeId]: storeRequestsCopy
+    };
+
+    // Delete the array from paymentRequestBuyer map
+    delete paymentRequestBuyerMap[storeId];
+
+    // Update the user document in the database
+    await collection.updateOne(
+      { walletAddress: buyerWalletAddress },
+      {
+        $set: {
+          paymentRequestBuyer: paymentRequestBuyerMap,
+          salesHistoryBuyer: salesHistoryBuyerMap // Update sales history
+        }
+      }
+    );
+
+    // Delete the array from approvalcheckout map only if it exists
+    if (user.approvalcheckout && user.approvalcheckout[storeId]) {
+      await collection.updateOne(
+        { walletAddress: buyerWalletAddress },
+        {
+          $unset: {
+            [`approvalcheckout.${storeId}`]: 1
+          }
+        }
+      );
+    }
+
+    // Close MongoDB connection
+    await client.close();
+
+    console.log(`Buyer request deleted and added to sales history successfully for walletAddress ${buyerWalletAddress}`);
+
+    // Send success response
+    res.status(200).json({ message: 'Buyer request deleted and added to sales history successfully' });
+  } catch (error) {
+    console.error('Error deleting buyer request and adding to sales history:', error);
+    res.status(500).json({ error: 'An error occurred while processing the request' });
+  }
+});
+
+app.get('/deleteSellerRequestAndAddSalesHistory', async (req, res) => {
+  try {
+    const { buyerWalletAddress, storeId } = req.query;
+
+    console.log('Deleting buyer request and adding to sales history for buyerWalletAddress:', buyerWalletAddress, 'and storeId:', storeId);
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user with the specified buyerWalletAddress
+    const user = await collection.findOne({ walletAddress: buyerWalletAddress });
+    if (!user) {
+      console.log(`User with walletAddress ${buyerWalletAddress} not found`);
+      return res.status(404).json({ error: `User with walletAddress ${buyerWalletAddress} not found` });
+    }
+
+    const paymentRequestSellerMap = user.paymentRequestSeller || {};
+    const storeRequestsArray = paymentRequestSellerMap[storeId] || [];
+
+    // Make a copy of the storeRequestsArray
+    const storeRequestsCopy = [...storeRequestsArray];
+
+    // Add the copied array to salesHistoryBuyer map
+    const salesHistorySellerMap = {
+      ...user.salesHistorySeller, // Preserve existing sales history
+      [storeId]: storeRequestsCopy
+    };
+
+    // Delete the array from paymentRequestBuyer map
+    delete paymentRequestSellerMap[storeId];
+
+    // Update the user document in the database
+    await collection.updateOne(
+      { walletAddress: buyerWalletAddress },
+      {
+        $set: {
+          paymentRequestSeller: paymentRequestSellerMap,
+          salesHistorySeller: salesHistorySellerMap // Update sales history
+        }
+      }
+    );
+
+    // Delete the array from approvalcheckout map only if it exists
+    if (user.approvalcheckout && user.approvalcheckout[storeId]) {
+      await collection.updateOne(
+        { walletAddress: buyerWalletAddress },
+        {
+          $unset: {
+            [`approvalcheckout.${storeId}`]: 1
+          }
+        }
+      );
+    }
+
+    // Close MongoDB connection
+    await client.close();
+
+    console.log(`Buyer request deleted and added to sales history successfully for walletAddress ${buyerWalletAddress}`);
+
+    // Send success response
+    res.status(200).json({ message: 'Buyer request deleted and added to sales history successfully' });
+  } catch (error) {
+    console.error('Error deleting buyer request and adding to sales history:', error);
+    res.status(500).json({ error: 'An error occurred while processing the request' });
+  }
+});
 
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`);
