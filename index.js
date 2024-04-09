@@ -1130,7 +1130,7 @@ app.get('/getBuyersSectionApprovedCheckout', async (req, res) => {
 
 app.get('/updateRequestApprovedCheckout', async (req, res) => {
   try {
-    const { storeId, sellerId, paymentRequestedTimestamp,totalF3Amount,totalGc } = req.query;
+    const { storeId, sellerId, paymentRequestedTimestamp,totalF3Amount,totalGc,f3LiveOfThisTime } = req.query;
 
     console.log('Request received:', storeId, sellerId, paymentRequestedTimestamp,totalF3Amount,totalGc);
 
@@ -1178,7 +1178,7 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
     }
     const copiedSellerArray = sellerArray.map((sellerObject) => {
       const { paymentRequested, paymentRequestedTimestamp, paymentRequestedBuyer, paymentRequestedTimestampBuyer, ...rest } = sellerObject;
-      return { ...rest, totalF3Amount, totalGc,sellerId };
+      return { ...rest, totalF3Amount, totalGc,sellerId,f3LiveOfThisTime };
     });
     
     user.paymentRequestSeller[sellerId] = copiedSellerArray;
@@ -1189,6 +1189,7 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
         sellerObject.paymentRequestedTimestamp = paymentRequestedTimestamp;
         sellerObject.totalF3Amount = totalF3Amount;
         sellerObject.totalGc = totalGc;
+        sellerObject.f3LiveOfThisTime = f3LiveOfThisTime,
         sellerObject.storeIdProduct = sellerId;
       } else if (sellerObject.paymentRequested === 'Yes') {
         sellerObject.paymentRequestedTimestamp = paymentRequestedTimestamp;
@@ -1216,7 +1217,7 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
 
 app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
   try {
-    const { storeId, sellerId, paymentRequestedTimestamp,totalF3Amount,totalGc } = req.query;
+    const { storeId, sellerId, paymentRequestedTimestamp,totalF3Amount,totalGc,f3LiveOfThisTime } = req.query;
 
     console.log('Request received:', storeId, sellerId, paymentRequestedTimestamp,totalF3Amount,totalGc);
 
@@ -1271,7 +1272,7 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
 
     const copiedSellerArray = sellerArray.map((sellerObject) => {
       const { paymentRequested, paymentRequestedTimestamp, paymentRequestedBuyer, paymentRequestedTimestampBuyer, ...rest } = sellerObject;
-      return { ...rest, totalF3Amount, totalGc,sellerId };
+      return { ...rest, totalF3Amount, totalGc,sellerId,f3LiveOfThisTime };
     });
     
 
@@ -1283,6 +1284,7 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
         sellerObject.paymentRequestedTimestampBuyer = paymentRequestedTimestamp;
         sellerObject.totalF3Amount = totalF3Amount;
         sellerObject.totalGc = totalGc;
+        sellerObject.f3LiveOfThisTime = f3LiveOfThisTime,
         sellerObject.storeIdProduct = sellerId;
       }else if(sellerObject.paymentRequestedBuyer === 'Yes'){
         sellerObject.paymentRequestedTimestampBuyer = paymentRequestedTimestamp
@@ -1811,7 +1813,7 @@ app.get('/getSellerSectionSalesHistory', async (req, res) => {
         
         // Iterate over each checkout approval in the seller's array
         for (const saleshistory of sellerSalesHistoryArray) {
-          const { productId, quantity, totalPrice,paymentRequestedTimestamp,totalF3Amount,totalGc } = saleshistory;
+          const { productId, quantity, totalPrice,paymentRequestedTimestamp,totalF3Amount,totalGc,f3LiveOfThisTime } = saleshistory;
 
           // Fetch product details from MongoDB
           const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
@@ -1824,6 +1826,7 @@ app.get('/getSellerSectionSalesHistory', async (req, res) => {
             paymentRequestedTimestamp,
             totalF3Amount,
             totalGc,
+            f3LiveOfThisTime,
             productName: productDetails.products[0].productName,
             startedPrice: productDetails.products[0].startedPrice,
             f3MarketPrice: productDetails.products[0].f3MarketPrice,
@@ -1890,7 +1893,7 @@ app.get('/getBuyersSectionSalesHistory', async (req, res) => {
 
       // Iterate over each checkout approval in the seller's array
       for (const saleshistory of sellerSalesHistoryArray) {
-        const { productId, quantity, totalPrice,paymentRequestedTimestampBuyer,totalF3Amount,totalGc } = saleshistory;
+        const { productId, quantity, totalPrice,paymentRequestedTimestampBuyer,totalF3Amount,totalGc,f3LiveOfThisTime } = saleshistory;
 
         // Fetch product details from MongoDB
         const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
@@ -1903,6 +1906,7 @@ app.get('/getBuyersSectionSalesHistory', async (req, res) => {
           paymentRequestedTimestampBuyer,
           totalF3Amount,
           totalGc,
+          f3LiveOfThisTime,
           productName: productDetails.products[0].productName,
           startedPrice: productDetails.products[0].startedPrice,
           f3MarketPrice: productDetails.products[0].f3MarketPrice,
