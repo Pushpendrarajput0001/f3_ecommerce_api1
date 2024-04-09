@@ -1809,7 +1809,7 @@ app.get('/getSellerSectionSalesHistory', async (req, res) => {
         
         // Iterate over each checkout approval in the seller's array
         for (const saleshistory of sellerSalesHistoryArray) {
-          const { productId, quantity, totalPrice,paymentRequestedTimestamp } = saleshistory;
+          const { productId, quantity, totalPrice,paymentRequestedTimestamp,totalF3Amount,totalGc } = saleshistory;
 
           // Fetch product details from MongoDB
           const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
@@ -1820,6 +1820,8 @@ app.get('/getSellerSectionSalesHistory', async (req, res) => {
             totalQuantity : quantity,
             totalPrice,
             paymentRequestedTimestamp,
+            totalF3Amount,
+            totalGc,
             productName: productDetails.products[0].productName,
             startedPrice: productDetails.products[0].startedPrice,
             f3MarketPrice: productDetails.products[0].f3MarketPrice,
@@ -1886,7 +1888,7 @@ app.get('/getBuyersSectionSalesHistory', async (req, res) => {
 
       // Iterate over each checkout approval in the seller's array
       for (const saleshistory of sellerSalesHistoryArray) {
-        const { productId, quantity, totalPrice,paymentRequestedTimestampBuyer } = saleshistory;
+        const { productId, quantity, totalPrice,paymentRequestedTimestampBuyer,totalF3Amount,totalGc } = saleshistory;
 
         // Fetch product details from MongoDB
         const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
@@ -1897,6 +1899,8 @@ app.get('/getBuyersSectionSalesHistory', async (req, res) => {
           totalQuantity : quantity,
           totalPrice,
           paymentRequestedTimestampBuyer,
+          totalF3Amount,
+          totalGc,
           productName: productDetails.products[0].productName,
           startedPrice: productDetails.products[0].startedPrice,
           f3MarketPrice: productDetails.products[0].f3MarketPrice,
