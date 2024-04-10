@@ -1176,6 +1176,7 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
     }
 
     const sellerArray = user.approvalcheckout[sellerId];
+    const sellerArrayReq = user.paymentRequestSeller[storeId];
 
     const isAlreadyRequested = sellerArray.some((sellerObject) => {
       return sellerObject.paymentRequested === 'Yes' || sellerObject.paymentRequestedTimestamp === paymentRequestedTimestamp;
@@ -1190,7 +1191,12 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
         }
       });
       
+      sellerArrayReq.forEach((sellerObjectReq)=>{
+        sellerObjectReq.startedDateAndTime = paymentRequestedTimestamp;
+      });
+
       await collection.updateOne({ storeId }, { $set: { [`approvalcheckout.${sellerId}`]: sellerArray } });
+      await collection.updateOne({ storeId }, { $set: { [`paymentRequestSeller.${sellerId}`]: sellerArrayReq } });
 
       console.log(`Payment requested timestamp updated successfully for sellerId ${sellerId}`);
 
@@ -1201,13 +1207,7 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
     if (typeof user.paymentRequestSeller === 'undefined') {
       user.paymentRequestSeller = {};
     }
-    const copiedSellerArray = sellerArray.map((sellerObject) => {
-      const { paymentRequested, paymentRequestedTimestamp, paymentRequestedBuyer, paymentRequestedTimestampBuyer, ...rest } = sellerObject;
-      return { ...rest, totalF3Amount, totalGc,sellerId,f3LiveOfThisTime };
-    });
     
-    user.paymentRequestSeller[sellerId] = copiedSellerArray;
-
     sellerArray.forEach((sellerObject) => {
       if (!sellerObject.paymentRequested && !sellerObject.paymentRequestedTimestamp) {
         sellerObject.paymentRequested = 'Yes';
@@ -1221,8 +1221,15 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
         sellerObject.paymentRequestedTimestamp = paymentRequestedTimestamp;
       }
     });
+
+    const copiedSellerArray = sellerArray.map((sellerObject) => {
+      const { paymentRequested, paymentRequestedTimestamp, paymentRequestedBuyer, paymentRequestedTimestampBuyer, ...rest } = sellerObject;
+      return { ...rest, totalF3Amount, totalGc,sellerId,f3LiveOfThisTime };
+    });
     
-    // Update the user in the database with the updated paymentRequestSeller
+    user.paymentRequestSeller[sellerId] = copiedSellerArray;
+
+    
     await collection.updateOne(
       { storeId },
       { $set: { [`approvalcheckout.${sellerId}`]: sellerArray, paymentRequestSeller: user.paymentRequestSeller } }
@@ -1269,6 +1276,7 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
 
     // Get the array corresponding to the sellerId
     const sellerArray = user.approvalcheckout[sellerId];
+    const sellerArrayRequestIn = user.paymentRequestBuyer[sellerId];
 
     // Check if paymentRequested and paymentRequestedTimestamp already exist in any object of the array
     const isAlreadyRequested = sellerArray.some((sellerObject) => {
@@ -1285,8 +1293,15 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
         }
       });
 
+      sellerArrayRequestIn.forEach((sellerObjectReq)=>{
+        sellerObjectReq.startedDateAndTime = paymentRequestedTimestamp;
+      });
+
+
       // Update the user in the database
       await collection.updateOne({ storeId }, { $set: { [`approvalcheckout.${sellerId}`]: sellerArray } });
+      await collection.updateOne({ storeId }, { $set: { [`paymentRequestBuyer.${sellerId}`]: sellerArrayRequestIn } });
+
 
       console.log(`Payment requested timestamp updated successfully for sellerId ${sellerId}`);
 
@@ -1297,14 +1312,6 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
     if (!user.paymentRequestBuyer) {
       user.paymentRequestBuyer = {};
     }
-
-    const copiedSellerArray = sellerArray.map((sellerObject) => {
-      const { paymentRequested, paymentRequestedTimestamp, paymentRequestedBuyer, paymentRequestedTimestampBuyer, ...rest } = sellerObject;
-      return { ...rest, totalF3Amount, totalGc,sellerId,f3LiveOfThisTime };
-    });
-    
-
-    user.paymentRequestBuyer[sellerId] = copiedSellerArray;
 
     sellerArray.forEach((sellerObject) => {
       if (!sellerObject.paymentRequestedBuyer && !sellerObject.paymentRequestedTimestampBuyer) {
@@ -1320,7 +1327,15 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
       }
     });
 
-    // Update the user in the database
+    const copiedSellerArray = sellerArray.map((sellerObject) => {
+      const { paymentRequested, paymentRequestedTimestamp, paymentRequestedBuyer, paymentRequestedTimestampBuyer, ...rest } = sellerObject;
+      return { ...rest, totalF3Amount, totalGc,sellerId,f3LiveOfThisTime };
+    });
+    
+
+    user.paymentRequestBuyer[sellerId] = copiedSellerArray;
+
+
     await collection.updateOne(
       { storeId },
       { $set: { [`approvalcheckout.${sellerId}`]: sellerArray, paymentRequestBuyer: user.paymentRequestBuyer } }
