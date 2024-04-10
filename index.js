@@ -1394,7 +1394,7 @@ app.get('/getRequestsOfPayments', async (req, res) => {
       const buyerRequest = {
         totalF3: user.paymentRequestBuyer[storeId][0].totalF3Amount,
         totalGc: user.paymentRequestBuyer[storeId][0].totalGc,
-        storeId: user.paymentRequestBuyer[storeId][0].storeIdProduct,
+        storeId: user.paymentRequestBuyer[storeId][0].sellerId,
         sellerWalletAddress: user.paymentRequestBuyer[storeId][0].sellerId,
         buyerWalletAddress: user.walletAddress, 
         requestType: 'buyer',
