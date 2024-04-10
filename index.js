@@ -1379,29 +1379,32 @@ app.get('/getRequestsOfPayments', async (req, res) => {
       }};
      
             
-    // Check if paymentRequestBuyer object exists
-    if (user.paymentRequestBuyer) {
-      const storeId = Object.keys(user.paymentRequestBuyer)[0]; // Assuming there's only one storeId
-      const buyerProducts = user.paymentRequestBuyer[storeId].map(product => ({
-        productId: product.productId,
-        quantity: product.quantity,
-        totalPrice: product.totalPrice,
-        totalF3: product.totalF3Amount,
-        totalGc: product.totalGc,
-        sellerWalletAddress: product.sellerId,
-        dateAndTime : product.dateAndTime
-      }));
-      const buyerRequest = {
-        totalF3: user.paymentRequestBuyer[storeId][0].totalF3Amount,
-        totalGc: user.paymentRequestBuyer[storeId][0].totalGc,
-        storeId: user.paymentRequestBuyer[storeId][0].sellerId,
-        sellerWalletAddress: user.paymentRequestBuyer[storeId][0].sellerId,
-        buyerWalletAddress: user.walletAddress, 
-        requestType: 'buyer',
-        products: buyerProducts
-      };
-      response.requests.push(buyerRequest);
+      if (user.paymentRequestBuyer) {
+        Object.keys(user.paymentRequestBuyer).forEach(storeId => {
+            const buyerProducts = user.paymentRequestBuyer[storeId].map(product => ({
+                productId: product.productId,
+                quantity: product.quantity,
+                totalPrice: product.totalPrice,
+                totalF3: product.totalF3Amount,
+                totalGc: product.totalGc,
+                sellerWalletAddress: product.sellerId,
+                dateAndTime: product.dateAndTime
+            }));
+    
+            const buyerRequest = {
+                totalF3: user.paymentRequestBuyer[storeId][0].totalF3Amount,
+                totalGc: user.paymentRequestBuyer[storeId][0].totalGc,
+                storeId: user.paymentRequestBuyer[storeId][0].sellerId,
+                sellerWalletAddress: user.paymentRequestBuyer[storeId][0].sellerId,
+                buyerWalletAddress: user.walletAddress,
+                requestType: 'buyer',
+                products: buyerProducts
+            };
+    
+            response.requests.push(buyerRequest);
+        });
     }
+    
 
     // Close MongoDB connection
     await client.close();
