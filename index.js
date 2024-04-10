@@ -71,6 +71,28 @@ app.post('/usersregister', async (req, res) => {
   }
 });
 
+async function getUserDetails(email) {
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  const db = client.db('f3_ecommerce');
+  const collection = db.collection('users');
+
+  // Find the user by email
+  const user = await collection.findOne({ email });
+
+  // Close MongoDB connection
+  await client.close();
+
+  // Filter out any nested maps from the user object
+  const filteredUser = Object.keys(user).reduce((acc, key) => {
+      if (!user[key] || typeof user[key] !== 'object') {
+          acc[key] = user[key];
+      }
+      return acc;
+  }, {});
+
+  return filteredUser;
+}
+
 app.post('/login', async (req, res) => {
   try {
     // Extract email and password from request body
@@ -133,7 +155,7 @@ app.post('/productsAdd', async (req, res) => {
     const collection = db.collection(COLLECTION_NAME);
 
     // Extract product data and images from request body
-    const { email, productName, startedPrice, f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected, description, totalsolds, images, storeId, storeName,flagWord } = req.body;
+    const { email, productName, startedPrice, f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected, description, totalsolds, images, storeId, storeName,flagWord,offer } = req.body;
 
     // Resize and compress images
     const compressedImages = await Promise.all(images.map(async (image) => {
@@ -159,6 +181,7 @@ app.post('/productsAdd', async (req, res) => {
       totalsolds,
       storeId,
       storeName,
+      offer,
       flagWord,
       images: compressedImages
     };
@@ -1946,6 +1969,25 @@ app.get('/getBuyersSectionSalesHistory', async (req, res) => {
     res.status(500).json({ error: 'An error occurred while retrieving buyer products by ID' });
   }
 });
+
+app.get('/getUserDetails', async (req, res) => {
+  try {
+      const { email } = req.query;
+
+      console.log('Request received:', email);
+
+      const userDetails = await getUserDetails(email);
+
+      console.log(`User details retrieved successfully for email ${email}`);
+
+      // Send response with user details
+      res.status(200).json(userDetails);
+  } catch (error) {
+      console.error('Error retrieving user details:', error);
+      res.status(500).json({ error: 'An error occurred while retrieving user details' });
+  }
+});
+
 
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`);
