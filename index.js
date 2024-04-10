@@ -1176,7 +1176,7 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
     }
 
     const sellerArray = user.approvalcheckout[sellerId];
-    const sellerArrayReq = user.paymentRequestSeller[storeId];
+    //const sellerArrayReq = user.paymentRequestSeller[sellerId];
 
     const isAlreadyRequested = sellerArray.some((sellerObject) => {
       return sellerObject.paymentRequested === 'Yes' || sellerObject.paymentRequestedTimestamp === paymentRequestedTimestamp;
@@ -1191,12 +1191,20 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
         }
       });
       
-      sellerArrayReq.forEach((sellerObjectReq)=>{
-        sellerObjectReq.startedDateAndTime = paymentRequestedTimestamp;
-      });
+      if (user.paymentRequestSeller[sellerId]) {
+            const sellerArrayReq = user.paymentRequestSeller[sellerId];
+            sellerArrayReq.forEach((sellerObjectRequest)=>{
+              if(sellerObjectRequest.startedDateAndTime){
+                sellerObjectRequest.startedDateAndTime = paymentRequestedTimestamp
+              }
 
+            });
+            await collection.updateOne({ storeId }, { $set: { [`paymentRequestSeller.${sellerId}`]: sellerArrayReq } });
+    } else {
+
+    }
+    
       await collection.updateOne({ storeId }, { $set: { [`approvalcheckout.${sellerId}`]: sellerArray } });
-      await collection.updateOne({ storeId }, { $set: { [`paymentRequestSeller.${sellerId}`]: sellerArrayReq } });
 
       console.log(`Payment requested timestamp updated successfully for sellerId ${sellerId}`);
 
@@ -1274,9 +1282,8 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
       return;
     }
 
-    // Get the array corresponding to the sellerId
     const sellerArray = user.approvalcheckout[sellerId];
-    const sellerArrayRequestIn = user.paymentRequestBuyer[sellerId];
+    //const sellerArrayRequestIn = user.paymentRequestBuyer[sellerId];
 
     // Check if paymentRequested and paymentRequestedTimestamp already exist in any object of the array
     const isAlreadyRequested = sellerArray.some((sellerObject) => {
@@ -1293,14 +1300,23 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
         }
       });
 
-      sellerArrayRequestIn.forEach((sellerObjectReq)=>{
-        sellerObjectReq.startedDateAndTime = paymentRequestedTimestamp;
-      });
+      if (user.paymentRequestBuyer[sellerId]) {
+        const sellerArrayReq = user.paymentRequestBuyer[sellerId];
+        sellerArrayReq.forEach((sellerObjectRequest)=>{
+          if(sellerObjectRequest.startedDateAndTime){
+            sellerObjectRequest.startedDateAndTime = paymentRequestedTimestamp
+          }
+
+        });
+        await collection.updateOne({ storeId }, { $set: { [`paymentRequestBuyer.${sellerId}`]: sellerArrayReq } });
+} else {
+
+}
 
 
       // Update the user in the database
       await collection.updateOne({ storeId }, { $set: { [`approvalcheckout.${sellerId}`]: sellerArray } });
-      await collection.updateOne({ storeId }, { $set: { [`paymentRequestBuyer.${sellerId}`]: sellerArrayRequestIn } });
+      //await collection.updateOne({ storeId }, { $set: { [`paymentRequestBuyer.${sellerId}`]: sellerArrayRequestIn } });
 
 
       console.log(`Payment requested timestamp updated successfully for sellerId ${sellerId}`);
@@ -1877,7 +1893,8 @@ app.get('/deleteBuyerUnApprovedRequest', async (req, res) => {
       const arrayToUpdate = user.approvalcheckout[storeId];
       const updatedArray = arrayToUpdate.map(item => {
         delete item.paymentRequestedBuyer;
-        delete item.paymentRequestedTimestampBuyer
+        delete item.paymentRequestedTimestampBuyer;
+        delete item.startedDateAndTime
         ;
         return item;
       });
@@ -1944,6 +1961,7 @@ app.get('/deleteSellerUnApprovedRequest', async (req, res) => {
       const updatedArray = arrayToUpdate.map(item => {
         delete item.paymentRequested;
         delete item.paymentRequestedTimestamp;
+        delete item.startedDateAndTime
         return item;
       });
 
