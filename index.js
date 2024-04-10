@@ -1379,31 +1379,41 @@ app.get('/getRequestsOfPayments', async (req, res) => {
       }};
      
             
+      let sellerUsers = {};
       if (user.paymentRequestBuyer) {
-        Object.keys(user.paymentRequestBuyer).forEach(storeId => {
-            const buyerProducts = user.paymentRequestBuyer[storeId].map(product => ({
-                productId: product.productId,
-                quantity: product.quantity,
-                totalPrice: product.totalPrice,
-                totalF3: product.totalF3Amount,
-                totalGc: product.totalGc,
-                sellerWalletAddress: product.sellerId,
-                dateAndTime: product.dateAndTime
-            }));
-    
-            const buyerRequest = {
-                totalF3: user.paymentRequestBuyer[storeId][0].totalF3Amount,
-                totalGc: user.paymentRequestBuyer[storeId][0].totalGc,
-                storeId: user.paymentRequestBuyer[storeId][0].sellerId,
-                sellerWalletAddress: user.paymentRequestBuyer[storeId][0].sellerId,
-                buyerWalletAddress: user.walletAddress,
-                requestType: 'buyer',
-                products: buyerProducts
-            };
-    
-            response.requests.push(buyerRequest);
-        });
-    }
+        const storeIds = Object.keys(user.paymentRequestBuyer);
+        for (const storeId of storeIds) {
+          const sellerStore = user.paymentRequestBuyer[storeId][0].sellerId;
+          const SellerUser = await collection.findOne({ storeId: sellerStore });
+          sellerUsers[storeId] = SellerUser;
+        }
+        
+        // Process buyer requests
+        for (const storeId of storeIds) {
+          const SellerUser = sellerUsers[storeId];
+          const buyerProducts = user.paymentRequestBuyer[storeId].map(product => ({
+            productId: product.productId,
+            quantity: product.quantity,
+            totalPrice: product.totalPrice,
+            totalF3: product.totalF3Amount,
+            totalGc: product.totalGc,
+            sellerWalletAddress: product.sellerId,
+            dateAndTime: product.dateAndTime
+          }));
+  
+          const buyerRequest = {
+            totalF3: user.paymentRequestBuyer[storeId][0].totalF3Amount,
+            totalGc: user.paymentRequestBuyer[storeId][0].totalGc,
+            storeId: user.paymentRequestBuyer[storeId][0].sellerId,
+            sellerWalletAddress: SellerUser.walletAddress,
+            buyerWalletAddress: user.walletAddress,
+            requestType: 'buyer',
+            products: buyerProducts
+          };
+  
+          response.requests.push(buyerRequest);
+        }
+      }
     
 
     // Close MongoDB connection
