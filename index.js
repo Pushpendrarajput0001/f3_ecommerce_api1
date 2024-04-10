@@ -1185,6 +1185,8 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
       sellerArray.forEach((sellerObject) => {
         if (sellerObject.paymentRequested === 'Yes') {
           sellerObject.paymentRequestedTimestamp = paymentRequestedTimestamp;
+          sellerObject.f3LiveOfThisTime = f3LiveOfThisTime;
+          sellerObject.startedDateAndTime = paymentRequestedTimestamp;
         }
       });
       
@@ -1214,6 +1216,7 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
         sellerObject.totalGc = totalGc;
         sellerObject.f3LiveOfThisTime = f3LiveOfThisTime,
         sellerObject.storeIdProduct = sellerId;
+        sellerObject.startedDateAndTime = paymentRequestedTimestamp;
       } else if (sellerObject.paymentRequested === 'Yes') {
         sellerObject.paymentRequestedTimestamp = paymentRequestedTimestamp;
       }
@@ -1277,6 +1280,8 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
       sellerArray.forEach((sellerObject) => {
         if (sellerObject.paymentRequestedBuyer === 'Yes') {
           sellerObject.paymentRequestedTimestampBuyer = paymentRequestedTimestamp;
+          sellerObject.f3LiveOfThisTime = f3LiveOfThisTime;
+          sellerObject.startedDateAndTime = paymentRequestedTimestamp;
         }
       });
 
@@ -1309,6 +1314,7 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
         sellerObject.totalGc = totalGc;
         sellerObject.f3LiveOfThisTime = f3LiveOfThisTime,
         sellerObject.storeIdProduct = sellerId;
+        sellerObject.startedDateAndTime = paymentRequestedTimestamp;;
       }else if(sellerObject.paymentRequestedBuyer === 'Yes'){
         sellerObject.paymentRequestedTimestampBuyer = paymentRequestedTimestamp
       }
@@ -1385,7 +1391,8 @@ app.get('/getRequestsOfPayments', async (req, res) => {
               totalF3: product.totalF3Amount,
               totalGc: product.totalGc,
               sellerWalletAddress: user.walletAddress, 
-              dateAndTime : product.dateAndTime
+              dateAndTime : product.dateAndTime,
+              startedDateAndTime : product.startedDateAndTime
             }));
             const sellerRequest = {
               totalF3: storeIdRequests[0].totalF3Amount,
@@ -1421,7 +1428,8 @@ app.get('/getRequestsOfPayments', async (req, res) => {
             totalF3: product.totalF3Amount,
             totalGc: product.totalGc,
             sellerWalletAddress: product.sellerId,
-            dateAndTime: product.dateAndTime
+            dateAndTime: product.dateAndTime,
+            startedDateAndTime : product.startedDateAndTime
           }));
   
           const buyerRequest = {
@@ -1798,6 +1806,137 @@ app.get('/deleteSellerRequestAndAddSalesHistory', async (req, res) => {
         {
           $unset: {
             [`approvalcheckout.${storeId}`]: 1
+          }
+        }
+      );
+    }
+
+    // Close MongoDB connection
+    await client.close();
+
+    console.log(`Buyer request deleted and added to sales history successfully for walletAddress ${buyerWalletAddress}`);
+
+    // Send success response
+    res.status(200).json({ message: 'Buyer request deleted and added to sales history successfully' });
+  } catch (error) {
+    console.error('Error deleting buyer request and adding to sales history:', error);
+    res.status(500).json({ error: 'An error occurred while processing the request' });
+  }
+});
+
+app.get('/deleteBuyerUnApprovedRequest', async (req, res) => {
+  try {
+    const { buyerWalletAddress, storeId } = req.query;
+
+    console.log('Deleting buyer request and adding to sales history for buyerWalletAddress:', buyerWalletAddress, 'and storeId:', storeId);
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user with the specified buyerWalletAddress
+    const user = await collection.findOne({ walletAddress: buyerWalletAddress });
+    if (!user) {
+      console.log(`User with walletAddress ${buyerWalletAddress} not found`);
+      return res.status(404).json({ error: `User with walletAddress ${buyerWalletAddress} not found` });
+    }
+
+    // Find the paymentRequestBuyer map in the user document
+    const paymentRequestBuyerMap = user.paymentRequestBuyer || {};
+    const storeRequestsArray = paymentRequestBuyerMap[storeId] || [];
+
+    delete paymentRequestBuyerMap[storeId];
+
+    // Update the user document in the database
+    await collection.updateOne(
+      { walletAddress: buyerWalletAddress },
+      {
+        $set: {
+          paymentRequestBuyer: paymentRequestBuyerMap,
+        }
+      }
+    );
+
+    // Delete the specified strings from each object in the array
+    if (user.approvalcheckout && user.approvalcheckout[storeId]) {
+      const arrayToUpdate = user.approvalcheckout[storeId];
+      const updatedArray = arrayToUpdate.map(item => {
+        delete item.paymentRequestedBuyer;
+        delete item.paymentRequestedTimestampBuyer
+        ;
+        return item;
+      });
+
+      await collection.updateOne(
+        { walletAddress: buyerWalletAddress },
+        {
+          $set: {
+            [`approvalcheckout.${storeId}`]: updatedArray
+          }
+        }
+      );
+    }
+
+    // Close MongoDB connection
+    await client.close();
+
+    console.log(`Buyer request deleted and added to sales history successfully for walletAddress ${buyerWalletAddress}`);
+
+    // Send success response
+    res.status(200).json({ message: 'Buyer request deleted and added to sales history successfully' });
+  } catch (error) {
+    console.error('Error deleting buyer request and adding to sales history:', error);
+    res.status(500).json({ error: 'An error occurred while processing the request' });
+  }
+});
+
+app.get('/deleteSellerUnApprovedRequest', async (req, res) => {
+  try {
+    const { buyerWalletAddress, storeId } = req.query;
+
+    console.log('Deleting buyer request and adding to sales history for buyerWalletAddress:', buyerWalletAddress, 'and storeId:', storeId);
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user with the specified buyerWalletAddress
+    const user = await collection.findOne({ walletAddress: buyerWalletAddress });
+    if (!user) {
+      console.log(`User with walletAddress ${buyerWalletAddress} not found`);
+      return res.status(404).json({ error: `User with walletAddress ${buyerWalletAddress} not found` });
+    }
+
+    // Find the paymentRequestBuyer map in the user document
+    const paymentRequestSellerMap = user.paymentRequestSeller || {};
+    const storeRequestsArray = paymentRequestSellerMap[storeId] || [];
+
+    delete paymentRequestSellerMap[storeId];
+
+    // Update the user document in the database
+    await collection.updateOne(
+      { walletAddress: buyerWalletAddress },
+      {
+        $set: {
+          paymentRequestSeller: paymentRequestSellerMap,
+        }
+      }
+    );
+
+    // Delete the specified strings from each object in the array
+    if (user.approvalcheckout && user.approvalcheckout[storeId]) {
+      const arrayToUpdate = user.approvalcheckout[storeId];
+      const updatedArray = arrayToUpdate.map(item => {
+        delete item.paymentRequested;
+        delete item.paymentRequestedTimestamp;
+        return item;
+      });
+
+      await collection.updateOne(
+        { walletAddress: buyerWalletAddress },
+        {
+          $set: {
+            [`approvalcheckout.${storeId}`]: updatedArray
           }
         }
       );
