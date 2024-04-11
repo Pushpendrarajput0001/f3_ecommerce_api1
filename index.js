@@ -2178,6 +2178,7 @@ app.post('/updateProductDatas', async (req, res) => {
  
   // Check if required parameters are missing
   if (!storeId || !productId) {
+    console.log(storeId,productId)
     return res.status(400).json({ error: 'Missing required parameters' });
   }
 
@@ -2294,6 +2295,56 @@ app.get('/refillStocksProducts', async (req, res) => {
     res.status(500).json({ error: 'An error occurred while updating product stock' });
   }
 });
+
+app.get('/deleteProductOfUser', async (req, res) => {
+  try {
+    const { storeId, productId } = req.query;
+
+    // Check if required parameters are missing
+    if (!storeId || !productId) {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by storeId
+    const existingUser = await collection.findOne({ storeId });
+
+    if (!existingUser) {
+      res.status(404).json({ error: `User with storeId ${storeId} not found` });
+      return;
+    }
+
+    // Find the index of the product by productId within the user's products
+    const productIndex = existingUser.products.findIndex(product => product._id === productId);
+
+    if (productIndex === -1) {
+      res.status(404).json({ error: `Product ${productId} not found in store` });
+      return;
+    }
+
+    // Remove the product from the array
+    existingUser.products.splice(productIndex, 1);
+
+    // Update the user document in the database
+    await collection.updateOne(
+      { storeId },
+      { $set: { products: existingUser.products } }
+    );
+
+    // Close MongoDB connection
+    await client.close();
+
+    // Send response
+    res.status(200).json({ message: 'Product deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    res.status(500).json({ error: 'An error occurred while deleting product' });
+  }
+});
+
 
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`);
