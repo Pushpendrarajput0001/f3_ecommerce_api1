@@ -2173,6 +2173,59 @@ app.get('/getUserDetails', async (req, res) => {
   }
 });
 
+app.get('/updateProductDatas', async (req, res) => {
+  const { storeId, productId, imagesBase64 } = req.query;
+
+  // Check if required parameters are missing
+  if (!storeId || !productId || !imagesBase64) {
+    return res.status(400).json({ error: 'Missing required parameters' });
+  }
+
+  try {
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    const existingProduct = await collection.findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
+
+    if (!existingProduct) {
+      res.status(404).json({ error: `Product ${productId} not found in store` });
+      return;
+    }
+
+    // Filter out existing images in base64 format
+    const existingBase64Images = existingProduct.products[0].images.filter(image => typeof image === 'string');
+
+    // Merge existing and new images
+    let mergedImages = existingBase64Images ? [...existingBase64Images] : [];
+    // Compress and add new images
+    const newImages = await Promise.all(imagesBase64.map(async (image) => {
+      // Compress and resize new image using sharp
+      const compressedBuffer = await sharp(Buffer.from(image, 'base64'))
+        .resize({ width: 150 }) // Set desired width (you can adjust this as needed)
+        .png({ quality: 25 }) // Set desired PNG quality (you can adjust this as needed)
+        .toBuffer();
+
+      return compressedBuffer.toString('base64');
+    }));
+
+    mergedImages = [...mergedImages, ...newImages];
+
+    // Update the product's images in the MongoDB collection
+    await collection.updateOne(
+      { 'products._id': productId },
+      { $set: { 'products.$.images': mergedImages } }
+    );
+
+    client.close();
+
+    res.status(200).json({ message: 'Product images updated successfully' });
+  } catch (error) {
+    console.error('Error updating product images:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 
 
 app.listen(PORT, '192.168.29.149', () => {
