@@ -902,9 +902,17 @@ app.get('/deleteAndapprovalcheckoutsStore', async (req, res) => {
       user.approvalcheckout = {};
     }
 
+    if (!user.approvalcheckoutBuyer) {
+      user.approvalcheckoutBuyer = {};
+    }
+
     // If approvalcheckout does not have storeId as key or its value is not an array, create an empty array
     if (!user.approvalcheckout[storeId] || !Array.isArray(user.approvalcheckout[storeId])) {
       user.approvalcheckout[storeId] = [];
+    }
+
+    if (!user.approvalcheckoutBuyer[storeId] || !Array.isArray(user.approvalcheckoutBuyer[storeId])) {
+      user.approvalcheckoutBuyer[storeId] = [];
     }
 
     // Add new products to the existing array
@@ -913,12 +921,17 @@ app.get('/deleteAndapprovalcheckoutsStore', async (req, res) => {
       ...store_products
     ];
 
+    user.approvalcheckoutBuyer[storeId] = [
+      ...user.approvalcheckoutBuyer[storeId],
+      ...store_products
+    ];
+
     // Delete the store from the checkoutapproval
     delete user.checkoutapproval[storeId];
 
     await collection.updateOne(
       { storeId: buyerId },
-      { $set: { checkoutapproval: user.checkoutapproval, approvalcheckout: user.approvalcheckout } }
+      { $set: { checkoutapproval: user.checkoutapproval, approvalcheckout: user.approvalcheckout,approvalcheckoutBuyer : user.approvalcheckoutBuyer } }
     );
 
     await client.close();
@@ -1096,7 +1109,7 @@ app.get('/getBuyersSectionApprovedCheckout', async (req, res) => {
     }
 
     // Check if the buyer has checkout approvals
-    const approvalCheckoutMap = buyer.approvalcheckout;
+    const approvalCheckoutMap = buyer.approvalcheckoutBuyer;
     console.log('Type of checkoutApprovalMap:', typeof approvalCheckoutMap);
     console.log('Checkout Approval Map:', approvalCheckoutMap);
     if (!approvalCheckoutMap) {
@@ -1276,13 +1289,13 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
     }
 
     // Ensure that approvalcheckout is an object
-    if (typeof user.approvalcheckout !== 'object' || !user.approvalcheckout.hasOwnProperty(sellerId)) {
+    if (typeof user.approvalcheckoutBuyer !== 'object' || !user.approvalcheckoutBuyer.hasOwnProperty(sellerId)) {
       console.log(`Seller with sellerId ${sellerId} not found in approvalcheckout object`);
       res.status(404).json({ error: `Seller with sellerId ${sellerId} not found in approvalcheckout object` });
       return;
     }
 
-    const sellerArray = user.approvalcheckout[sellerId];
+    const sellerArray = user.approvalcheckoutBuyer[sellerId];
     //const sellerArrayRequestIn = user.paymentRequestBuyer[sellerId];
 
     // Check if paymentRequested and paymentRequestedTimestamp already exist in any object of the array
@@ -1354,7 +1367,7 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
 
     await collection.updateOne(
       { storeId },
-      { $set: { [`approvalcheckout.${sellerId}`]: sellerArray, paymentRequestBuyer: user.paymentRequestBuyer } }
+      { $set: { [`approvalcheckoutBuyer.${sellerId}`]: sellerArray, paymentRequestBuyer: user.paymentRequestBuyer } }
     );
 
     // Close MongoDB connection
@@ -1763,12 +1776,12 @@ app.get('/deleteBuyerRequestAndAddSalesHistory', async (req, res) => {
     );
 
     // Delete the array from approvalcheckout map only if it exists
-    if (user.approvalcheckout && user.approvalcheckout[storeId]) {
+    if (user.approvalcheckoutBuyer && user.approvalcheckoutBuyer[storeId]) {
       await collection.updateOne(
         { walletAddress: buyerWalletAddress },
         {
           $unset: {
-            [`approvalcheckout.${storeId}`]: 1
+            [`approvalcheckoutBuyer.${storeId}`]: 1
           }
         }
       );
@@ -1889,7 +1902,7 @@ app.get('/deleteBuyerUnApprovedRequest', async (req, res) => {
     );
 
     // Delete the specified strings from each object in the array
-    if (user.approvalcheckout && user.approvalcheckout[storeId]) {
+    if (user.approvalcheckoutBuyer && user.approvalcheckoutBuyer[storeId]) {
       const arrayToUpdate = user.approvalcheckout[storeId];
       const updatedArray = arrayToUpdate.map(item => {
         delete item.paymentRequestedBuyer;
@@ -1903,7 +1916,7 @@ app.get('/deleteBuyerUnApprovedRequest', async (req, res) => {
         { walletAddress: buyerWalletAddress },
         {
           $set: {
-            [`approvalcheckout.${storeId}`]: updatedArray
+            [`approvalcheckoutBuyer.${storeId}`]: updatedArray
           }
         }
       );
@@ -2159,6 +2172,7 @@ app.get('/getUserDetails', async (req, res) => {
       res.status(500).json({ error: 'An error occurred while retrieving user details' });
   }
 });
+
 
 
 app.listen(PORT, '192.168.29.149', () => {
