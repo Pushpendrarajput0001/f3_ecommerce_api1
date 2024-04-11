@@ -2246,7 +2246,54 @@ app.post('/updateProductDatas', async (req, res) => {
   }
 });
 
+app.get('/refillStocksProducts', async (req, res) => {
+  try {
+    const { storeId, productId, newStocks } = req.query;
 
+    // Check if required parameters are missing
+    if (!storeId || !productId || !newStocks) {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by storeId
+    const existingUser = await collection.findOne({ storeId });
+
+    if (!existingUser) {
+      res.status(404).json({ error: `User with storeId ${storeId} not found` });
+      return;
+    }
+
+    // Find the product by productId within the user's products
+    const existingProduct = existingUser.products.find(product => product._id === productId);
+
+    if (!existingProduct) {
+      res.status(404).json({ error: `Product ${productId} not found in store` });
+      return;
+    }
+
+    // Update the product's stocks field
+    existingProduct.numberOfStocks = newStocks;
+
+    // Update the product in the database
+    await collection.updateOne(
+      { storeId, 'products._id': productId },
+      { $set: { 'products.$.numberOfStocks': newStocks } }
+    );
+
+    // Close MongoDB connection
+    await client.close();
+
+    // Send response
+    res.status(200).json({ message: 'Product stock updated successfully' });
+  } catch (error) {
+    console.error('Error updating product stock:', error);
+    res.status(500).json({ error: 'An error occurred while updating product stock' });
+  }
+});
 
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`);
