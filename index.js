@@ -199,8 +199,11 @@ app.post('/productsAdd', async (req, res) => {
       user.products = [];
     }
     user.products.push(productDocument);
+    
+    if (!user.productsbackup) {
+      user.productsbackup = [];
+    }
     user.productsbackup.push(productDocument);
-
     // Update the user's document in the collection
     await collection.updateOne({ email }, { $set: user });
 
