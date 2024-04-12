@@ -2317,21 +2317,22 @@ app.get('/deleteProductOfUser', async (req, res) => {
       return;
     }
 
-    // Find the index of the product by productId within the user's products
+    // Delete the product from user's products array
     const productIndex = existingUser.products.findIndex(product => product._id === productId);
-
-    if (productIndex === -1) {
-      res.status(404).json({ error: `Product ${productId} not found in store` });
-      return;
+    if (productIndex !== -1) {
+      existingUser.products.splice(productIndex, 1);
     }
-
-    // Remove the product from the array
-    existingUser.products.splice(productIndex, 1);
 
     // Update the user document in the database
     await collection.updateOne(
       { storeId },
       { $set: { products: existingUser.products } }
+    );
+
+    // Delete the product from userCarts, checkoutapproval, and approvalcheckout
+    await collection.updateMany(
+      { $or: [{ userCarts: { $elemMatch: { productId } } }, { checkoutapproval: { $elemMatch: { productId } } }, { approvalcheckout: { $elemMatch: { productId } } }, { approvalcheckoutBuyer: { $elemMatch: { productId } } }] },
+      { $pull: { 'userCarts.$[].products': { _id: productId }, 'checkoutapproval.$[].products': { _id: productId }, 'approvalcheckout.$[].products': { _id: productId }, 'approvalcheckoutBuyer.$[].products': { _id: productId } } }
     );
 
     // Close MongoDB connection
@@ -2344,6 +2345,7 @@ app.get('/deleteProductOfUser', async (req, res) => {
     res.status(500).json({ error: 'An error occurred while deleting product' });
   }
 });
+
 
 
 app.listen(PORT, '192.168.29.149', () => {
