@@ -2177,80 +2177,6 @@ app.get('/getUserDetails', async (req, res) => {
   }
 });
 
-app.post('/updateProductDatas', async (req, res) => {
-  const { storeId, productId, productName, productDescription, startedPrice, unitItem, imagesBase64 } = req.body;
- 
-  // Check if required parameters are missing
-  if (!storeId || !productId) {
-    console.log(storeId,productId)
-    return res.status(400).json({ error: 'Missing required parameters' });
-  }
-
-  try {
-    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
-    const db = client.db('f3_ecommerce');
-    const collection = db.collection('users');
-
-    const existingProduct = await collection.findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
-
-    if (!existingProduct) {
-      res.status(404).json({ error: `Product ${productId} not found in store` });
-      return;
-    }
-
-    if(productName){
-      existingProduct.products[0].productName = productName;
-      await collection.updateOne({ 'products._id': productId }, { $set: { 'products.$.productName': productName} });
-    }
-
-    if(productDescription){
-      existingProduct.products[0].description = productDescription;
-      await collection.updateOne({ 'products._id': productId }, { $set: { 'products.$.description': productDescription} });
-    }
-
-    if(startedPrice){
-      existingProduct.products[0].startedPrice = startedPrice;
-      await collection.updateOne({ 'products._id': productId }, { $set: { 'products.$.startedPrice': startedPrice} });
-    }
-
-    if(unitItem){
-      existingProduct.products[0].unitItemSelected = unitItem;
-      await collection.updateOne({ 'products._id': productId }, { $set: { 'products.$.unitItemSelected': unitItem} });
-    }
-
-    if(imagesBase64){
-      let mergedImages = existingProduct.products[0].images ? [...existingProduct.products[0].images] : [];
-      // Compress and add new images
-      const newImages = await Promise.all(imagesBase64.map(async (image) => {
-        // Compress and resize new image using sharp
-        const compressedBuffer = await sharp(Buffer.from(image, 'base64'))
-          .resize({ width: 150 }) // Set desired width (you can adjust this as needed)
-          .png({ quality: 25 }) // Set desired PNG quality (you can adjust this as needed)
-          .toBuffer();
-  
-        return compressedBuffer.toString('base64');
-      }));
-  
-      mergedImages = [...mergedImages, ...newImages];
-  
-      // Update the product's images in the MongoDB collection
-      await collection.updateOne(
-        { 'products._id': productId },
-        { $set: { 'products.$.images': mergedImages } }
-      );
-    }
-
-
-    client.close();
-
-    res.status(200).json({ message: 'Product data updated successfully' });
-  
-  } catch (error) {
-    console.error('Error updating product data:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
 app.get('/refillStocksProducts', async (req, res) => {
   try {
     const { storeId, productId, newStocks } = req.query;
@@ -2431,6 +2357,79 @@ app.get('/updateOfferProduct', async (req, res) => {
   }
 });
 
+app.post('/updateProductDatas', async (req, res) => {
+  const { storeId, productId, productName, productDescription, startedPrice, unitItem, imagesBase64 } = req.body;
+ 
+  // Check if required parameters are missing
+  if (!storeId || !productId) {
+    console.log(storeId,productId)
+    return res.status(400).json({ error: 'Missing required parameters' });
+  }
+
+  try {
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    const existingProduct = await collection.findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
+
+    if (!existingProduct) {
+      res.status(404).json({ error: `Product ${productId} not found in store` });
+      return;
+    }
+
+    if(productName){
+      existingProduct.products[0].productName = productName;
+      await collection.updateOne({ 'products._id': productId }, { $set: { 'products.$.productName': productName} });
+    }
+
+    if(productDescription){
+      existingProduct.products[0].description = productDescription;
+      await collection.updateOne({ 'products._id': productId }, { $set: { 'products.$.description': productDescription} });
+    }
+
+    if(startedPrice){
+      existingProduct.products[0].startedPrice = startedPrice;
+      await collection.updateOne({ 'products._id': productId }, { $set: { 'products.$.startedPrice': startedPrice} });
+    }
+
+    if(unitItem){
+      existingProduct.products[0].unitItemSelected = unitItem;
+      await collection.updateOne({ 'products._id': productId }, { $set: { 'products.$.unitItemSelected': unitItem} });
+    }
+
+    if(imagesBase64){
+      let mergedImages = existingProduct.products[0].images ? [...existingProduct.products[0].images] : [];
+      // Compress and add new images
+      const newImages = await Promise.all(imagesBase64.map(async (image) => {
+        // Compress and resize new image using sharp
+        const compressedBuffer = await sharp(Buffer.from(image, 'base64'))
+          .resize({ width: 150 }) // Set desired width (you can adjust this as needed)
+          .png({ quality: 25 }) // Set desired PNG quality (you can adjust this as needed)
+          .toBuffer();
+  
+        return compressedBuffer.toString('base64');
+      }));
+  
+      mergedImages = [...mergedImages, ...newImages];
+  
+      // Update the product's images in the MongoDB collection
+      await collection.updateOne(
+        { 'products._id': productId },
+        { $set: { 'products.$.images': mergedImages } }
+      );
+    }
+
+
+    client.close();
+
+    res.status(200).json({ message: 'Product data updated successfully' });
+  
+  } catch (error) {
+    console.error('Error updating product data:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`);
