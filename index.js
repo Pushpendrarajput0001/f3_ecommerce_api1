@@ -199,7 +199,7 @@ app.post('/productsAdd', async (req, res) => {
       user.products = [];
     }
     user.products.push(productDocument);
-    
+
     if (!user.productsbackup) {
       user.productsbackup = [];
     }
@@ -2062,21 +2062,21 @@ app.get('/getSellerSectionSalesHistory', async (req, res) => {
             totalF3Amount,
             totalGc,
             f3LiveOfThisTime,
-            productName: productDetails.products[0].productName,
-            startedPrice: productDetails.products[0].startedPrice,
-            f3MarketPrice: productDetails.products[0].f3MarketPrice,
-            growthContribution: productDetails.products[0].growthContribution,
-            numberOfStocks: productDetails.products[0].numberOfStocks,
-            unitItemSelected: productDetails.products[0].unitItemSelected,
-            description: productDetails.products[0].description,
-            totalsolds: productDetails.products[0].totalsolds,
-            storeId : productDetails.products[0].storeId,
-            productOffer : productDetails.products[0].offer,
+            productName: productDetails.productsbackup[0].productName,
+            startedPrice: productDetails.productsbackup[0].startedPrice,
+            f3MarketPrice: productDetails.productsbackup[0].f3MarketPrice,
+            growthContribution: productDetails.productsbackup[0].growthContribution,
+            numberOfStocks: productDetails.productsbackup[0].numberOfStocks,
+            unitItemSelected: productDetails.productsbackup[0].unitItemSelected,
+            description: productDetails.productsbackup[0].description,
+            totalsolds: productDetails.productsbackup[0].totalsolds,
+            storeId : productDetails.productsbackup[0].storeId,
+            productOffer : productDetails.productsbackup[0].offer,
             storeIdBuyer: user.storeId,
             walletAddressBuyer : user.walletAddress,
-            flagWord : productDetails.products[0].flagWord,
-            storeName: productDetails.products[0].storeName,
-            images: productDetails.products[0].images
+            flagWord : productDetails.productsbackup[0].flagWord,
+            storeName: productDetails.productsbackup[0].storeName,
+            images: productDetails.productsbackup[0].images
           });
         }
       }
@@ -2143,19 +2143,19 @@ app.get('/getBuyersSectionSalesHistory', async (req, res) => {
           totalF3Amount,
           totalGc,
           f3LiveOfThisTime,
-          productName: productDetails.products[0].productName,
-          startedPrice: productDetails.products[0].startedPrice,
-          f3MarketPrice: productDetails.products[0].f3MarketPrice,
-          growthContribution: productDetails.products[0].growthContribution,
-          numberOfStocks: productDetails.products[0].numberOfStocks,
-          unitItemSelected: productDetails.products[0].unitItemSelected,
-          description: productDetails.products[0].description,
-          totalsolds: productDetails.products[0].totalsolds,
-          storeId: productDetails.products[0].storeId,
-          productOffer : productDetails.products[0].offer,
-          flagWord : productDetails.products[0].flagWord,
-          storeName: productDetails.products[0].storeName,
-          images: productDetails.products[0].images
+          productName: productDetails.productsbackup[0].productName,
+          startedPrice: productDetails.productsbackup[0].startedPrice,
+          f3MarketPrice: productDetails.productsbackup[0].f3MarketPrice,
+          growthContribution: productDetails.productsbackup[0].growthContribution,
+          numberOfStocks: productDetails.productsbackup[0].numberOfStocks,
+          unitItemSelected: productDetails.productsbackup[0].unitItemSelected,
+          description: productDetails.productsbackup[0].description,
+          totalsolds: productDetails.productsbackup[0].totalsolds,
+          storeId: productDetails.productsbackup[0].storeId,
+          productOffer : productDetails.productsbackup[0].offer,
+          flagWord : productDetails.productsbackup[0].flagWord,
+          storeName: productDetails.productsbackup[0].storeName,
+          images: productDetails.productsbackup[0].images
         });
       }
     }
