@@ -2048,7 +2048,7 @@ app.get('/getSellerSectionSalesHistory', async (req, res) => {
           const { productId, quantity, totalPrice,paymentRequestedTimestamp,totalF3Amount,totalGc,f3LiveOfThisTime } = saleshistory;
 
           // Fetch product details from MongoDB
-          const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
+          const productDetails = await db.collection('users').findOne({ 'productsbackup._id': productId }, { projection: { 'productsbackup.$': 1 } });
 
           // Add product details along with quantity, totalPrice, and storeId
           products.push({
@@ -2129,7 +2129,7 @@ app.get('/getBuyersSectionSalesHistory', async (req, res) => {
         const { productId, quantity, totalPrice,paymentRequestedTimestampBuyer,totalF3Amount,totalGc,f3LiveOfThisTime } = saleshistory;
 
         // Fetch product details from MongoDB
-        const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
+        const productDetails = await db.collection('users').findOne({ 'productsbackup._id': productId }, { projection: { 'productsbackup.$': 1 } });
 
         // Add product details along with quantity and totalPrice
         products.push({
