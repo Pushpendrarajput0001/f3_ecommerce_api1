@@ -2324,10 +2324,10 @@ app.get('/deleteProductOfUser', async (req, res) => {
     }
 
     // Update the user document in the database
-    await collection.updateOne(
-      { storeId },
-      { $set: { products: existingUser.products } }
-    );
+    // await collection.updateOne(
+    //   { storeId },
+    //   { $set: { products: existingUser.products } }
+    // );
 
     // Delete the product from userCarts, checkoutapproval, and approvalcheckout
     await collection.updateMany(
