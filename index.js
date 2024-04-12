@@ -779,6 +779,7 @@ app.get('/getSellerProductsCheckoutById', async (req, res) => {
             description: productDetails.products[0].description,
             totalsolds: productDetails.products[0].totalsolds,
             storeId : productDetails.products[0].storeId,
+            offer : productDetails.products[0].offer,
             storeIdBuyer: user.storeId,
             walletAddressBuyer : user.walletAddress,
             flagWord : productDetails.products[0].flagWord,
@@ -998,6 +999,7 @@ app.get('/getBuyersSectionProductcheckout', async (req, res) => {
           description: productDetails.products[0].description,
           totalsolds: productDetails.products[0].totalsolds,
           storeId: productDetails.products[0].storeId,
+          offer : productDetails.products[0].offer,
           flagWord : productDetails.products[0].flagWord,
           storeName: productDetails.products[0].storeName,
           images: productDetails.products[0].images
@@ -1070,6 +1072,7 @@ app.get('/getSellerSectionApprovedCheckout', async (req, res) => {
             totalsolds: productDetails.products[0].totalsolds,
             storeId : productDetails.products[0].storeId,
             storeIdBuyer: user.storeId,
+            offer : productDetails.products[0].offer,
             walletAddressBuyer : user.walletAddress,
             flagWord : productDetails.products[0].flagWord,
             storeName: productDetails.products[0].storeName,
@@ -1147,6 +1150,7 @@ app.get('/getBuyersSectionApprovedCheckout', async (req, res) => {
           totalsolds: productDetails.products[0].totalsolds,
           storeId: productDetails.products[0].storeId,
           flagWord : productDetails.products[0].flagWord,
+          offer : productDetails.products[0].offer,
           storeName: productDetails.products[0].storeName,
           images: productDetails.products[0].images
         });
