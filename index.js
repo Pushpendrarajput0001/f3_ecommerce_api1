@@ -2420,7 +2420,7 @@ app.get('/updateOfferProduct', async (req, res) => {
     await client.close();
 
     // Send response
-    res.status(200).json({ message: 'Product stock updated successfully' });
+    res.status(200).json({ message: 'Product offer updated successfully' });
   } catch (error) {
     console.error('Error updating product stock:', error);
     res.status(500).json({ error: 'An error occurred while updating product stock' });
