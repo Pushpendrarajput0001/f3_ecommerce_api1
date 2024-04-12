@@ -199,6 +199,7 @@ app.post('/productsAdd', async (req, res) => {
       user.products = [];
     }
     user.products.push(productDocument);
+    user.productsbackup.push(productDocument);
 
     // Update the user's document in the collection
     await collection.updateOne({ email }, { $set: user });
@@ -642,7 +643,7 @@ app.post('/addCheckoutApproval', async (req, res) => {
 
     // Iterate through products to add or replace in the checkoutapproval map
     products.forEach(product => {
-      const { productId, quantity, totalPrice, storeId } = product;
+      const { productId, quantity, totalPrice, storeId,offer } = product;
 
       // Check if checkoutapproval for the storeId already exists
       if (!user.checkoutapproval[storeId]) {
@@ -653,7 +654,8 @@ app.post('/addCheckoutApproval', async (req, res) => {
       user.checkoutapproval[storeId].push({
         productId,
         quantity,
-        totalPrice
+        totalPrice,
+        offer
       });
     });
 
@@ -2061,6 +2063,7 @@ app.get('/getSellerSectionSalesHistory', async (req, res) => {
             description: productDetails.products[0].description,
             totalsolds: productDetails.products[0].totalsolds,
             storeId : productDetails.products[0].storeId,
+            productOffer : productDetails.products[0].offer,
             storeIdBuyer: user.storeId,
             walletAddressBuyer : user.walletAddress,
             flagWord : productDetails.products[0].flagWord,
@@ -2141,6 +2144,7 @@ app.get('/getBuyersSectionSalesHistory', async (req, res) => {
           description: productDetails.products[0].description,
           totalsolds: productDetails.products[0].totalsolds,
           storeId: productDetails.products[0].storeId,
+          productOffer : productDetails.products[0].offer,
           flagWord : productDetails.products[0].flagWord,
           storeName: productDetails.products[0].storeName,
           images: productDetails.products[0].images
@@ -2430,6 +2434,7 @@ app.post('/updateProductDatas', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
 
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`);
