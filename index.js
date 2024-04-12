@@ -852,6 +852,7 @@ app.post('/updateProductAfterCheckoutApproval', async (req, res) => {
 
       // Find the product by productId
       const existingProduct = await collection.findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
+      const existingProductBackup = await collection.findOne({'productsbackup._id':productId},{projection : {'productsbackup.$' : 1}});
 
       if (!existingProduct) {
         res.status(404).json({ error: `Product ${productId} not found in store` });
@@ -862,8 +863,12 @@ app.post('/updateProductAfterCheckoutApproval', async (req, res) => {
       existingProduct.products[0].numberOfStocks = newStocks;
       existingProduct.products[0].totalsolds = newSolds;
 
+      existingProductBackup.productsbackup[0].numberOfStocks = newStocks;
+      existingProductBackup.productsbackup[0].totalsolds = newSolds;
+
       // Update the product in the database
       await collection.updateOne({ 'products._id': productId }, { $set: { 'products.$.numberOfStocks': newStocks, 'products.$.totalsolds': newSolds } });
+      await collection.updateOne({ 'productsbackup._id': productId }, { $set: { 'productsbackup.$.numberOfStocks': newStocks, 'productsbackup.$.totalsolds': newSolds } });
     }
 
     // Close MongoDB connection
@@ -2204,7 +2209,8 @@ app.get('/refillStocksProducts', async (req, res) => {
 
     // Find the product by productId within the user's products
     const existingProduct = existingUser.products.find(product => product._id === productId);
-
+    const existingProductBackup = existingUser.productsbackup.find(product => product._id === productId);
+    
     if (!existingProduct) {
       res.status(404).json({ error: `Product ${productId} not found in store` });
       return;
@@ -2212,6 +2218,7 @@ app.get('/refillStocksProducts', async (req, res) => {
 
     // Update the product's stocks field
     existingProduct.numberOfStocks = newStocks;
+    existingProductBackup.numberOfStocks = newStocks;
 
     // Update the product in the database
     await collection.updateOne(
@@ -2219,6 +2226,10 @@ app.get('/refillStocksProducts', async (req, res) => {
       { $set: { 'products.$.numberOfStocks': newStocks } }
     );
 
+    await collection.updateOne(
+      { storeId, 'productsbackup._id': productId },
+      { $set: { 'productsbackup.$.numberOfStocks': newStocks } }
+    );
     // Close MongoDB connection
     await client.close();
 
@@ -2335,6 +2346,7 @@ app.get('/updateOfferProduct', async (req, res) => {
 
     // Find the product by productId within the user's products
     const existingProduct = existingUser.products.find(product => product._id === productId);
+    const existingProductBackup = existingUser.productsbackup.find(product => product._id === productId);
 
     if (!existingProduct) {
       res.status(404).json({ error: `Product ${productId} not found in store` });
@@ -2343,11 +2355,16 @@ app.get('/updateOfferProduct', async (req, res) => {
 
     // Update the product's stocks field
     existingProduct.offer = newOffer;
+    existingProductBackup.offer = newOffer;
 
     // Update the product in the database
     await collection.updateOne(
       { storeId, 'products._id': productId },
       { $set: { 'products.$.offer': newOffer } }
+    );
+    await collection.updateOne(
+      { storeId, 'productsbackup._id': productId },
+      { $set: { 'productsbackup.$.offer': newOffer } }
     );
 
     // Close MongoDB connection
@@ -2385,21 +2402,25 @@ app.post('/updateProductDatas', async (req, res) => {
     if(productName){
       existingProduct.products[0].productName = productName;
       await collection.updateOne({ 'products._id': productId }, { $set: { 'products.$.productName': productName} });
+      await collection.updateOne({ 'productsbackup._id': productId }, { $set: { 'productsbackup.$.productName': productName} });
     }
 
     if(productDescription){
       existingProduct.products[0].description = productDescription;
       await collection.updateOne({ 'products._id': productId }, { $set: { 'products.$.description': productDescription} });
+      await collection.updateOne({ 'productsbackup._id': productId }, { $set: { 'productsbackup.$.description': productDescription} });
     }
 
     if(startedPrice){
       existingProduct.products[0].startedPrice = startedPrice;
       await collection.updateOne({ 'products._id': productId }, { $set: { 'products.$.startedPrice': startedPrice} });
+      await collection.updateOne({ 'productsbackup._id': productId }, { $set: { 'productsbackup.$.startedPrice': startedPrice} });
     }
 
     if(unitItem){
       existingProduct.products[0].unitItemSelected = unitItem;
       await collection.updateOne({ 'products._id': productId }, { $set: { 'products.$.unitItemSelected': unitItem} });
+      await collection.updateOne({ 'productsbackup._id': productId }, { $set: { 'productsbackup.$.unitItemSelected': unitItem} });
     }
 
     if(imagesBase64){
@@ -2419,8 +2440,12 @@ app.post('/updateProductDatas', async (req, res) => {
   
       // Update the product's images in the MongoDB collection
       await collection.updateOne(
-        { 'products._id': productId },
-        { $set: { 'products.$.images': mergedImages } }
+        { 'productsbackup._id': productId },
+        { $set: { 'v.$.images': mergedImages } }
+      );
+      await collection.updateOne(
+        { 'productsbackup._id': productId },
+        { $set: { 'productsbackup.$.images': mergedImages } }
       );
     }
 
