@@ -2317,24 +2317,56 @@ app.get('/deleteProductOfUser', async (req, res) => {
       return;
     }
 
-    // Delete the product from user's products array
+    // Find the index of the product by productId within the user's products
     const productIndex = existingUser.products.findIndex(product => product._id === productId);
-    if (productIndex !== -1) {
-      existingUser.products.splice(productIndex, 1);
+
+    if (productIndex === -1) {
+      res.status(404).json({ error: `Product ${productId} not found in store` });
+      return;
     }
 
-    // Update the user document in the database
-    // await collection.updateOne(
-    //   { storeId },
-    //   { $set: { products: existingUser.products } }
-    // );
+    // Remove the product from the array
+    existingUser.products.splice(productIndex, 1);
 
-    // Delete the product from userCarts, checkoutapproval, and approvalcheckout
-    await collection.updateMany(
-      { $or: [{ userCarts: { $elemMatch: { productId } } }, { checkoutapproval: { $elemMatch: { productId } } }, { approvalcheckout: { $elemMatch: { productId } } }, { approvalcheckoutBuyer: { $elemMatch: { productId } } }] },
-      { $pull: { 'userCarts.$[].products': { _id: productId }, 'checkoutapproval.$[].products': { _id: productId }, 'approvalcheckout.$[].products': { _id: productId }, 'approvalcheckoutBuyer.$[].products': { _id: productId } } }
+    // Update the user document in the database
+    await collection.updateOne(
+      { storeId },
+      { $set: { products: existingUser.products } }
     );
 
+    if(productId){
+      await collection.updateMany(
+        { [`userCarts.${productId}`]: { $exists: true } }, 
+        { $unset: { [`userCarts.${productId}`]: "" } } 
+      );
+    }
+
+    if(productId){
+      await collection.updateMany(
+        { [`userCarts.${productId}`]: { $exists: true } }, 
+        { $unset: { [`userCarts.${productId}`]: "" } } 
+      );
+    }
+
+    if(productId){
+      await collection.updateMany(
+        { [`checkoutapproval.${storeId}`]: { $exists: true } },
+        { $pull: { [`checkoutapproval.${storeId}`]: { productId } } }
+      );
+    }
+
+    if(productId){
+      await collection.updateMany(
+        { [`approvalcheckout.${storeId}`]: { $exists: true } },
+        { $pull: { [`approvalcheckout.${storeId}`]: { productId } } }
+      );
+    }
+    if(productId){
+      await collection.updateMany(
+        { [`approvalcheckoutBuyer.${storeId}`]: { $exists: true } },
+        { $pull: { [`approvalcheckoutBuyer.${storeId}`]: { productId } } }
+      );
+    }
     // Close MongoDB connection
     await client.close();
 
@@ -2345,7 +2377,6 @@ app.get('/deleteProductOfUser', async (req, res) => {
     res.status(500).json({ error: 'An error occurred while deleting product' });
   }
 });
-
 
 
 app.listen(PORT, '192.168.29.149', () => {
