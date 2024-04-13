@@ -612,7 +612,7 @@ app.post('/deleteCartProduct', async (req, res) => {
         return;
       }
       delete user.userCarts[productId];
-      
+
       // Delete the product with the matching _id from userCartsProductsDetails
       for (const key in user.userCartsProductsDetails) {
         if (user.userCartsProductsDetails.hasOwnProperty(key)) {
@@ -687,7 +687,7 @@ app.post('/addCheckoutApproval', async (req, res) => {
         productId,
         quantity,
         totalPrice,
-        offerp : offer,
+        offerp: offer,
         productName: productDetails.productName,
         startedPrice: productDetails.startedPrice,
         f3MarketPrice: productDetails.f3MarketPrice,
@@ -702,7 +702,8 @@ app.post('/addCheckoutApproval', async (req, res) => {
         walletAddressBuyer: user.walletAddress,
         flagWord: productDetails.flagWord,
         storeName: productDetails.storeName,
-        images: productDetails.images      });
+        images: productDetails.images
+      });
     }
 
     // Update the user document in the database
@@ -808,10 +809,10 @@ app.get('/getSellerProductsCheckoutById', async (req, res) => {
 
         // Iterate over each checkout approval in the seller's array
         for (const checkoutApproval of sellerCheckoutApprovalsArray) {
-          const { productId, quantity, totalPrice,productName,startedPrice,
-            f3MarketPrice,growthContribution,numberOfStocks,unitItemSelected,
-            description,totalsolds,storeId,offer,storeIdBuyer,walletAddressBuyer,
-            flagWord,storeName,images} = checkoutApproval;
+          const { productId, quantity, totalPrice, productName, startedPrice,
+            f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected,
+            description, totalsolds, storeId, offer, storeIdBuyer, walletAddressBuyer,
+            flagWord, storeName, images } = checkoutApproval;
 
           // Fetch product details from MongoDB
           const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
@@ -1036,10 +1037,10 @@ app.get('/getBuyersSectionProductcheckout', async (req, res) => {
 
       // Iterate over each checkout approval in the seller's array
       for (const checkoutApproval of sellerCheckoutApprovalsArray) {
-        const { productId, quantity, totalPrice,productName,startedPrice,
-          f3MarketPrice,growthContribution,numberOfStocks,unitItemSelected,
-          description,totalsolds,storeId,offer,storeIdBuyer,walletAddressBuyer,
-          flagWord,storeName,images} = checkoutApproval;
+        const { productId, quantity, totalPrice, productName, startedPrice,
+          f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected,
+          description, totalsolds, storeId, offer, storeIdBuyer, walletAddressBuyer,
+          flagWord, storeName, images } = checkoutApproval;
 
         // Fetch product details from MongoDB
         const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
@@ -1111,7 +1112,11 @@ app.get('/getSellerSectionApprovedCheckout', async (req, res) => {
 
         // Iterate over each checkout approval in the seller's array
         for (const approvalcheckout of sellerApprovalsCheckoutArray) {
-          const { productId, quantity, totalPrice, paymentRequestedTimestamp } = approvalcheckout;
+          const { productId, quantity, totalPrice, paymentRequestedTimestamp,
+            productName, startedPrice,
+            f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected,
+            description, totalsolds, storeId, offer, storeIdBuyer, walletAddressBuyer,
+            flagWord, storeName, images } = approvalcheckout;
 
           // Fetch product details from MongoDB
           const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
@@ -1122,21 +1127,21 @@ app.get('/getSellerSectionApprovedCheckout', async (req, res) => {
             totalQuantity: quantity,
             totalPrice,
             paymentRequestedTimestamp,
-            productName: productDetails.products[0].productName,
-            startedPrice: productDetails.products[0].startedPrice,
-            f3MarketPrice: productDetails.products[0].f3MarketPrice,
-            growthContribution: productDetails.products[0].growthContribution,
-            numberOfStocks: productDetails.products[0].numberOfStocks,
-            unitItemSelected: productDetails.products[0].unitItemSelected,
-            description: productDetails.products[0].description,
-            totalsolds: productDetails.products[0].totalsolds,
-            storeId: productDetails.products[0].storeId,
+            productName,
+            startedPrice,
+            f3MarketPrice,
+            growthContribution,
+            numberOfStocks,
+            unitItemSelected,
+            description,
+            totalsolds,
+            storeId,
             storeIdBuyer: user.storeId,
-            offer: productDetails.products[0].offer,
+            offer,
             walletAddressBuyer: user.walletAddress,
-            flagWord: productDetails.products[0].flagWord,
-            storeName: productDetails.products[0].storeName,
-            images: productDetails.products[0].images
+            flagWord,
+            storeName,
+            images,
           });
         }
       }
@@ -1189,7 +1194,11 @@ app.get('/getBuyersSectionApprovedCheckout', async (req, res) => {
 
       // Iterate over each checkout approval in the seller's array
       for (const approvalcheckout of sellerCheckoutApprovalsArray) {
-        const { productId, quantity, totalPrice, paymentRequestedTimestampBuyer } = approvalcheckout;
+        const { productId, quantity, totalPrice, paymentRequestedTimestampBuyer,
+          productName, startedPrice,
+          f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected,
+          description, totalsolds, storeId, offer, storeIdBuyer, walletAddressBuyer,
+          flagWord, storeName, images } = approvalcheckout;
 
         // Fetch product details from MongoDB
         const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
@@ -1200,19 +1209,19 @@ app.get('/getBuyersSectionApprovedCheckout', async (req, res) => {
           totalQuantity: quantity,
           totalPrice,
           paymentRequestedTimestampBuyer,
-          productName: productDetails.products[0].productName,
-          startedPrice: productDetails.products[0].startedPrice,
-          f3MarketPrice: productDetails.products[0].f3MarketPrice,
-          growthContribution: productDetails.products[0].growthContribution,
-          numberOfStocks: productDetails.products[0].numberOfStocks,
-          unitItemSelected: productDetails.products[0].unitItemSelected,
-          description: productDetails.products[0].description,
-          totalsolds: productDetails.products[0].totalsolds,
-          storeId: productDetails.products[0].storeId,
-          flagWord: productDetails.products[0].flagWord,
-          offer: productDetails.products[0].offer,
-          storeName: productDetails.products[0].storeName,
-          images: productDetails.products[0].images
+          productName,
+          startedPrice,
+          f3MarketPrice,
+          growthContribution,
+          numberOfStocks,
+          unitItemSelected,
+          description,
+          totalsolds,
+          storeId,
+          flagWord,
+          offer,
+          storeName,
+          images,
         });
       }
     }
@@ -2099,7 +2108,11 @@ app.get('/getSellerSectionSalesHistory', async (req, res) => {
 
         // Iterate over each checkout approval in the seller's array
         for (const saleshistory of sellerSalesHistoryArray) {
-          const { productId, quantity, totalPrice, paymentRequestedTimestamp, totalF3Amount, totalGc, f3LiveOfThisTime } = saleshistory;
+          const { productId, quantity, totalPrice, paymentRequestedTimestamp, totalF3Amount, totalGc, f3LiveOfThisTime,
+            productName, startedPrice,
+            f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected,
+            description, totalsolds, storeId, offer, storeIdBuyer, walletAddressBuyer,
+            flagWord, storeName, images } = saleshistory;
 
           // Fetch product details from MongoDB
           const productDetails = await db.collection('users').findOne({ 'productsbackup._id': productId }, { projection: { 'productsbackup.$': 1 } });
@@ -2113,21 +2126,21 @@ app.get('/getSellerSectionSalesHistory', async (req, res) => {
             totalF3Amount,
             totalGc,
             f3LiveOfThisTime,
-            productName: productDetails.productsbackup[0].productName,
-            startedPrice: productDetails.productsbackup[0].startedPrice,
-            f3MarketPrice: productDetails.productsbackup[0].f3MarketPrice,
-            growthContribution: productDetails.productsbackup[0].growthContribution,
-            numberOfStocks: productDetails.productsbackup[0].numberOfStocks,
-            unitItemSelected: productDetails.productsbackup[0].unitItemSelected,
-            description: productDetails.productsbackup[0].description,
-            totalsolds: productDetails.productsbackup[0].totalsolds,
-            storeId: productDetails.productsbackup[0].storeId,
-            productOffer: productDetails.productsbackup[0].offer,
+            productName,
+            startedPrice,
+            f3MarketPrice,
+            growthContribution,
+            numberOfStocks,
+            unitItemSelected,
+            description,
+            totalsolds,
+            storeId,
+            productOffer: offer,
             storeIdBuyer: user.storeId,
             walletAddressBuyer: user.walletAddress,
-            flagWord: productDetails.productsbackup[0].flagWord,
-            storeName: productDetails.productsbackup[0].storeName,
-            images: productDetails.productsbackup[0].images
+            flagWord,
+            storeName,
+            images,
           });
         }
       }
@@ -2180,7 +2193,11 @@ app.get('/getBuyersSectionSalesHistory', async (req, res) => {
 
       // Iterate over each checkout approval in the seller's array
       for (const saleshistory of sellerSalesHistoryArray) {
-        const { productId, quantity, totalPrice, paymentRequestedTimestampBuyer, totalF3Amount, totalGc, f3LiveOfThisTime } = saleshistory;
+        const { productId, quantity, totalPrice, paymentRequestedTimestampBuyer, totalF3Amount, totalGc, f3LiveOfThisTime,
+          productName, startedPrice,
+          f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected,
+          description, totalsolds, storeId, offer, storeIdBuyer, walletAddressBuyer,
+          flagWord, storeName, images } = saleshistory;
 
         // Fetch product details from MongoDB
         const productDetails = await db.collection('users').findOne({ 'productsbackup._id': productId }, { projection: { 'productsbackup.$': 1 } });
@@ -2194,19 +2211,19 @@ app.get('/getBuyersSectionSalesHistory', async (req, res) => {
           totalF3Amount,
           totalGc,
           f3LiveOfThisTime,
-          productName: productDetails.productsbackup[0].productName,
-          startedPrice: productDetails.productsbackup[0].startedPrice,
-          f3MarketPrice: productDetails.productsbackup[0].f3MarketPrice,
-          growthContribution: productDetails.productsbackup[0].growthContribution,
-          numberOfStocks: productDetails.productsbackup[0].numberOfStocks,
-          unitItemSelected: productDetails.productsbackup[0].unitItemSelected,
-          description: productDetails.productsbackup[0].description,
-          totalsolds: productDetails.productsbackup[0].totalsolds,
-          storeId: productDetails.productsbackup[0].storeId,
-          productOffer: productDetails.productsbackup[0].offer,
-          flagWord: productDetails.productsbackup[0].flagWord,
-          storeName: productDetails.productsbackup[0].storeName,
-          images: productDetails.productsbackup[0].images
+          productName,
+          startedPrice,
+          f3MarketPrice,
+          growthContribution,
+          numberOfStocks,
+          unitItemSelected,
+          description,
+          totalsolds,
+          storeId,
+          productOffer: offer,
+          flagWord,
+          storeName,
+          images,
         });
       }
     }
@@ -2327,7 +2344,7 @@ app.get('/deleteProductOfUser', async (req, res) => {
     // Remove the product from the array
     existingUser.products.splice(productIndex, 1);
 
-    // Update the user document in the database
+    // // Update the user document in the database
     await collection.updateOne(
       { storeId },
       { $set: { products: existingUser.products } }
@@ -2338,13 +2355,48 @@ app.get('/deleteProductOfUser', async (req, res) => {
         { [`userCarts.${productId}`]: { $exists: true } },
         { $unset: { [`userCarts.${productId}`]: "" } }
       );
-    }
+      const aggregationPipeline = [
+        { $match: { 'userCartsProductsDetails': { $exists: true } } },
+        { $project: { userCartsProductsArray: { $objectToArray: '$userCartsProductsDetails' } } },
+        { $match: { 'userCartsProductsArray.v._id': productId } }
+      ];
 
-    if (productId) {
-      await collection.updateMany(
-        { [`userCarts.${productId}`]: { $exists: true } },
-        { $unset: { [`userCarts.${productId}`]: "" } }
-      );
+      const usersWithProduct = await collection.aggregate(aggregationPipeline).toArray();
+
+      console.log(usersWithProduct)
+      if (usersWithProduct.length === 0) {
+        return res.status(404).json({ error: `No users found with productId ${productId}` });
+      }
+
+      // Iterate through each user and delete the product from userCartsProductsDetails
+      // Iterate through each user and delete the product from userCartsProductsDetails
+      for (const user of usersWithProduct) {
+        const userId = user._id;
+        const existingUserDeleteFor = await collection.findOne({ _id: userId });
+        const storeDe = await collection.findOne({ storeId: existingUserDeleteFor.storeId });
+        const userStoreId = existingUserDeleteFor.storeId
+        console.log(userId)
+        console.log(existingUserDeleteFor)
+        console.log('funsStore', storeDe)
+        console.log('storeDirect', existingUserDeleteFor.storeId)
+        //Check if the product exists in userCartsProductsDetails for this user
+        if (storeDe.userCartsProductsDetails) {
+          for (const key in storeDe.userCartsProductsDetails) {
+            if (storeDe.userCartsProductsDetails.hasOwnProperty(key)) {
+              const productDetail = storeDe.userCartsProductsDetails[key];
+              console.log(productDetail);
+              if (productDetail._id === productId) {
+                delete storeDe.userCartsProductsDetails[key];
+                console.log('yes', productId,)
+              }
+            }
+          }
+        }
+        await collection.updateOne(
+          { storeId: userStoreId },
+          { $set: { userCartsProductsDetails: storeDe.userCartsProductsDetails } }
+        );
+      }
     }
 
     if (productId) {
@@ -2355,16 +2407,16 @@ app.get('/deleteProductOfUser', async (req, res) => {
     }
 
     if (productId) {
-      await collection.updateMany(
-        { [`approvalcheckout.${storeId}`]: { $exists: true } },
-        { $pull: { [`approvalcheckout.${storeId}`]: { productId } } }
-      );
+      // await collection.updateMany(
+      //   { [`approvalcheckout.${storeId}`]: { $exists: true } },
+      //   { $pull: { [`approvalcheckout.${storeId}`]: { productId } } }
+      // );
     }
     if (productId) {
-      await collection.updateMany(
-        { [`approvalcheckoutBuyer.${storeId}`]: { $exists: true } },
-        { $pull: { [`approvalcheckoutBuyer.${storeId}`]: { productId } } }
-      );
+      // await collection.updateMany(
+      //   { [`approvalcheckoutBuyer.${storeId}`]: { $exists: true } },
+      //   { $pull: { [`approvalcheckoutBuyer.${storeId}`]: { productId } } }
+      // );
     }
     // Close MongoDB connection
     await client.close();
