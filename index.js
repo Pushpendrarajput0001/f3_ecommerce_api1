@@ -2376,8 +2376,8 @@ app.get('/deleteProductOfUser', async (req, res) => {
         const storeDe = await collection.findOne({ storeId: existingUserDeleteFor.storeId });
         const userStoreId = existingUserDeleteFor.storeId
         console.log(userId)
-        console.log(existingUserDeleteFor)
-        console.log('funsStore', storeDe)
+        //console.log(existingUserDeleteFor)
+        //console.log('funsStore', storeDe)
         console.log('storeDirect', existingUserDeleteFor.storeId)
         //Check if the product exists in userCartsProductsDetails for this user
         if (storeDe.userCartsProductsDetails) {
