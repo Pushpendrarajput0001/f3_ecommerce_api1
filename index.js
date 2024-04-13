@@ -523,8 +523,8 @@ app.post('/addProductToCart', async (req, res) => {
     }
 
     // Add product details to userCartsProductsDetails map
-    user.userCartsProductsDetails[Object.keys(user.userCartsProductsDetails).length] = product.products[0]; // Assuming product is found and has details
-
+    const productDetailsCopy = { ...product.products[0] };
+    user.userCartsProductsDetails[Object.keys(user.userCartsProductsDetails).length] = productDetailsCopy;
     // Update the user document in the database
     await collection.updateOne(
       { email },
@@ -541,7 +541,6 @@ app.post('/addProductToCart', async (req, res) => {
     res.status(500).json({ error: 'An error occurred while adding product to cart' });
   }
 });
-
 
 app.get('/userCartProducts', async (req, res) => {
   try {
@@ -614,9 +613,15 @@ app.post('/deleteCartProduct', async (req, res) => {
         return;
       }
       delete user.userCarts[productId];
-      if (user.userCartsProductsDetails && user.userCartsProductsDetails[productId]) {
-        // If it exists, delete it from userCartsProductsDetails
-        delete user.userCartsProductsDetails[productId];
+      
+      // Delete the product with the matching _id from userCartsProductsDetails
+      for (const key in user.userCartsProductsDetails) {
+        if (user.userCartsProductsDetails.hasOwnProperty(key)) {
+          const productDetail = user.userCartsProductsDetails[key];
+          if (productDetail._id === productId) {
+            delete user.userCartsProductsDetails[key];
+          }
+        }
       }
     });
 
