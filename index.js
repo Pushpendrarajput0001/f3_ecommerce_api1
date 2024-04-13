@@ -2,7 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const { MongoClient, ObjectId } = require('mongodb');
 const sharp = require('sharp');
-const {ethers,JsonRpcProvider , formatEther, parseUnits, isAddress, ContractTransactionResponse, InfuraProvider} = require("ethers");
+const { ethers, JsonRpcProvider, formatEther, parseUnits, isAddress, ContractTransactionResponse, InfuraProvider } = require("ethers");
 const app = express();
 const PORT = 3000;
 const MONGO_URI = 'mongodb+srv://andy:markf3ecommerce@atlascluster.gjlv4np.mongodb.net/?retryWrites=true&w=majority&appName=AtlasCluster';
@@ -18,7 +18,7 @@ const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTop
 app.post('/usersregister', async (req, res) => {
   try {
     // Extract user data from request body
-    const { email, password, storeName, walletAddress, cityAddress, localAddress, usdtRate, country,storeId,currencySymbol,currencyCode,flagWord } = req.body;
+    const { email, password, storeName, walletAddress, cityAddress, localAddress, usdtRate, country, storeId, currencySymbol, currencyCode, flagWord } = req.body;
 
     // Connect to MongoDB
     const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -30,16 +30,16 @@ app.post('/usersregister', async (req, res) => {
 
     // Check if the email already exists
     const existingUser = await collection.findOne({ email });
-    const existingUserWallet = await collection.findOne({walletAddress});
+    const existingUserWallet = await collection.findOne({ walletAddress });
     if (existingUser) {
       // Close the MongoDB connection
       await client.close();
       return res.status(400).json({ error: 'User with this email already exists' });
     }
 
-    if(existingUserWallet){
+    if (existingUserWallet) {
       await client.close();
-      return res.status(401).json({error : 'User with this wallet already'})
+      return res.status(401).json({ error: 'User with this wallet already' })
     }
     // Create a document with user data
     const userDocument = {
@@ -84,10 +84,10 @@ async function getUserDetails(email) {
 
   // Filter out any nested maps from the user object
   const filteredUser = Object.keys(user).reduce((acc, key) => {
-      if (!user[key] || typeof user[key] !== 'object') {
-          acc[key] = user[key];
-      }
-      return acc;
+    if (!user[key] || typeof user[key] !== 'object') {
+      acc[key] = user[key];
+    }
+    return acc;
   }, {});
 
   return filteredUser;
@@ -124,13 +124,13 @@ app.post('/login', async (req, res) => {
     const userToSend = {
       email: user.email,
       storeName: user.storeName,
-      storeId : user.storeId,
+      storeId: user.storeId,
       walletAddress: user.walletAddress,
       cityAddress: user.cityAddress,
       localAddress: user.localAddress,
       usdRate: user.usdtRate,
-      flagWord : user.flagWord,
-      currencySymbol : user.currencySymbol,
+      flagWord: user.flagWord,
+      currencySymbol: user.currencySymbol,
       country: user.country
     };
 
@@ -148,22 +148,22 @@ app.post('/login', async (req, res) => {
 app.post('/productsAdd', async (req, res) => {
   const DB_NAME = 'f3_ecommerce';
   const COLLECTION_NAME = 'users';
-  
+
   try {
     const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true });
     const db = client.db(DB_NAME);
     const collection = db.collection(COLLECTION_NAME);
 
     // Extract product data and images from request body
-    const { email, productName, startedPrice, f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected, description, totalsolds, images, storeId, storeName,flagWord,offer } = req.body;
+    const { email, productName, startedPrice, f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected, description, totalsolds, images, storeId, storeName, flagWord, offer } = req.body;
 
     // Resize and compress images
     const compressedImages = await Promise.all(images.map(async (image) => {
       // Resize and compress image using sharp
       compressedBuffer = await sharp(Buffer.from(image, 'base64'))
-      .resize({ width: 150 }) // Set desired width (you can adjust this as needed)
-      .png({ quality: 25 }) // Set desired PNG quality (you can adjust this as needed)
-      .toBuffer();
+        .resize({ width: 150 }) // Set desired width (you can adjust this as needed)
+        .png({ quality: 25 }) // Set desired PNG quality (you can adjust this as needed)
+        .toBuffer();
 
       return compressedBuffer.toString('base64');
     }));
@@ -330,49 +330,49 @@ app.get('/userLocationsWithProducts', async (req, res) => {
 
 app.get("/userBalances", async (req, res) => {
   try {
-      const { privateKey } = req.query;
+    const { privateKey } = req.query;
 
-      if (!privateKey) {
-          return res.status(400).send("Please provide private key");
+    if (!privateKey) {
+      return res.status(400).send("Please provide private key");
+    }
+
+    const provider = new JsonRpcProvider("https://bsc-dataseed.binance.org/");
+    const wallet = new ethers.Wallet(privateKey, provider);
+
+    // Define the F3 token contract ABI
+    const ABI = require("./contract.json");
+    const f3ContractAddress = "0xfB265e16e882d3d32639253ffcfC4b0a2E861467";
+    const f3Contract = new ethers.Contract(f3ContractAddress, ABI, provider);
+
+    // Fetch F3 token details
+    const f3Name = await f3Contract.name();
+    const f3Symbol = await f3Contract.symbol();
+    const f3Decimals = await f3Contract.decimals();
+
+    // Fetch F3 token balance
+    const f3Balance = await f3Contract.balanceOf(wallet.address);
+
+    // Fetch BNB balance
+    const bnbBalance = await provider.getBalance(wallet.address);
+
+    // Prepare response
+    const response = {
+      f3Balance: formatEther(f3Balance).toString(),
+      bnbBalance: formatEther(bnbBalance).toString()
+    };
+
+    // Convert any potential BigInt values in the response to strings
+    const jsonString = JSON.stringify(response, (key, value) => {
+      if (typeof value === 'bigint') {
+        return value.toString();
       }
+      return value;
+    });
 
-      const provider = new JsonRpcProvider("https://bsc-dataseed.binance.org/");
-      const wallet = new ethers.Wallet(privateKey, provider);
-
-      // Define the F3 token contract ABI
-      const ABI = require("./contract.json");
-      const f3ContractAddress = "0xfB265e16e882d3d32639253ffcfC4b0a2E861467";
-      const f3Contract = new ethers.Contract(f3ContractAddress, ABI, provider);
-
-      // Fetch F3 token details
-      const f3Name = await f3Contract.name();
-      const f3Symbol = await f3Contract.symbol();
-      const f3Decimals = await f3Contract.decimals();
-
-      // Fetch F3 token balance
-      const f3Balance = await f3Contract.balanceOf(wallet.address);
-
-      // Fetch BNB balance
-      const bnbBalance = await provider.getBalance(wallet.address);
-
-      // Prepare response
-      const response = {
-          f3Balance: formatEther(f3Balance).toString(),
-          bnbBalance: formatEther(bnbBalance).toString() 
-      };
-
-      // Convert any potential BigInt values in the response to strings
-      const jsonString = JSON.stringify(response, (key, value) => {
-          if (typeof value === 'bigint') {
-              return value.toString();
-          }
-          return value;
-      });
-
-      return res.status(200).json(JSON.parse(jsonString));
+    return res.status(200).json(JSON.parse(jsonString));
   } catch (error) {
-      console.error(error);
-      return res.status(500).send("Internal Server Error");
+    console.error(error);
+    return res.status(500).send("Internal Server Error");
   }
 });
 
@@ -523,7 +523,7 @@ app.post('/addProductToCart', async (req, res) => {
     }
 
     // Add product details to userCartsProductsDetails map
-    user.userCartsProductsDetails[productId] = product.products[0]; // Assuming product is found and has details
+    user.userCartsProductsDetails[Object.keys(user.userCartsProductsDetails).length] = product.products[0]; // Assuming product is found and has details
 
     // Update the user document in the database
     await collection.updateOne(
@@ -569,15 +569,13 @@ app.get('/userCartProducts', async (req, res) => {
     // Extract product IDs from user's cart
     const productIds = Object.keys(user.userCarts);
 
-    // Find product details for the product IDs in the user's cart
+    // Retrieve product details from userCartsProductsDetails map
+    // Retrieve product details from userCartsProductsDetails map
     const cartProducts = [];
-    await Promise.all(productIds.map(async (productId) => {
-      // Find product in all users
-      const product = await collection.findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
-      if (product && product.products && product.products.length > 0) {
-        cartProducts.push(product.products[0]);
-      }
-    }));
+    Object.keys(user.userCartsProductsDetails).forEach((key) => {
+      cartProducts.push(user.userCartsProductsDetails[key]);
+    });
+
 
     // Close MongoDB connection
     await client.close();
@@ -592,7 +590,7 @@ app.get('/userCartProducts', async (req, res) => {
 
 app.post('/deleteCartProduct', async (req, res) => {
   try {
-    const { email, productIds } = req.body; 
+    const { email, productIds } = req.body;
 
     const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
     const db = client.db('f3_ecommerce');
@@ -616,11 +614,15 @@ app.post('/deleteCartProduct', async (req, res) => {
         return;
       }
       delete user.userCarts[productId];
+      if (user.userCartsProductsDetails && user.userCartsProductsDetails[productId]) {
+        // If it exists, delete it from userCartsProductsDetails
+        delete user.userCartsProductsDetails[productId];
+      }
     });
 
     await collection.updateOne(
       { email },
-      { $set: { userCarts: user.userCarts } }
+      { $set: { userCarts: user.userCarts, userCartsProductsDetails: user.userCartsProductsDetails } }
     );
 
     await client.close();
@@ -656,7 +658,7 @@ app.post('/addCheckoutApproval', async (req, res) => {
 
     // Iterate through products to add or replace in the checkoutapproval map
     products.forEach(product => {
-      const { productId, quantity, totalPrice, storeId,offer } = product;
+      const { productId, quantity, totalPrice, storeId, offer } = product;
 
       // Check if checkoutapproval for the storeId already exists
       if (!user.checkoutapproval[storeId]) {
@@ -724,7 +726,7 @@ app.get('/getBuyCheckedOutApproval', async (req, res) => {
         // Add product details along with quantity and totalPrice
         productsDetails.push({
           productId,
-          totalQuantity : quantity,
+          totalQuantity: quantity,
           totalPrice,
           ...productDetails
         });
@@ -735,7 +737,7 @@ app.get('/getBuyCheckedOutApproval', async (req, res) => {
     await client.close();
 
     // Send response with productsDetails array
-    res.status(200).json({ products: productsDetails});
+    res.status(200).json({ products: productsDetails });
   } catch (error) {
     console.error('Error retrieving checkout approvals:', error);
     res.status(500).json({ error: 'An error occurred while retrieving checkout approvals' });
@@ -768,11 +770,11 @@ app.get('/getSellerProductsCheckoutById', async (req, res) => {
     // Iterate over each user with checkout approvals
     for (const user of usersWithCheckoutApprovals) {
       console.log('User:', user);
-      
+
       if (user.checkoutapproval[sellerId]) {
         const sellerCheckoutApprovalsArray = user.checkoutapproval[sellerId];
         console.log('Checkout Approvals for Seller:', sellerCheckoutApprovalsArray);
-        
+
         // Iterate over each checkout approval in the seller's array
         for (const checkoutApproval of sellerCheckoutApprovalsArray) {
           const { productId, quantity, totalPrice } = checkoutApproval;
@@ -783,7 +785,7 @@ app.get('/getSellerProductsCheckoutById', async (req, res) => {
           // Add product details along with quantity, totalPrice, and storeId
           products.push({
             _id: productId,
-            totalQuantity : quantity,
+            totalQuantity: quantity,
             totalPrice,
             productName: productDetails.products[0].productName,
             startedPrice: productDetails.products[0].startedPrice,
@@ -793,11 +795,11 @@ app.get('/getSellerProductsCheckoutById', async (req, res) => {
             unitItemSelected: productDetails.products[0].unitItemSelected,
             description: productDetails.products[0].description,
             totalsolds: productDetails.products[0].totalsolds,
-            storeId : productDetails.products[0].storeId,
-            offer : productDetails.products[0].offer,
+            storeId: productDetails.products[0].storeId,
+            offer: productDetails.products[0].offer,
             storeIdBuyer: user.storeId,
-            walletAddressBuyer : user.walletAddress,
-            flagWord : productDetails.products[0].flagWord,
+            walletAddressBuyer: user.walletAddress,
+            flagWord: productDetails.products[0].flagWord,
             storeName: productDetails.products[0].storeName,
             images: productDetails.products[0].images
           });
@@ -818,7 +820,7 @@ app.get('/getSellerProductsCheckoutById', async (req, res) => {
 
 app.get('/deleteCheckoutapprovalsStore', async (req, res) => {
   try {
-    const { storeId, buyerId } = req.query; 
+    const { storeId, buyerId } = req.query;
 
     const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
     const db = client.db('f3_ecommerce');
@@ -865,7 +867,7 @@ app.post('/updateProductAfterCheckoutApproval', async (req, res) => {
 
       // Find the product by productId
       const existingProduct = await collection.findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
-      const existingProductBackup = await collection.findOne({'productsbackup._id':productId},{projection : {'productsbackup.$' : 1}});
+      const existingProductBackup = await collection.findOne({ 'productsbackup._id': productId }, { projection: { 'productsbackup.$': 1 } });
 
       if (!existingProduct) {
         res.status(404).json({ error: `Product ${productId} not found in store` });
@@ -952,7 +954,7 @@ app.get('/deleteAndapprovalcheckoutsStore', async (req, res) => {
 
     await collection.updateOne(
       { storeId: buyerId },
-      { $set: { checkoutapproval: user.checkoutapproval, approvalcheckout: user.approvalcheckout,approvalcheckoutBuyer : user.approvalcheckoutBuyer } }
+      { $set: { checkoutapproval: user.checkoutapproval, approvalcheckout: user.approvalcheckout, approvalcheckoutBuyer: user.approvalcheckoutBuyer } }
     );
 
     await client.close();
@@ -1008,7 +1010,7 @@ app.get('/getBuyersSectionProductcheckout', async (req, res) => {
         // Add product details along with quantity and totalPrice
         products.push({
           _id: productId,
-          totalQuantity : quantity,
+          totalQuantity: quantity,
           totalPrice,
           productName: productDetails.products[0].productName,
           startedPrice: productDetails.products[0].startedPrice,
@@ -1019,8 +1021,8 @@ app.get('/getBuyersSectionProductcheckout', async (req, res) => {
           description: productDetails.products[0].description,
           totalsolds: productDetails.products[0].totalsolds,
           storeId: productDetails.products[0].storeId,
-          offer : productDetails.products[0].offer,
-          flagWord : productDetails.products[0].flagWord,
+          offer: productDetails.products[0].offer,
+          flagWord: productDetails.products[0].flagWord,
           storeName: productDetails.products[0].storeName,
           images: productDetails.products[0].images
         });
@@ -1064,14 +1066,14 @@ app.get('/getSellerSectionApprovedCheckout', async (req, res) => {
     // Iterate over each user with checkout approvals
     for (const user of usersWithApprovalsCheckout) {
       console.log('User:', user);
-      
+
       if (user.approvalcheckout[sellerId]) {
         const sellerApprovalsCheckoutArray = user.approvalcheckout[sellerId];
         console.log('Approvals Checkout for Seller:', sellerApprovalsCheckoutArray);
-        
+
         // Iterate over each checkout approval in the seller's array
         for (const approvalcheckout of sellerApprovalsCheckoutArray) {
-          const { productId, quantity, totalPrice,paymentRequestedTimestamp } = approvalcheckout;
+          const { productId, quantity, totalPrice, paymentRequestedTimestamp } = approvalcheckout;
 
           // Fetch product details from MongoDB
           const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
@@ -1079,7 +1081,7 @@ app.get('/getSellerSectionApprovedCheckout', async (req, res) => {
           // Add product details along with quantity, totalPrice, and storeId
           products.push({
             _id: productId,
-            totalQuantity : quantity,
+            totalQuantity: quantity,
             totalPrice,
             paymentRequestedTimestamp,
             productName: productDetails.products[0].productName,
@@ -1090,11 +1092,11 @@ app.get('/getSellerSectionApprovedCheckout', async (req, res) => {
             unitItemSelected: productDetails.products[0].unitItemSelected,
             description: productDetails.products[0].description,
             totalsolds: productDetails.products[0].totalsolds,
-            storeId : productDetails.products[0].storeId,
+            storeId: productDetails.products[0].storeId,
             storeIdBuyer: user.storeId,
-            offer : productDetails.products[0].offer,
-            walletAddressBuyer : user.walletAddress,
-            flagWord : productDetails.products[0].flagWord,
+            offer: productDetails.products[0].offer,
+            walletAddressBuyer: user.walletAddress,
+            flagWord: productDetails.products[0].flagWord,
             storeName: productDetails.products[0].storeName,
             images: productDetails.products[0].images
           });
@@ -1149,7 +1151,7 @@ app.get('/getBuyersSectionApprovedCheckout', async (req, res) => {
 
       // Iterate over each checkout approval in the seller's array
       for (const approvalcheckout of sellerCheckoutApprovalsArray) {
-        const { productId, quantity, totalPrice,paymentRequestedTimestampBuyer } = approvalcheckout;
+        const { productId, quantity, totalPrice, paymentRequestedTimestampBuyer } = approvalcheckout;
 
         // Fetch product details from MongoDB
         const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
@@ -1157,7 +1159,7 @@ app.get('/getBuyersSectionApprovedCheckout', async (req, res) => {
         // Add product details along with quantity and totalPrice
         products.push({
           _id: productId,
-          totalQuantity : quantity,
+          totalQuantity: quantity,
           totalPrice,
           paymentRequestedTimestampBuyer,
           productName: productDetails.products[0].productName,
@@ -1169,8 +1171,8 @@ app.get('/getBuyersSectionApprovedCheckout', async (req, res) => {
           description: productDetails.products[0].description,
           totalsolds: productDetails.products[0].totalsolds,
           storeId: productDetails.products[0].storeId,
-          flagWord : productDetails.products[0].flagWord,
-          offer : productDetails.products[0].offer,
+          flagWord: productDetails.products[0].flagWord,
+          offer: productDetails.products[0].offer,
           storeName: productDetails.products[0].storeName,
           images: productDetails.products[0].images
         });
@@ -1190,9 +1192,9 @@ app.get('/getBuyersSectionApprovedCheckout', async (req, res) => {
 
 app.get('/updateRequestApprovedCheckout', async (req, res) => {
   try {
-    const { storeId, sellerId, paymentRequestedTimestamp,totalF3Amount,totalGc,f3LiveOfThisTime } = req.query;
+    const { storeId, sellerId, paymentRequestedTimestamp, totalF3Amount, totalGc, f3LiveOfThisTime } = req.query;
 
-    console.log('Request received:', storeId, sellerId, paymentRequestedTimestamp,totalF3Amount,totalGc);
+    console.log('Request received:', storeId, sellerId, paymentRequestedTimestamp, totalF3Amount, totalGc);
 
     const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
     const db = client.db('f3_ecommerce');
@@ -1227,20 +1229,20 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
           sellerObject.startedDateAndTime = paymentRequestedTimestamp;
         }
       });
-      
+
       if (user.paymentRequestSeller[sellerId]) {
-            const sellerArrayReq = user.paymentRequestSeller[sellerId];
-            sellerArrayReq.forEach((sellerObjectRequest)=>{
-              if(sellerObjectRequest.startedDateAndTime){
-                sellerObjectRequest.startedDateAndTime = paymentRequestedTimestamp
-              }
+        const sellerArrayReq = user.paymentRequestSeller[sellerId];
+        sellerArrayReq.forEach((sellerObjectRequest) => {
+          if (sellerObjectRequest.startedDateAndTime) {
+            sellerObjectRequest.startedDateAndTime = paymentRequestedTimestamp
+          }
 
-            });
-            await collection.updateOne({ storeId }, { $set: { [`paymentRequestSeller.${sellerId}`]: sellerArrayReq } });
-    } else {
+        });
+        await collection.updateOne({ storeId }, { $set: { [`paymentRequestSeller.${sellerId}`]: sellerArrayReq } });
+      } else {
 
-    }
-    
+      }
+
       await collection.updateOne({ storeId }, { $set: { [`approvalcheckout.${sellerId}`]: sellerArray } });
 
       console.log(`Payment requested timestamp updated successfully for sellerId ${sellerId}`);
@@ -1252,7 +1254,7 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
     if (typeof user.paymentRequestSeller === 'undefined') {
       user.paymentRequestSeller = {};
     }
-    
+
     sellerArray.forEach((sellerObject) => {
       if (!sellerObject.paymentRequested && !sellerObject.paymentRequestedTimestamp) {
         sellerObject.paymentRequested = 'Yes';
@@ -1260,7 +1262,7 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
         sellerObject.totalF3Amount = totalF3Amount;
         sellerObject.totalGc = totalGc;
         sellerObject.f3LiveOfThisTime = f3LiveOfThisTime,
-        sellerObject.storeIdProduct = sellerId;
+          sellerObject.storeIdProduct = sellerId;
         sellerObject.startedDateAndTime = paymentRequestedTimestamp;
       } else if (sellerObject.paymentRequested === 'Yes') {
         sellerObject.paymentRequestedTimestamp = paymentRequestedTimestamp;
@@ -1269,12 +1271,12 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
 
     const copiedSellerArray = sellerArray.map((sellerObject) => {
       const { paymentRequested, paymentRequestedTimestamp, paymentRequestedBuyer, paymentRequestedTimestampBuyer, ...rest } = sellerObject;
-      return { ...rest, totalF3Amount, totalGc,sellerId,f3LiveOfThisTime };
+      return { ...rest, totalF3Amount, totalGc, sellerId, f3LiveOfThisTime };
     });
-    
+
     user.paymentRequestSeller[sellerId] = copiedSellerArray;
 
-    
+
     await collection.updateOne(
       { storeId },
       { $set: { [`approvalcheckout.${sellerId}`]: sellerArray, paymentRequestSeller: user.paymentRequestSeller } }
@@ -1295,9 +1297,9 @@ app.get('/updateRequestApprovedCheckout', async (req, res) => {
 
 app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
   try {
-    const { storeId, sellerId, paymentRequestedTimestamp,totalF3Amount,totalGc,f3LiveOfThisTime } = req.query;
+    const { storeId, sellerId, paymentRequestedTimestamp, totalF3Amount, totalGc, f3LiveOfThisTime } = req.query;
 
-    console.log('Request received:', storeId, sellerId, paymentRequestedTimestamp,totalF3Amount,totalGc);
+    console.log('Request received:', storeId, sellerId, paymentRequestedTimestamp, totalF3Amount, totalGc);
 
     const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
     const db = client.db('f3_ecommerce');
@@ -1339,16 +1341,16 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
 
       if (user.paymentRequestBuyer[sellerId]) {
         const sellerArrayReq = user.paymentRequestBuyer[sellerId];
-        sellerArrayReq.forEach((sellerObjectRequest)=>{
-          if(sellerObjectRequest.startedDateAndTime){
+        sellerArrayReq.forEach((sellerObjectRequest) => {
+          if (sellerObjectRequest.startedDateAndTime) {
             sellerObjectRequest.startedDateAndTime = paymentRequestedTimestamp
           }
 
         });
         await collection.updateOne({ storeId }, { $set: { [`paymentRequestBuyer.${sellerId}`]: sellerArrayReq } });
-} else {
+      } else {
 
-}
+      }
 
 
       // Update the user in the database
@@ -1373,18 +1375,18 @@ app.get('/updateRequestApprovedCheckoutBuyerSection', async (req, res) => {
         sellerObject.totalF3Amount = totalF3Amount;
         sellerObject.totalGc = totalGc;
         sellerObject.f3LiveOfThisTime = f3LiveOfThisTime,
-        sellerObject.storeIdProduct = sellerId;
+          sellerObject.storeIdProduct = sellerId;
         sellerObject.startedDateAndTime = paymentRequestedTimestamp;;
-      }else if(sellerObject.paymentRequestedBuyer === 'Yes'){
+      } else if (sellerObject.paymentRequestedBuyer === 'Yes') {
         sellerObject.paymentRequestedTimestampBuyer = paymentRequestedTimestamp
       }
     });
 
     const copiedSellerArray = sellerArray.map((sellerObject) => {
       const { paymentRequested, paymentRequestedTimestamp, paymentRequestedBuyer, paymentRequestedTimestampBuyer, ...rest } = sellerObject;
-      return { ...rest, totalF3Amount, totalGc,sellerId,f3LiveOfThisTime };
+      return { ...rest, totalF3Amount, totalGc, sellerId, f3LiveOfThisTime };
     });
-    
+
 
     user.paymentRequestBuyer[sellerId] = copiedSellerArray;
 
@@ -1440,11 +1442,11 @@ app.get('/getRequestsOfPayments', async (req, res) => {
           $exists: true,
         }
       }).toArray();
-      
+
       const requestedStoreId = user.storeId; // Assuming user is the current user
-      
+
       console.log('Requested StoreId:', requestedStoreId);
-      
+
       // Iterate over otherUsersWithSellerRequests to find requests for the requested storeId
       for (const otherUser of otherUsersWithSellerRequests) {
         if (otherUser.paymentRequestSeller && otherUser.paymentRequestSeller[requestedStoreId]) {
@@ -1458,9 +1460,9 @@ app.get('/getRequestsOfPayments', async (req, res) => {
               totalPrice: product.totalPrice,
               totalF3: product.totalF3Amount,
               totalGc: product.totalGc,
-              sellerWalletAddress: user.walletAddress, 
-              dateAndTime : product.dateAndTime,
-              startedDateAndTime : product.startedDateAndTime
+              sellerWalletAddress: user.walletAddress,
+              dateAndTime: product.dateAndTime,
+              startedDateAndTime: product.startedDateAndTime
             }));
             const sellerRequest = {
               totalF3: storeIdRequests[0].totalF3Amount,
@@ -1474,46 +1476,47 @@ app.get('/getRequestsOfPayments', async (req, res) => {
             response.requests.push(sellerRequest);
           }
         }
-      }};
-     
-            
-      let sellerUsers = {};
-      if (user.paymentRequestBuyer) {
-        const storeIds = Object.keys(user.paymentRequestBuyer);
-        for (const storeId of storeIds) {
-          const sellerStore = user.paymentRequestBuyer[storeId][0].sellerId;
-          const SellerUser = await collection.findOne({ storeId: sellerStore });
-          sellerUsers[storeId] = SellerUser;
-        }
-        
-        // Process buyer requests
-        for (const storeId of storeIds) {
-          const SellerUser = sellerUsers[storeId];
-          const buyerProducts = user.paymentRequestBuyer[storeId].map(product => ({
-            productId: product.productId,
-            quantity: product.quantity,
-            totalPrice: product.totalPrice,
-            totalF3: product.totalF3Amount,
-            totalGc: product.totalGc,
-            sellerWalletAddress: product.sellerId,
-            dateAndTime: product.dateAndTime,
-            startedDateAndTime : product.startedDateAndTime
-          }));
-  
-          const buyerRequest = {
-            totalF3: user.paymentRequestBuyer[storeId][0].totalF3Amount,
-            totalGc: user.paymentRequestBuyer[storeId][0].totalGc,
-            storeId: user.paymentRequestBuyer[storeId][0].sellerId,
-            sellerWalletAddress: SellerUser.walletAddress,
-            buyerWalletAddress: user.walletAddress,
-            requestType: 'buyer',
-            products: buyerProducts
-          };
-  
-          response.requests.push(buyerRequest);
-        }
       }
-    
+    };
+
+
+    let sellerUsers = {};
+    if (user.paymentRequestBuyer) {
+      const storeIds = Object.keys(user.paymentRequestBuyer);
+      for (const storeId of storeIds) {
+        const sellerStore = user.paymentRequestBuyer[storeId][0].sellerId;
+        const SellerUser = await collection.findOne({ storeId: sellerStore });
+        sellerUsers[storeId] = SellerUser;
+      }
+
+      // Process buyer requests
+      for (const storeId of storeIds) {
+        const SellerUser = sellerUsers[storeId];
+        const buyerProducts = user.paymentRequestBuyer[storeId].map(product => ({
+          productId: product.productId,
+          quantity: product.quantity,
+          totalPrice: product.totalPrice,
+          totalF3: product.totalF3Amount,
+          totalGc: product.totalGc,
+          sellerWalletAddress: product.sellerId,
+          dateAndTime: product.dateAndTime,
+          startedDateAndTime: product.startedDateAndTime
+        }));
+
+        const buyerRequest = {
+          totalF3: user.paymentRequestBuyer[storeId][0].totalF3Amount,
+          totalGc: user.paymentRequestBuyer[storeId][0].totalGc,
+          storeId: user.paymentRequestBuyer[storeId][0].sellerId,
+          sellerWalletAddress: SellerUser.walletAddress,
+          buyerWalletAddress: user.walletAddress,
+          requestType: 'buyer',
+          products: buyerProducts
+        };
+
+        response.requests.push(buyerRequest);
+      }
+    }
+
 
     // Close MongoDB connection
     await client.close();
@@ -1554,12 +1557,12 @@ app.get('/updatePaymentRequestFlagAndMakeItApprovedSeller', async (req, res) => 
         request.txhashBuyer = txhashBuyer;
         request.txhashGc = txhashGc;
       });
-      
+
       // Create a copy of storeIdRequests for approvedRequestsSellers
       const newRequestObject = {
         'requestProducts': [...storeIdRequests]
       };
-  
+
       // Ensure approvedPaymentRequestsSeller object exists and is an array
       user.approvedPaymentRequestsSeller = user.approvedPaymentRequestsSeller || {};
 
@@ -1617,12 +1620,12 @@ app.get('/updatePaymentRequestFlagAndMakeItApprovedBuyer', async (req, res) => {
         request.dateAndTime = dateAndTime;
         request.txhashGc = txhashGc;
       });
-      
+
       // Create a copy of storeIdRequests for approvedRequestsSellers
       const newRequestObject = {
         'requestProducts': [...storeIdRequests]
       };
-  
+
       // Ensure approvedPaymentRequestsSeller object exists and is an array
       user.approvedPaymentRequestsBuyer = user.approvedPaymentRequestsBuyer || {};
 
@@ -1665,7 +1668,7 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
     const db = client.db('f3_ecommerce');
     const collection = db.collection('users');
 
-    const userSeller = await collection.findOne({ storeId : sellerStoreId });
+    const userSeller = await collection.findOne({ storeId: sellerStoreId });
 
     const response = {
       requests: []
@@ -1695,7 +1698,7 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
         $exists: true,
       }
     }).toArray();
-    console.log('buyerOnes',usersWithBuyerApprovedRequest)
+    console.log('buyerOnes', usersWithBuyerApprovedRequest)
     console.log('Found users with approved requests:', usersWithApprovedRequests);
 
     // Extract approved payment requests from users
@@ -1706,13 +1709,13 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
         const storeRequests = user.approvedPaymentRequestsSeller[sellerStoreId];
         storeRequests.forEach(storeRequest => {
           // Add the requestType field directly to each store request object
-          const requestWithRequestType = {buyerWalletAddress,sellerWalletAddress, requestType: 'seller',...storeRequest,  };
+          const requestWithRequestType = { buyerWalletAddress, sellerWalletAddress, requestType: 'seller', ...storeRequest, };
           acc.push(requestWithRequestType);
         });
       }
       return acc;
     }, []);
-    
+
     // Pushing to response.requests is done outside of the reduce loop
     response.requests.push(...approvedRequests);
 
@@ -1720,27 +1723,27 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
     const approvedRequestsBuyers = usersWithBuyerApprovedRequest.reduce((acc, user) => {
       const buyerWalletAddress = user.walletAddress;
       const storeRequests = user.approvedPaymentRequestsBuyer;
-      
+
       // Iterate over the keys of storeRequests object
       Object.keys(storeRequests).forEach(subRequestName => {
-          const requestsArray = storeRequests[subRequestName];
-          
-          // Iterate over the array of requests for each subRequestName
-          requestsArray.forEach(storeRequest => {
-              const requestWithRequestType = { buyerWalletAddress, requestType: 'buyer', ...storeRequest };
-              acc.push(requestWithRequestType);
-          });
+        const requestsArray = storeRequests[subRequestName];
+
+        // Iterate over the array of requests for each subRequestName
+        requestsArray.forEach(storeRequest => {
+          const requestWithRequestType = { buyerWalletAddress, requestType: 'buyer', ...storeRequest };
+          acc.push(requestWithRequestType);
+        });
       });
-      
+
       return acc;
-  }, []);
-  
-    
+    }, []);
+
+
     // Pushing to response.requests is done outside of the reduce loop
     response.requests.push(...approvedRequestsBuyers);
-    
 
-    console.log('buyersOne',usersWithBuyerApprovedRequest);
+
+    console.log('buyersOne', usersWithBuyerApprovedRequest);
 
     console.log('Extracted approved requests:', approvedRequests, approvedRequestsBuyers);
 
@@ -1932,7 +1935,7 @@ app.get('/deleteBuyerUnApprovedRequest', async (req, res) => {
         delete item.paymentRequestedBuyer;
         delete item.paymentRequestedTimestampBuyer;
         delete item.startedDateAndTime
-        ;
+          ;
         return item;
       });
 
@@ -2051,14 +2054,14 @@ app.get('/getSellerSectionSalesHistory', async (req, res) => {
     // Iterate over each user with checkout approvals
     for (const user of usersWithSalesHistorySeller) {
       console.log('User:', user);
-      
+
       if (user.salesHistorySeller[sellerId]) {
         const sellerSalesHistoryArray = user.salesHistorySeller[sellerId];
         console.log('Approvals Checkout for Seller:', sellerSalesHistoryArray);
-        
+
         // Iterate over each checkout approval in the seller's array
         for (const saleshistory of sellerSalesHistoryArray) {
-          const { productId, quantity, totalPrice,paymentRequestedTimestamp,totalF3Amount,totalGc,f3LiveOfThisTime } = saleshistory;
+          const { productId, quantity, totalPrice, paymentRequestedTimestamp, totalF3Amount, totalGc, f3LiveOfThisTime } = saleshistory;
 
           // Fetch product details from MongoDB
           const productDetails = await db.collection('users').findOne({ 'productsbackup._id': productId }, { projection: { 'productsbackup.$': 1 } });
@@ -2066,7 +2069,7 @@ app.get('/getSellerSectionSalesHistory', async (req, res) => {
           // Add product details along with quantity, totalPrice, and storeId
           products.push({
             _id: productId,
-            totalQuantity : quantity,
+            totalQuantity: quantity,
             totalPrice,
             paymentRequestedTimestamp,
             totalF3Amount,
@@ -2080,11 +2083,11 @@ app.get('/getSellerSectionSalesHistory', async (req, res) => {
             unitItemSelected: productDetails.productsbackup[0].unitItemSelected,
             description: productDetails.productsbackup[0].description,
             totalsolds: productDetails.productsbackup[0].totalsolds,
-            storeId : productDetails.productsbackup[0].storeId,
-            productOffer : productDetails.productsbackup[0].offer,
+            storeId: productDetails.productsbackup[0].storeId,
+            productOffer: productDetails.productsbackup[0].offer,
             storeIdBuyer: user.storeId,
-            walletAddressBuyer : user.walletAddress,
-            flagWord : productDetails.productsbackup[0].flagWord,
+            walletAddressBuyer: user.walletAddress,
+            flagWord: productDetails.productsbackup[0].flagWord,
             storeName: productDetails.productsbackup[0].storeName,
             images: productDetails.productsbackup[0].images
           });
@@ -2139,7 +2142,7 @@ app.get('/getBuyersSectionSalesHistory', async (req, res) => {
 
       // Iterate over each checkout approval in the seller's array
       for (const saleshistory of sellerSalesHistoryArray) {
-        const { productId, quantity, totalPrice,paymentRequestedTimestampBuyer,totalF3Amount,totalGc,f3LiveOfThisTime } = saleshistory;
+        const { productId, quantity, totalPrice, paymentRequestedTimestampBuyer, totalF3Amount, totalGc, f3LiveOfThisTime } = saleshistory;
 
         // Fetch product details from MongoDB
         const productDetails = await db.collection('users').findOne({ 'productsbackup._id': productId }, { projection: { 'productsbackup.$': 1 } });
@@ -2147,7 +2150,7 @@ app.get('/getBuyersSectionSalesHistory', async (req, res) => {
         // Add product details along with quantity and totalPrice
         products.push({
           _id: productId,
-          totalQuantity : quantity,
+          totalQuantity: quantity,
           totalPrice,
           paymentRequestedTimestampBuyer,
           totalF3Amount,
@@ -2162,8 +2165,8 @@ app.get('/getBuyersSectionSalesHistory', async (req, res) => {
           description: productDetails.productsbackup[0].description,
           totalsolds: productDetails.productsbackup[0].totalsolds,
           storeId: productDetails.productsbackup[0].storeId,
-          productOffer : productDetails.productsbackup[0].offer,
-          flagWord : productDetails.productsbackup[0].flagWord,
+          productOffer: productDetails.productsbackup[0].offer,
+          flagWord: productDetails.productsbackup[0].flagWord,
           storeName: productDetails.productsbackup[0].storeName,
           images: productDetails.productsbackup[0].images
         });
@@ -2183,19 +2186,19 @@ app.get('/getBuyersSectionSalesHistory', async (req, res) => {
 
 app.get('/getUserDetails', async (req, res) => {
   try {
-      const { email } = req.query;
+    const { email } = req.query;
 
-      console.log('Request received:', email);
+    console.log('Request received:', email);
 
-      const userDetails = await getUserDetails(email);
+    const userDetails = await getUserDetails(email);
 
-      console.log(`User details retrieved successfully for email ${email}`);
+    console.log(`User details retrieved successfully for email ${email}`);
 
-      // Send response with user details
-      res.status(200).json(userDetails);
+    // Send response with user details
+    res.status(200).json(userDetails);
   } catch (error) {
-      console.error('Error retrieving user details:', error);
-      res.status(500).json({ error: 'An error occurred while retrieving user details' });
+    console.error('Error retrieving user details:', error);
+    res.status(500).json({ error: 'An error occurred while retrieving user details' });
   }
 });
 
@@ -2223,7 +2226,7 @@ app.get('/refillStocksProducts', async (req, res) => {
     // Find the product by productId within the user's products
     const existingProduct = existingUser.products.find(product => product._id === productId);
     const existingProductBackup = existingUser.productsbackup.find(product => product._id === productId);
-    
+
     if (!existingProduct) {
       res.status(404).json({ error: `Product ${productId} not found in store` });
       return;
@@ -2292,34 +2295,34 @@ app.get('/deleteProductOfUser', async (req, res) => {
       { $set: { products: existingUser.products } }
     );
 
-    if(productId){
+    if (productId) {
       await collection.updateMany(
-        { [`userCarts.${productId}`]: { $exists: true } }, 
-        { $unset: { [`userCarts.${productId}`]: "" } } 
+        { [`userCarts.${productId}`]: { $exists: true } },
+        { $unset: { [`userCarts.${productId}`]: "" } }
       );
     }
 
-    if(productId){
+    if (productId) {
       await collection.updateMany(
-        { [`userCarts.${productId}`]: { $exists: true } }, 
-        { $unset: { [`userCarts.${productId}`]: "" } } 
+        { [`userCarts.${productId}`]: { $exists: true } },
+        { $unset: { [`userCarts.${productId}`]: "" } }
       );
     }
 
-    if(productId){
+    if (productId) {
       await collection.updateMany(
         { [`checkoutapproval.${storeId}`]: { $exists: true } },
         { $pull: { [`checkoutapproval.${storeId}`]: { productId } } }
       );
     }
 
-    if(productId){
+    if (productId) {
       await collection.updateMany(
         { [`approvalcheckout.${storeId}`]: { $exists: true } },
         { $pull: { [`approvalcheckout.${storeId}`]: { productId } } }
       );
     }
-    if(productId){
+    if (productId) {
       await collection.updateMany(
         { [`approvalcheckoutBuyer.${storeId}`]: { $exists: true } },
         { $pull: { [`approvalcheckoutBuyer.${storeId}`]: { productId } } }
@@ -2393,10 +2396,10 @@ app.get('/updateOfferProduct', async (req, res) => {
 
 app.post('/updateProductDatas', async (req, res) => {
   const { storeId, productId, productName, productDescription, startedPrice, unitItem, imagesBase64 } = req.body;
- 
+
   // Check if required parameters are missing
   if (!storeId || !productId) {
-    console.log(storeId,productId)
+    console.log(storeId, productId)
     return res.status(400).json({ error: 'Missing required parameters' });
   }
 
@@ -2412,31 +2415,31 @@ app.post('/updateProductDatas', async (req, res) => {
       return;
     }
 
-    if(productName){
+    if (productName) {
       existingProduct.products[0].productName = productName;
-      await collection.updateOne({ 'products._id': productId }, { $set: { 'products.$.productName': productName} });
-      await collection.updateOne({ 'productsbackup._id': productId }, { $set: { 'productsbackup.$.productName': productName} });
+      await collection.updateOne({ 'products._id': productId }, { $set: { 'products.$.productName': productName } });
+      await collection.updateOne({ 'productsbackup._id': productId }, { $set: { 'productsbackup.$.productName': productName } });
     }
 
-    if(productDescription){
+    if (productDescription) {
       existingProduct.products[0].description = productDescription;
-      await collection.updateOne({ 'products._id': productId }, { $set: { 'products.$.description': productDescription} });
-      await collection.updateOne({ 'productsbackup._id': productId }, { $set: { 'productsbackup.$.description': productDescription} });
+      await collection.updateOne({ 'products._id': productId }, { $set: { 'products.$.description': productDescription } });
+      await collection.updateOne({ 'productsbackup._id': productId }, { $set: { 'productsbackup.$.description': productDescription } });
     }
 
-    if(startedPrice){
+    if (startedPrice) {
       existingProduct.products[0].startedPrice = startedPrice;
-      await collection.updateOne({ 'products._id': productId }, { $set: { 'products.$.startedPrice': startedPrice} });
-      await collection.updateOne({ 'productsbackup._id': productId }, { $set: { 'productsbackup.$.startedPrice': startedPrice} });
+      await collection.updateOne({ 'products._id': productId }, { $set: { 'products.$.startedPrice': startedPrice } });
+      await collection.updateOne({ 'productsbackup._id': productId }, { $set: { 'productsbackup.$.startedPrice': startedPrice } });
     }
 
-    if(unitItem){
+    if (unitItem) {
       existingProduct.products[0].unitItemSelected = unitItem;
-      await collection.updateOne({ 'products._id': productId }, { $set: { 'products.$.unitItemSelected': unitItem} });
-      await collection.updateOne({ 'productsbackup._id': productId }, { $set: { 'productsbackup.$.unitItemSelected': unitItem} });
+      await collection.updateOne({ 'products._id': productId }, { $set: { 'products.$.unitItemSelected': unitItem } });
+      await collection.updateOne({ 'productsbackup._id': productId }, { $set: { 'productsbackup.$.unitItemSelected': unitItem } });
     }
 
-    if(imagesBase64){
+    if (imagesBase64) {
       let mergedImages = existingProduct.products[0].images ? [...existingProduct.products[0].images] : [];
       // Compress and add new images
       const newImages = await Promise.all(imagesBase64.map(async (image) => {
@@ -2445,12 +2448,12 @@ app.post('/updateProductDatas', async (req, res) => {
           .resize({ width: 150 }) // Set desired width (you can adjust this as needed)
           .png({ quality: 25 }) // Set desired PNG quality (you can adjust this as needed)
           .toBuffer();
-  
+
         return compressedBuffer.toString('base64');
       }));
-  
+
       mergedImages = [...mergedImages, ...newImages];
-  
+
       // Update the product's images in the MongoDB collection
       await collection.updateOne(
         { 'productsbackup._id': productId },
@@ -2466,7 +2469,7 @@ app.post('/updateProductDatas', async (req, res) => {
     client.close();
 
     res.status(200).json({ message: 'Product data updated successfully' });
-  
+
   } catch (error) {
     console.error('Error updating product data:', error);
     res.status(500).json({ error: 'Internal server error' });
