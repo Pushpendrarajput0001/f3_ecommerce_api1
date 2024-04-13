@@ -495,6 +495,7 @@ app.post('/addProductToCart', async (req, res) => {
 
     // Find the user by email
     const user = await collection.findOne({ email });
+    const product = await collection.findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
 
     if (!user) {
       res.status(404).json({ error: 'User not found' });
@@ -503,7 +504,7 @@ app.post('/addProductToCart', async (req, res) => {
 
     // Check if userCarts map exists, if not create it
     if (!user.userCarts) {
-      user.userCarts = {}; // Create userCarts object
+      user.userCarts = {};
     }
 
     // Check if product already exists in the user's cart
@@ -516,10 +517,18 @@ app.post('/addProductToCart', async (req, res) => {
     // Add product to user's cart
     user.userCarts[productId] = 1; // Default quantity is 1
 
+    // Check if userCartsProductsDetails map exists, if not create it
+    if (!user.userCartsProductsDetails) {
+      user.userCartsProductsDetails = {};
+    }
+
+    // Add product details to userCartsProductsDetails map
+    user.userCartsProductsDetails[productId] = product.products[0]; // Assuming product is found and has details
+
     // Update the user document in the database
     await collection.updateOne(
       { email },
-      { $set: { userCarts: user.userCarts } }
+      { $set: { userCarts: user.userCarts, userCartsProductsDetails: user.userCartsProductsDetails } }
     );
 
     // Close MongoDB connection
@@ -532,6 +541,7 @@ app.post('/addProductToCart', async (req, res) => {
     res.status(500).json({ error: 'An error occurred while adding product to cart' });
   }
 });
+
 
 app.get('/userCartProducts', async (req, res) => {
   try {
