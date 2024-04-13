@@ -2364,9 +2364,6 @@ app.get('/deleteProductOfUser', async (req, res) => {
       const usersWithProduct = await collection.aggregate(aggregationPipeline).toArray();
 
       console.log(usersWithProduct)
-      if (usersWithProduct.length === 0) {
-        return res.status(404).json({ error: `No users found with productId ${productId}` });
-      }
 
       // Iterate through each user and delete the product from userCartsProductsDetails
       // Iterate through each user and delete the product from userCartsProductsDetails
