@@ -2487,6 +2487,7 @@ app.get('/updateOfferProduct', async (req, res) => {
 app.post('/updateProductDatas', async (req, res) => {
   const { storeId, productId, productName, productDescription, startedPrice, unitItem, imagesBase64 } = req.body;
 
+  console.log('images',imagesBase64)
   // Check if required parameters are missing
   if (!storeId || !productId) {
     console.log(storeId, productId)
@@ -2530,28 +2531,24 @@ app.post('/updateProductDatas', async (req, res) => {
     }
 
     if (imagesBase64) {
-      let mergedImages = existingProduct.products[0].images ? [...existingProduct.products[0].images] : [];
-      // Compress and add new images
-      const newImages = await Promise.all(imagesBase64.map(async (image) => {
-        // Compress and resize new image using sharp
-        const compressedBuffer = await sharp(Buffer.from(image, 'base64'))
+      const compressedImages = await Promise.all(imagesBase64.map(async (image) => {
+        // Resize and compress image using sharp
+        compressedBuffer = await sharp(Buffer.from(image, 'base64'))
           .resize({ width: 150 }) // Set desired width (you can adjust this as needed)
           .png({ quality: 25 }) // Set desired PNG quality (you can adjust this as needed)
           .toBuffer();
-
+  
         return compressedBuffer.toString('base64');
       }));
 
-      mergedImages = [...mergedImages, ...newImages];
-
       // Update the product's images in the MongoDB collection
       await collection.updateOne(
-        { 'productsbackup._id': productId },
-        { $set: { 'v.$.images': mergedImages } }
+        { 'products._id': productId },
+        { $set: { 'products.$.images': compressedImages } }
       );
       await collection.updateOne(
         { 'productsbackup._id': productId },
-        { $set: { 'productsbackup.$.images': mergedImages } }
+        { $set: { 'productsbackup.$.images': compressedImages } }
       );
     }
 
