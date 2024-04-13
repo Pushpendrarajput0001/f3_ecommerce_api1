@@ -569,7 +569,6 @@ app.get('/userCartProducts', async (req, res) => {
     const productIds = Object.keys(user.userCarts);
 
     // Retrieve product details from userCartsProductsDetails map
-    // Retrieve product details from userCartsProductsDetails map
     const cartProducts = [];
     Object.keys(user.userCartsProductsDetails).forEach((key) => {
       cartProducts.push(user.userCartsProductsDetails[key]);
@@ -662,22 +661,49 @@ app.post('/addCheckoutApproval', async (req, res) => {
     }
 
     // Iterate through products to add or replace in the checkoutapproval map
-    products.forEach(product => {
+    for (const product of products) {
       const { productId, quantity, totalPrice, storeId, offer } = product;
 
+
+      let productDetails;
+      for (const key in user.userCartsProductsDetails) {
+        if (user.userCartsProductsDetails.hasOwnProperty(key)) {
+          const productDetail = user.userCartsProductsDetails[key];
+          if (productDetail._id === productId) {
+            productDetails = productDetail;
+            break; // Found the product, no need to continue searching
+          }
+        }
+      }
+
+      console.log(productDetails);
       // Check if checkoutapproval for the storeId already exists
       if (!user.checkoutapproval[storeId]) {
         user.checkoutapproval[storeId] = [];
       }
 
-      // Add new product
+      // Add new product with details
       user.checkoutapproval[storeId].push({
         productId,
         quantity,
         totalPrice,
-        offer
-      });
-    });
+        offerp : offer,
+        productName: productDetails.productName,
+        startedPrice: productDetails.startedPrice,
+        f3MarketPrice: productDetails.f3MarketPrice,
+        growthContribution: productDetails.growthContribution,
+        numberOfStocks: productDetails.numberOfStocks,
+        unitItemSelected: productDetails.unitItemSelected,
+        description: productDetails.description,
+        totalsolds: productDetails.totalsolds,
+        storeId: productDetails.storeId,
+        offer: productDetails.offer,
+        storeIdBuyer: user.storeId,
+        walletAddressBuyer: user.walletAddress,
+        flagWord: productDetails.flagWord,
+        storeName: productDetails.storeName,
+        images: productDetails.images      });
+    }
 
     // Update the user document in the database
     await collection.updateOne(
@@ -782,7 +808,10 @@ app.get('/getSellerProductsCheckoutById', async (req, res) => {
 
         // Iterate over each checkout approval in the seller's array
         for (const checkoutApproval of sellerCheckoutApprovalsArray) {
-          const { productId, quantity, totalPrice } = checkoutApproval;
+          const { productId, quantity, totalPrice,productName,startedPrice,
+            f3MarketPrice,growthContribution,numberOfStocks,unitItemSelected,
+            description,totalsolds,storeId,offer,storeIdBuyer,walletAddressBuyer,
+            flagWord,storeName,images} = checkoutApproval;
 
           // Fetch product details from MongoDB
           const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
@@ -792,21 +821,21 @@ app.get('/getSellerProductsCheckoutById', async (req, res) => {
             _id: productId,
             totalQuantity: quantity,
             totalPrice,
-            productName: productDetails.products[0].productName,
-            startedPrice: productDetails.products[0].startedPrice,
-            f3MarketPrice: productDetails.products[0].f3MarketPrice,
-            growthContribution: productDetails.products[0].growthContribution,
-            numberOfStocks: productDetails.products[0].numberOfStocks,
-            unitItemSelected: productDetails.products[0].unitItemSelected,
-            description: productDetails.products[0].description,
-            totalsolds: productDetails.products[0].totalsolds,
-            storeId: productDetails.products[0].storeId,
-            offer: productDetails.products[0].offer,
-            storeIdBuyer: user.storeId,
-            walletAddressBuyer: user.walletAddress,
-            flagWord: productDetails.products[0].flagWord,
-            storeName: productDetails.products[0].storeName,
-            images: productDetails.products[0].images
+            productName,
+            startedPrice,
+            f3MarketPrice,
+            growthContribution,
+            numberOfStocks,
+            unitItemSelected,
+            description,
+            totalsolds,
+            storeId,
+            offer,
+            storeIdBuyer,
+            walletAddressBuyer,
+            flagWord,
+            storeName,
+            images
           });
         }
       }
@@ -1017,19 +1046,21 @@ app.get('/getBuyersSectionProductcheckout', async (req, res) => {
           _id: productId,
           totalQuantity: quantity,
           totalPrice,
-          productName: productDetails.products[0].productName,
-          startedPrice: productDetails.products[0].startedPrice,
-          f3MarketPrice: productDetails.products[0].f3MarketPrice,
-          growthContribution: productDetails.products[0].growthContribution,
-          numberOfStocks: productDetails.products[0].numberOfStocks,
-          unitItemSelected: productDetails.products[0].unitItemSelected,
-          description: productDetails.products[0].description,
-          totalsolds: productDetails.products[0].totalsolds,
-          storeId: productDetails.products[0].storeId,
-          offer: productDetails.products[0].offer,
-          flagWord: productDetails.products[0].flagWord,
-          storeName: productDetails.products[0].storeName,
-          images: productDetails.products[0].images
+          productName,
+          startedPrice,
+          f3MarketPrice,
+          growthContribution,
+          numberOfStocks,
+          unitItemSelected,
+          description,
+          totalsolds,
+          storeId,
+          offer,
+          storeIdBuyer,
+          walletAddressBuyer,
+          flagWord,
+          storeName,
+          images
         });
       }
     }
