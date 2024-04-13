@@ -1036,7 +1036,10 @@ app.get('/getBuyersSectionProductcheckout', async (req, res) => {
 
       // Iterate over each checkout approval in the seller's array
       for (const checkoutApproval of sellerCheckoutApprovalsArray) {
-        const { productId, quantity, totalPrice } = checkoutApproval;
+        const { productId, quantity, totalPrice,productName,startedPrice,
+          f3MarketPrice,growthContribution,numberOfStocks,unitItemSelected,
+          description,totalsolds,storeId,offer,storeIdBuyer,walletAddressBuyer,
+          flagWord,storeName,images} = checkoutApproval;
 
         // Fetch product details from MongoDB
         const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
