@@ -1059,7 +1059,6 @@ app.get('/getBuyersSectionProductcheckout', async (req, res) => {
           totalsolds,
           storeId,
           offer,
-          storeIdBuyer,
           walletAddressBuyer,
           flagWord,
           storeName,
