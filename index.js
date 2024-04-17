@@ -2616,6 +2616,12 @@ app.post('/viewCartManiaRequest', async (req, res) => {
 
     const viewManiaCartPaymentRequest = user.viewManiaCartPaymentRequest || {}; // Initialize map if not exist
 
+    if (viewManiaCartPaymentRequest[sellerId] && viewManiaCartPaymentRequest[sellerId].length > 0) {
+      console.log(`Products already requested for sellerId ${sellerId}`);
+      res.status(405).json({ error: `Products already requested for sellerId ${sellerId}` });
+      return;
+    }
+
     for (const product of productDetails) {
       const productId = product.productId;
 
@@ -2628,7 +2634,7 @@ app.post('/viewCartManiaRequest', async (req, res) => {
               ...productFromUserCart,
               totalQuantity: product.totalQuantity,
               totalPrice: product.totalAmount,
-              paymentRequestedTimestamp: paymentRequestedTimestamp,
+              startedDateAndTime: paymentRequestedTimestamp,
               totalF3Amount: totalF3Amount,
               totalGc: totalGc,
               f3LiveOfThisTime: f3LiveOfThisTime
@@ -2663,6 +2669,7 @@ app.post('/viewCartManiaRequest', async (req, res) => {
     res.status(500).json({ error: 'An error occurred while updating product details' });
   }
 });
+
 
 
 
