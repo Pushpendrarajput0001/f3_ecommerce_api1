@@ -661,7 +661,6 @@ app.post('/addCheckoutApproval', async (req, res) => {
       user.checkoutapproval = {}; // Create checkoutapproval object
     }
 
-    // Iterate through products to add or replace in the checkoutapproval map
     for (const product of products) {
       const { productId, quantity, totalPrice, storeId, offer } = product;
 
@@ -672,7 +671,7 @@ app.post('/addCheckoutApproval', async (req, res) => {
           const productDetail = user.userCartsProductsDetails[key];
           if (productDetail._id === productId) {
             productDetails = productDetail;
-            break; // Found the product, no need to continue searching
+            break;
           }
         }
       }
@@ -2485,7 +2484,7 @@ app.get('/updateOfferProduct', async (req, res) => {
 app.post('/updateProductDatas', async (req, res) => {
   const { storeId, productId, productName, productDescription, startedPrice, unitItem, imagesBase64 } = req.body;
 
-  console.log('images',imagesBase64)
+  console.log('images', imagesBase64)
   // Check if required parameters are missing
   if (!storeId || !productId) {
     console.log(storeId, productId)
@@ -2535,7 +2534,7 @@ app.post('/updateProductDatas', async (req, res) => {
           .resize({ width: 150 }) // Set desired width (you can adjust this as needed)
           .png({ quality: 25 }) // Set desired PNG quality (you can adjust this as needed)
           .toBuffer();
-  
+
         return compressedBuffer.toString('base64');
       }));
 
@@ -2560,6 +2559,75 @@ app.post('/updateProductDatas', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+app.post('/viewCartManiaRequest', async (req, res) => {
+  try {
+    const { storeId, sellerId, paymentRequestedTimestamp, totalF3Amount, totalGc, f3LiveOfThisTime, productDetails } = req.body;
+
+    console.log('Request received:', storeId, sellerId, paymentRequestedTimestamp, totalF3Amount, totalGc, productDetails);
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    const user = await collection.findOne({ storeId });
+
+    if (!user) {
+      console.log(`User with storeId ${storeId} not found`);
+      res.status(404).json({ error: `User with storeId ${storeId} not found` });
+      return;
+    }
+
+    const viewManiaCartPaymentRequest = user.viewManiaCartPaymentRequest || {}; // Initialize map if not exist
+
+    for (const product of productDetails) {
+      const productId = product.productId;
+
+      let productDetail;
+      for (const key in user.userCartsProductsDetails) {
+        if (user.userCartsProductsDetails.hasOwnProperty(key)) {
+          const productFromUserCart = user.userCartsProductsDetails[key];
+          if (productFromUserCart._id === productId) {
+            productDetail = {
+              ...productFromUserCart,
+              totalQuantity: product.totalQuantity,
+              totalPrice: product.totalAmount,
+              paymentRequestedTimestamp: paymentRequestedTimestamp,
+              totalF3Amount: totalF3Amount,
+              totalGc: totalGc,
+              f3LiveOfThisTime: f3LiveOfThisTime
+            };
+            break;
+          }
+        }
+      }
+
+      if (productDetail) {
+        if (!viewManiaCartPaymentRequest[sellerId]) {
+          viewManiaCartPaymentRequest[sellerId] = [];
+        }
+        viewManiaCartPaymentRequest[sellerId].push(productDetail);
+      }
+    }
+
+    await collection.updateOne(
+      { storeId },
+      { $set: { viewManiaCartPaymentRequest } }
+    );
+
+    // Close MongoDB connection
+    await client.close();
+
+    console.log(`Product details updated successfully for storeId ${storeId}`);
+
+    // Send response
+    res.status(200).json({ message: 'Product details updated successfully' });
+  } catch (error) {
+    console.error('Error updating product details:', error);
+    res.status(500).json({ error: 'An error occurred while updating product details' });
+  }
+});
+
 
 
 app.listen(PORT, '192.168.29.149', () => {
