@@ -1564,6 +1564,42 @@ app.get('/getRequestsOfPayments', async (req, res) => {
       }
     }
 
+    let sellerUsersMania = {};
+    if (user.viewManiaCartPaymentRequest) {
+      const storeIds = Object.keys(user.viewManiaCartPaymentRequest);
+      for (const storeId of storeIds) {
+        const sellerStore = user.viewManiaCartPaymentRequest[storeId][0].sellerId;
+        const SellerUser = await collection.findOne({ storeId: sellerStore });
+        sellerUsersMania[storeId] = SellerUser;
+      }
+
+      // Process buyer requests
+      for (const storeId of storeIds) {
+        const SellerUser = sellerUsersMania[storeId];
+        const buyerProducts = user.viewManiaCartPaymentRequest[storeId].map(product => ({
+          productId: product.productId,
+          quantity: product.quantity,
+          totalPrice: product.totalPrice,
+          totalF3: product.totalF3Amount,
+          totalGc: product.totalGc,
+          sellerWalletAddress: product.sellerId,
+          dateAndTime: product.dateAndTime,
+          startedDateAndTime: product.startedDateAndTime
+        }));
+
+        const buyerRequest = {
+          totalF3: user.viewManiaCartPaymentRequest[storeId][0].totalF3Amount,
+          totalGc: user.viewManiaCartPaymentRequest[storeId][0].totalGc,
+          storeId: user.viewManiaCartPaymentRequest[storeId][0].sellerId,
+          sellerWalletAddress: user.viewManiaCartPaymentRequest[storeId][0].sellerWalletAddress,
+          buyerWalletAddress: user.walletAddress,
+          requestType: 'buyer',
+          products: buyerProducts
+        };
+
+        response.requests.push(buyerRequest);
+      }
+    }
 
     // Close MongoDB connection
     await client.close();
