@@ -2600,7 +2600,7 @@ app.post('/viewCartManiaRequest', async (req, res) => {
   try {
     const { storeId, sellerId, paymentRequestedTimestamp, totalF3Amount, totalGc, f3LiveOfThisTime, productDetails } = req.body;
 
-    console.log('Request received:', storeId, sellerId, paymentRequestedTimestamp, totalF3Amount, totalGc, productDetails);
+    console.log('Request received:', storeId, sellerId, paymentRequestedTimestamp, totalF3Amount, totalGc, productDetails,f3LiveOfThisTime);
 
     const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
     const db = client.db('f3_ecommerce');
