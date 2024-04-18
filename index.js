@@ -1593,7 +1593,7 @@ app.get('/getRequestsOfPayments', async (req, res) => {
           storeId: user.viewManiaCartPaymentRequest[storeId][0].sellerId,
           sellerWalletAddress: user.viewManiaCartPaymentRequest[storeId][0].sellerWalletAddress,
           buyerWalletAddress: user.walletAddress,
-          requestType: 'buyer',
+          requestType: 'View Mania',
           products: buyerProducts
         };
 
