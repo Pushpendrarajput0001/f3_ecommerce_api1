@@ -1781,6 +1781,13 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
         $exists: true,
       }
     }).toArray();
+
+    const usersWithManiaApprovedRequest = await collection.find({
+      'storeId': sellerStoreId, // Replace 'userType' with the actual field name distinguishing sellerUser
+      'viewManiaCartPaymentRequest': {
+        $exists: true,
+      }
+    }).toArray();
     console.log('buyerOnes', usersWithBuyerApprovedRequest)
     console.log('Found users with approved requests:', usersWithApprovedRequests);
 
@@ -1820,11 +1827,28 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
 
       return acc;
     }, []);
-
-
-    // Pushing to response.requests is done outside of the reduce loop
+    
     response.requests.push(...approvedRequestsBuyers);
 
+    const approvedRequestsMania = usersWithManiaApprovedRequest.reduce((acc, user) => {
+      const buyerWalletAddress = user.walletAddress;
+      const storeRequests = user.viewManiaCartPaymentRequest;
+
+      // Iterate over the keys of storeRequests object
+      Object.keys(storeRequests).forEach(subRequestName => {
+        const requestsArray = storeRequests[subRequestName];
+
+        // Iterate over the array of requests for each subRequestName
+        requestsArray.forEach(storeRequest => {
+          const requestWithRequestType = { buyerWalletAddress, requestType: 'View Mania Cart', ...storeRequest };
+          acc.push(requestWithRequestType);
+        });
+      });
+
+      return acc;
+    }, []);
+
+    response.requests.push(...approvedRequestsMania);
 
     console.log('buyersOne', usersWithBuyerApprovedRequest);
 
