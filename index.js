@@ -2632,6 +2632,7 @@ app.post('/viewCartManiaRequest', async (req, res) => {
           if (productFromUserCart._id === productId) {
             productDetail = {
               ...productFromUserCart,
+              productId : productId,
               totalQuantity: product.totalQuantity,
               totalPrice: product.totalAmount,
               startedDateAndTime: paymentRequestedTimestamp,
