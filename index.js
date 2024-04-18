@@ -156,7 +156,7 @@ app.post('/productsAdd', async (req, res) => {
     const collection = db.collection(COLLECTION_NAME);
 
     // Extract product data and images from request body
-    const { email, productName, startedPrice, f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected, description, totalsolds, images, storeId, storeName, flagWord, offer } = req.body;
+    const { email, productName, startedPrice, f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected, description, totalsolds, images, storeId, storeName, flagWord, offer,sellerWalletAddress } = req.body;
 
     // Resize and compress images
     const compressedImages = await Promise.all(images.map(async (image) => {
@@ -184,6 +184,7 @@ app.post('/productsAdd', async (req, res) => {
       storeName,
       offer,
       flagWord,
+      sellerWalletAddress,
       images: compressedImages
     };
 
