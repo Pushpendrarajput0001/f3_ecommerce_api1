@@ -1590,10 +1590,10 @@ app.get('/getRequestsOfPayments', async (req, res) => {
         const buyerRequest = {
           totalF3: user.viewManiaCartPaymentRequest[storeId][0].totalF3Amount,
           totalGc: user.viewManiaCartPaymentRequest[storeId][0].totalGc,
-          storeId: user.viewManiaCartPaymentRequest[storeId][0].sellerId,
+          storeId: user.viewManiaCartPaymentRequest[storeId][0].storeId,
           sellerWalletAddress: user.viewManiaCartPaymentRequest[storeId][0].sellerWalletAddress,
           buyerWalletAddress: user.walletAddress,
-          requestType: 'View Mania',
+          requestType: 'View Mania Cart',
           products: buyerProducts
         };
 
