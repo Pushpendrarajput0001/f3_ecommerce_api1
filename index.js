@@ -2600,7 +2600,7 @@ app.post('/viewCartManiaRequest', async (req, res) => {
   try {
     const { storeId, sellerId, paymentRequestedTimestamp, totalF3Amount, totalGc, f3LiveOfThisTime, productDetails } = req.body;
 
-    console.log('Request received:', storeId, sellerId, paymentRequestedTimestamp, totalF3Amount, totalGc, productDetails,f3LiveOfThisTime);
+    console.log('Request received:', storeId, sellerId, paymentRequestedTimestamp, totalF3Amount, totalGc, productDetails, f3LiveOfThisTime);
 
     const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
     const db = client.db('f3_ecommerce');
@@ -2670,7 +2670,217 @@ app.post('/viewCartManiaRequest', async (req, res) => {
   }
 });
 
+app.get('/deleteUnApprovedManiaRequest', async (req, res) => {
+  try {
+    const { buyerWalletAddress, storeId } = req.query;
 
+    console.log('Deleting mania request for buyerWalletAddress:', buyerWalletAddress, 'and storeId:', storeId);
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user with the specified buyerWalletAddress
+    const user = await collection.findOne({ walletAddress: buyerWalletAddress });
+    if (!user) {
+      console.log(`User with walletAddress ${buyerWalletAddress} not found`);
+      return res.status(404).json({ error: `User with walletAddress ${buyerWalletAddress} not found` });
+    }
+
+    // Find the viewManiaCartPaymentRequest map in the user document
+    const viewManiaCartPaymentRequest = user.viewManiaCartPaymentRequest || {};
+    const storeRequestsArray = viewManiaCartPaymentRequest[storeId] || [];
+
+    // Extract product IDs from the existing requests
+    const productIds = storeRequestsArray.map(product => product._id);
+
+    productIds.forEach(productId => {
+      if (!user.userCarts[productId]) {
+        res.status(404).json({ error: `Product ${productId} not found in the cart` });
+        return;
+      }
+      delete user.userCarts[productId];
+
+      // Delete the product with the matching _id from userCartsProductsDetails
+      for (const key in user.userCartsProductsDetails) {
+        if (user.userCartsProductsDetails.hasOwnProperty(key)) {
+          const productDetail = user.userCartsProductsDetails[key];
+          if (productDetail._id === productId) {
+            delete user.userCartsProductsDetails[key];
+          }
+        }
+      }
+    });
+
+    // Update the user document in the database
+    await collection.updateOne(
+      { walletAddress: buyerWalletAddress },
+      { $set: { userCarts: user.userCarts, userCartsProductsDetails: user.userCartsProductsDetails } }
+    );
+
+
+    // Delete the store request from viewManiaCartPaymentRequest
+    delete viewManiaCartPaymentRequest[storeId];
+
+    // Update the user document in the database
+    await collection.updateOne(
+      { walletAddress: buyerWalletAddress },
+      { $set: { viewManiaCartPaymentRequest } }
+    );
+
+
+    // Close MongoDB connection
+    await client.close();
+
+    console.log(`Mania request deleted ${buyerWalletAddress}`);
+
+    // Send success response with extracted product IDs
+    res.status(200).json({ message: 'Mania request deleted', productIds });
+  } catch (error) {
+    console.error('Error deleting Mania request and adding to sales history:', error);
+    res.status(500).json({ error: 'An error occurred while processing the request' });
+  }
+});
+
+app.get('/deleteRequestAndAddApprovalCheckout', async (req, res) => {
+  const { buyerWalletAddress, storeId, txhash, dataAndTime } = req.query;
+
+  try {
+    console.log('Deleting request and adding to approval checkout for buyerWalletAddress:', buyerWalletAddress, 'storeId:', storeId);
+
+    // Connect to MongoDB
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user with the specified buyerWalletAddress
+    const user = await collection.findOne({ walletAddress: buyerWalletAddress });
+    if (!user) {
+      console.log(`User with walletAddress ${buyerWalletAddress} not found`);
+      return res.status(404).json({ error: `User with walletAddress ${buyerWalletAddress} not found` });
+    }
+
+    // Find the viewManiaCartPaymentRequest map in the user document
+    const viewManiaCartPaymentRequest = user.viewManiaCartPaymentRequest || {};
+    const storeRequestsArray = viewManiaCartPaymentRequest[storeId] || [];
+
+    if (!storeRequestsArray || storeRequestsArray.length === 0) {
+      console.log('No request found for deletion');
+      return res.status(404).json({ error: 'No request found for deletion' });
+    }
+
+    // Copy the array of requests from viewManiaCartPaymentRequest
+    const copiedRequestsArray = [...storeRequestsArray];
+
+    const copiedRequestsArrayForApproval = storeRequestsArray.map(product => {
+      const { sellerWalletAddress, startedDateAndTime, totalF3Amount, totalGc, f3LiveOfThisTime, dateAndTime, txhashSeller, ...rest } = product;
+      return rest;
+    });
+
+    const copiedRequestsArrayForApprovalBuyer = storeRequestsArray.map(product => {
+      const { sellerWalletAddress, startedDateAndTime, totalF3Amount, totalGc, f3LiveOfThisTime, dateAndTime, txhashSeller, ...rest } = product;
+      return { ...rest, storeIdBuyer: storeId };
+    });
+
+    // Add copied array to approval checkout maps (buyer and seller)
+    user.approvalcheckout = user.approvalcheckout || {};
+    user.approvalcheckoutBuyer = user.approvalcheckoutBuyer || {};
+     if (copiedRequestsArrayForApprovalBuyer.length > 0) {
+      if (!user.approvalcheckoutBuyer[storeId]) {
+        user.approvalcheckoutBuyer[storeId] = [];
+      }
+      user.approvalcheckoutBuyer[storeId] = [...user.approvalcheckoutBuyer[storeId], ...copiedRequestsArrayForApprovalBuyer];
+    }
+
+    if (copiedRequestsArrayForApproval.length > 0) {
+      if (!user.approvalcheckout[storeId]) {
+        user.approvalcheckout[storeId] = [];
+      }
+      user.approvalcheckout[storeId] = [...user.approvalcheckout[storeId], ...copiedRequestsArrayForApproval];
+    }
+
+
+    // Add copied array to approvedViewManiaCartRequest map
+    user.approvedViewManiaCartRequest = user.approvedViewManiaCartRequest || {};
+    user.approvedViewManiaCartRequest[storeId] = copiedRequestsArray;
+    user.approvedPaymentRequestsManiaView = user.approvedPaymentRequestsManiaView || {};
+    user.approvedPaymentRequestsManiaView[storeId] = {};
+
+    // Populate the requestProducts array in approvedPaymentRequestsManiaView
+    user.approvedPaymentRequestsManiaView = user.approvedPaymentRequestsManiaView || {};
+    copiedRequestsArray.forEach(request => {
+      request.dateAndTime = dataAndTime;
+      request.txhashSeller = txhash;
+    });
+
+    // Create a copy of storeIdRequests for approvedRequestsSellers
+    const newRequestObject = {
+      'requestProducts': [...copiedRequestsArray]
+    };
+
+    if (!Array.isArray(user.approvedPaymentRequestsManiaView[storeId])) {
+      user.approvedPaymentRequestsManiaView[storeId] = [newRequestObject]
+    } else {
+      user.approvedPaymentRequestsManiaView[storeId].push(newRequestObject);
+    }
+    // Extract product IDs from the existing requests
+    const productIds = storeRequestsArray.map(product => product._id);
+
+    for (const productId of productIds) {
+      const existingProduct = await collection.findOne({ 'products._id': productId });
+      if (existingProduct) {
+        const product = existingProduct.products[0]; // Access the first element of the products array
+        const quantity = storeRequestsArray.find(product => product._id === productId).totalQuantity;
+        const newStocks = Number(product.numberOfStocks) - Number(quantity);
+        const newTotalSolds = parseInt(product.totalsolds) + parseInt(quantity);
+        console.log(newStocks, newTotalSolds, quantity);
+        console.log(product.numberOfStocks,product.totalsolds)
+          await collection.updateOne(
+            { 'products._id': productId },
+            { $set: { 'products.$.numberOfStocks': newStocks.toString(), 'products.$.totalsolds': newTotalSolds.toString() } }
+          );
+        }
+    }
+
+
+    productIds.forEach(productId => {
+      if (!user.userCarts[productId]) {
+        res.status(404).json({ error: `Product ${productId} not found in the cart` });
+        return;
+      }
+      delete user.userCarts[productId];
+
+      // Delete the product with the matching _id from userCartsProductsDetails
+      for (const key in user.userCartsProductsDetails) {
+        if (user.userCartsProductsDetails.hasOwnProperty(key)) {
+          const productDetail = user.userCartsProductsDetails[key];
+          if (productDetail._id === productId) {
+            delete user.userCartsProductsDetails[key];
+          }
+        }
+      }
+    });
+
+    // Delete the store request from viewManiaCartPaymentRequest
+    delete viewManiaCartPaymentRequest[storeId];
+
+    // Update the user document in the database
+    await collection.updateOne(
+      { walletAddress: buyerWalletAddress },
+      { $set: { viewManiaCartPaymentRequest, userCarts: user.userCarts, approvalcheckout: user.approvalcheckout, approvalcheckoutBuyer: user.approvalcheckoutBuyer, approvedPaymentRequestsManiaView: user.approvedPaymentRequestsManiaView, userCartsProductsDetails: user.userCartsProductsDetails } }
+    );
+    // Close MongoDB connection
+    await client.close();
+
+    console.log(`Request deleted and added to approval checkout successfully for walletAddress ${buyerWalletAddress}`);
+
+    // Send success response with extracted product IDs
+    res.status(200).json({ message: 'Request deleted and added to approval checkout successfully', productIds });
+  } catch (error) {
+    console.error('Error deleting request and adding to approval checkout:', error);
+    res.status(500).json({ error: 'An error occurred while processing the request' });
+  }
+});
 
 
 app.listen(PORT, '192.168.29.149', () => {
