@@ -2634,10 +2634,12 @@ app.post('/viewCartManiaRequest', async (req, res) => {
               ...productFromUserCart,
               productId : productId,
               totalQuantity: product.totalQuantity,
+              quantity : product.totalQuantity,
               totalPrice: product.totalAmount,
               startedDateAndTime: paymentRequestedTimestamp,
               totalF3Amount: totalF3Amount,
               totalGc: totalGc,
+              
               f3LiveOfThisTime: f3LiveOfThisTime
             };
             break;
@@ -2775,12 +2777,12 @@ app.get('/deleteRequestAndAddApprovalCheckout', async (req, res) => {
 
     const copiedRequestsArrayForApproval = storeRequestsArray.map(product => {
       const { sellerWalletAddress, startedDateAndTime, totalF3Amount, totalGc, f3LiveOfThisTime, dateAndTime, txhashSeller, ...rest } = product;
-      return rest;
+      return { ...rest, storeIdBuyer: user.storeId };
     });
 
     const copiedRequestsArrayForApprovalBuyer = storeRequestsArray.map(product => {
       const { sellerWalletAddress, startedDateAndTime, totalF3Amount, totalGc, f3LiveOfThisTime, dateAndTime, txhashSeller, ...rest } = product;
-      return { ...rest, storeIdBuyer: storeId };
+      return rest;
     });
 
     // Add copied array to approval checkout maps (buyer and seller)
