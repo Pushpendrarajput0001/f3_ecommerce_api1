@@ -1541,11 +1541,11 @@ app.get('/getRequestsOfPayments', async (req, res) => {
         const SellerUser = sellerUsers[storeId];
         const buyerProducts = user.paymentRequestBuyer[storeId].map(product => ({
           productId: product.productId,
-          quantity: product.quantity,
+          quantity: product.totalQuantity,
           totalPrice: product.totalPrice,
           totalF3: product.totalF3Amount,
           totalGc: product.totalGc,
-          sellerWalletAddress: product.sellerId,
+          sellerWalletAddress: product.sellerWalletAddress,
           dateAndTime: product.dateAndTime,
           startedDateAndTime: product.startedDateAndTime
         }));
