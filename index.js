@@ -1784,7 +1784,7 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
 
     const usersWithManiaApprovedRequest = await collection.find({
       'storeId': sellerStoreId, // Replace 'userType' with the actual field name distinguishing sellerUser
-      'viewManiaCartPaymentRequest': {
+      'approvedPaymentRequestsManiaView': {
         $exists: true,
       }
     }).toArray();
@@ -1832,7 +1832,7 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
 
     const approvedRequestsMania = usersWithManiaApprovedRequest.reduce((acc, user) => {
       const buyerWalletAddress = user.walletAddress;
-      const storeRequests = user.viewManiaCartPaymentRequest;
+      const storeRequests = user.approvedPaymentRequestsManiaView;
 
       // Iterate over the keys of storeRequests object
       Object.keys(storeRequests).forEach(subRequestName => {
