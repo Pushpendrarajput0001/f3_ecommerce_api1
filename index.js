@@ -1548,7 +1548,8 @@ app.get('/getRequestsOfPayments', async (req, res) => {
               sellerWalletAddress: user.walletAddress,
               dateAndTime: product.dateAndTime,
               lccAmount : product.lccAmount,
-              startedDateAndTime: product.startedDateAndTime
+              startedDateAndTime: product.startedDateAndTime,
+              paymentRequestedTimestampForCredit : product.paymentRequestedTimestampForCredit
             }));
             const creditRequestRequest = {
               totalF3: storeIdRequests[0].totalF3Amount,
