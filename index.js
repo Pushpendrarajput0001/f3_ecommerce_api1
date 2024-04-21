@@ -1887,6 +1887,8 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
       return acc;
     }, []);
 
+
+
     response.requests.push(...approvedRequestsMania);
 
     console.log('buyersOne', usersWithBuyerApprovedRequest);
@@ -3048,7 +3050,7 @@ app.get('/requestForCredit',async (req,res)=>{
 
 app.get('/deleteCreditRequestAndAddApproved', async (req, res) => {
   try {
-    const { buyerWalletAddress, storeId } = req.query;
+    const { buyerWalletAddress, storeId,txhashCredit,dateAndTime } = req.query;
 
     console.log('Deleting buyer request and adding to sales history for buyerWalletAddress:', buyerWalletAddress, 'and storeId:', storeId);
 
@@ -3066,6 +3068,10 @@ app.get('/deleteCreditRequestAndAddApproved', async (req, res) => {
     const paymentRequestCreditMap = user.paymentRequestForCredit || {};
     const storeRequestsArray = paymentRequestCreditMap[storeId] || [];
     
+    storeRequestsArray.forEach(requests=>{
+      requests.creditTxHash = txhashCredit;
+      requests.dateAndTime = dateAndTime;
+    })
 
     const newRequestObject = {
       'requestProducts': [...storeRequestsArray]
