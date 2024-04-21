@@ -156,7 +156,7 @@ app.post('/productsAdd', async (req, res) => {
     const collection = db.collection(COLLECTION_NAME);
 
     // Extract product data and images from request body
-    const { email, productName, startedPrice, f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected, description, totalsolds, images, storeId, storeName, flagWord, offer,sellerWalletAddress } = req.body;
+    const { email, productName, startedPrice, f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected, description, totalsolds, images, storeId, storeName, flagWord, offer, sellerWalletAddress } = req.body;
 
     // Resize and compress images
     const compressedImages = await Promise.all(images.map(async (image) => {
@@ -1547,15 +1547,15 @@ app.get('/getRequestsOfPayments', async (req, res) => {
               totalGc: product.totalGc,
               sellerWalletAddress: user.walletAddress,
               dateAndTime: product.dateAndTime,
-              lccAmount : product.lccAmount,
+              lccAmount: product.lccAmount,
               startedDateAndTime: product.startedDateAndTime,
-              paymentRequestedTimestampForCredit : product.paymentRequestedTimestampForCredit
+              paymentRequestedTimestampForCredit: product.paymentRequestedTimestampForCredit
             }));
             const creditRequestRequest = {
               totalF3: storeIdRequests[0].totalF3Amount,
               totalGc: storeIdRequests[0].totalGc,
               storeId: requestedStoreId,
-              buyerWalletAddress: buyerWalletAddress, 
+              buyerWalletAddress: buyerWalletAddress,
               sellerWalletAddress: user.walletAddress,
               requestType: 'Credit',
               products: sellerProducts
@@ -1875,7 +1875,7 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
 
       return acc;
     }, []);
-    
+
     response.requests.push(...approvedRequestsBuyers);
 
     const approvedRequestsMania = usersWithCreditApprovedRequest.reduce((acc, user) => {
@@ -1900,7 +1900,7 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
 
     response.requests.push(...approvedRequestsMania);
 
-    
+
     const approvedRequestsCredit = usersWithManiaApprovedRequest.reduce((acc, user) => {
       const buyerWalletAddress = user.walletAddress;
       const storeRequests = user.approvedpaymentRequestForCredit;
@@ -1913,7 +1913,7 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
 
         // Iterate over the array of requests for each subRequestName
         requestsArray.forEach(storeRequest => {
-          const requestWithRequestType = { sellerWalletAddress,buyerWalletAddress, requestType: 'View Mania Cart', ...storeRequest };
+          const requestWithRequestType = { sellerWalletAddress, buyerWalletAddress, requestType: 'View Mania Cart', ...storeRequest };
           acc.push(requestWithRequestType);
         });
       });
@@ -2731,14 +2731,14 @@ app.post('/viewCartManiaRequest', async (req, res) => {
           if (productFromUserCart._id === productId) {
             productDetail = {
               ...productFromUserCart,
-              productId : productId,
+              productId: productId,
               totalQuantity: product.totalQuantity,
-              quantity : product.totalQuantity,
+              quantity: product.totalQuantity,
               totalPrice: product.totalAmount,
               startedDateAndTime: paymentRequestedTimestamp,
               totalF3Amount: totalF3Amount,
               totalGc: totalGc,
-              
+
               f3LiveOfThisTime: f3LiveOfThisTime
             };
             break;
@@ -2887,7 +2887,7 @@ app.get('/deleteRequestAndAddApprovalCheckout', async (req, res) => {
     // Add copied array to approval checkout maps (buyer and seller)
     user.approvalcheckout = user.approvalcheckout || {};
     user.approvalcheckoutBuyer = user.approvalcheckoutBuyer || {};
-     if (copiedRequestsArrayForApprovalBuyer.length > 0) {
+    if (copiedRequestsArrayForApprovalBuyer.length > 0) {
       if (!user.approvalcheckoutBuyer[storeId]) {
         user.approvalcheckoutBuyer[storeId] = [];
       }
@@ -2936,12 +2936,12 @@ app.get('/deleteRequestAndAddApprovalCheckout', async (req, res) => {
         const newStocks = Number(product.numberOfStocks) - Number(quantity);
         const newTotalSolds = parseInt(product.totalsolds) + parseInt(quantity);
         console.log(newStocks, newTotalSolds, quantity);
-        console.log(product.numberOfStocks,product.totalsolds)
-          await collection.updateOne(
-            { 'products._id': productId },
-            { $set: { 'products.$.numberOfStocks': newStocks.toString(), 'products.$.totalsolds': newTotalSolds.toString() } }
-          );
-        }
+        console.log(product.numberOfStocks, product.totalsolds)
+        await collection.updateOne(
+          { 'products._id': productId },
+          { $set: { 'products.$.numberOfStocks': newStocks.toString(), 'products.$.totalsolds': newTotalSolds.toString() } }
+        );
+      }
     }
 
 
@@ -2984,10 +2984,10 @@ app.get('/deleteRequestAndAddApprovalCheckout', async (req, res) => {
   }
 });
 
-app.get('/requestForCredit',async (req,res)=>{
+app.get('/requestForCredit', async (req, res) => {
 
   try {
-    const { storeId, sellerId, paymentRequestedTimestamp, totalF3Amount, f3LiveOfThisTime,lccAmount } = req.query;
+    const { storeId, sellerId, paymentRequestedTimestamp, totalF3Amount, f3LiveOfThisTime, lccAmount } = req.query;
 
     console.log('Request received for credit:', storeId, sellerId, paymentRequestedTimestamp, totalF3Amount);
 
@@ -3057,7 +3057,7 @@ app.get('/requestForCredit',async (req,res)=>{
 
     const copiedRequestArray = salesHistoryArray.map((sellerObject) => {
       const { paymentRequested, paymentRequestedTimestamp, paymentRequestedBuyer, paymentRequestedTimestampBuyer, ...rest } = sellerObject;
-      return { ...rest, totalF3Amount,f3LiveOfThisTimeCredit:  f3LiveOfThisTime,lccAmount : lccAmount };
+      return { ...rest, totalF3Amount, f3LiveOfThisTimeCredit: f3LiveOfThisTime, lccAmount: lccAmount };
     });
 
     user.paymentRequestForCredit[sellerId] = copiedRequestArray;
@@ -3084,7 +3084,7 @@ app.get('/requestForCredit',async (req,res)=>{
 
 app.get('/deleteCreditRequestAndAddApproved', async (req, res) => {
   try {
-    const { buyerWalletAddress, storeId,txhashCredit,dateAndTime } = req.query;
+    const { buyerWalletAddress, storeId, txhashCredit, dateAndTime } = req.query;
 
     console.log('Deleting buyer request and adding to sales history for buyerWalletAddress:', buyerWalletAddress, 'and storeId:', storeId);
 
@@ -3099,10 +3099,23 @@ app.get('/deleteCreditRequestAndAddApproved', async (req, res) => {
       return res.status(404).json({ error: `User with walletAddress ${buyerWalletAddress} not found` });
     }
 
+    const salesHistoryArray = user.salesHistoryBuyer[sellerId];
+
+    const isAlreadyRequested = salesHistoryArray.some((sellerObject) => {
+      return sellerObject.paymentRequestedForCredit === 'Yes';
+    });
+
+    if (isAlreadyRequested) {
+      salesHistoryArray.forEach((sellerObject) => {
+        delete sellerObject.paymentRequestedForCredit;
+      });
+    }
+
+
     const paymentRequestCreditMap = user.paymentRequestForCredit || {};
     const storeRequestsArray = paymentRequestCreditMap[storeId] || [];
-    
-    storeRequestsArray.forEach(requests=>{
+
+    storeRequestsArray.forEach(requests => {
       requests.creditTxHash = txhashCredit;
       requests.dateAndTime = dateAndTime;
     })
