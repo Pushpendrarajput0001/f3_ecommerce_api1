@@ -1913,7 +1913,7 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
 
         // Iterate over the array of requests for each subRequestName
         requestsArray.forEach(storeRequest => {
-          const requestWithRequestType = { sellerWalletAddress, buyerWalletAddress, requestType: 'View Mania Cart', ...storeRequest };
+          const requestWithRequestType = { sellerWalletAddress, buyerWalletAddress, requestType: 'Credit', ...storeRequest };
           acc.push(requestWithRequestType);
         });
       });
