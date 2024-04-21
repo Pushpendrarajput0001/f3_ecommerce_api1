@@ -1878,7 +1878,7 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
 
     response.requests.push(...approvedRequestsBuyers);
 
-    const approvedRequestsMania = usersWithCreditApprovedRequest.reduce((acc, user) => {
+    const approvedRequestsMania = usersWithManiaApprovedRequest.reduce((acc, user) => {
       const buyerWalletAddress = user.walletAddress;
       const storeRequests = user.approvedPaymentRequestsManiaView;
 
@@ -1923,7 +1923,7 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
 
 
 
-    response.requests.push(...approvedRequestsMania);
+    response.requests.push(...approvedRequestsCredit);
 
     console.log('buyersOne', usersWithBuyerApprovedRequest);
 
