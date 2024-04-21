@@ -1822,6 +1822,14 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
       }
     }).toArray();
 
+    const usersWithCreditApprovedRequest = await collection.find({
+      'storeId': sellerStoreId, // Replace 'userType' with the actual field name distinguishing sellerUser
+      'approvedpaymentRequestForCredit': {
+        $exists: true,
+      }
+    }).toArray();
+
+
     const usersWithManiaApprovedRequest = await collection.find({
       'storeId': sellerStoreId, // Replace 'userType' with the actual field name distinguishing sellerUser
       'approvedPaymentRequestsManiaView': {
@@ -1870,7 +1878,7 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
     
     response.requests.push(...approvedRequestsBuyers);
 
-    const approvedRequestsMania = usersWithManiaApprovedRequest.reduce((acc, user) => {
+    const approvedRequestsMania = usersWithCreditApprovedRequest.reduce((acc, user) => {
       const buyerWalletAddress = user.walletAddress;
       const storeRequests = user.approvedPaymentRequestsManiaView;
 
@@ -1881,6 +1889,31 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
         // Iterate over the array of requests for each subRequestName
         requestsArray.forEach(storeRequest => {
           const requestWithRequestType = { buyerWalletAddress, requestType: 'View Mania Cart', ...storeRequest };
+          acc.push(requestWithRequestType);
+        });
+      });
+
+      return acc;
+    }, []);
+
+
+
+    response.requests.push(...approvedRequestsMania);
+
+    
+    const approvedRequestsCredit = usersWithManiaApprovedRequest.reduce((acc, user) => {
+      const buyerWalletAddress = user.walletAddress;
+      const storeRequests = user.approvedpaymentRequestForCredit;
+      const sellerWalletAddress = userSeller.walletAddress
+
+
+      // Iterate over the keys of storeRequests object
+      Object.keys(storeRequests).forEach(subRequestName => {
+        const requestsArray = storeRequests[subRequestName];
+
+        // Iterate over the array of requests for each subRequestName
+        requestsArray.forEach(storeRequest => {
+          const requestWithRequestType = { sellerWalletAddress,buyerWalletAddress, requestType: 'View Mania Cart', ...storeRequest };
           acc.push(requestWithRequestType);
         });
       });
@@ -3078,12 +3111,17 @@ app.get('/deleteCreditRequestAndAddApproved', async (req, res) => {
       'requestProducts': [...storeRequestsArray]
     };
 
-    if (!Array.isArray(user.paymentRequestForCredit[storeId])) {
+    if (!user.approvedpaymentRequestForCredit) {
+      user.approvedpaymentRequestForCredit = {};
+    }
+
+
+    if (!Array.isArray(user.approvedpaymentRequestForCredit[storeId])) {
       console.log(`Creating new approvedPaymentRequestsCredit array for sellerStoreId ${storeId}`);
-      user.paymentRequestForCredit[storeId] = [newRequestObject];
+      user.approvedpaymentRequestForCredit[storeId] = [newRequestObject];
     } else {
       console.log(`Adding new request to existing approvedPaymentRequestsCredit array for sellerStoreId ${storeId}`);
-      user.paymentRequestForCredit[storeId].push(newRequestObject);
+      user.approvedpaymentRequestForCredit[storeId].push(newRequestObject);
     }
 
     // Save the updated user data
