@@ -1491,6 +1491,13 @@ app.get('/getRequestsOfPayments', async (req, res) => {
         }
       }).toArray();
 
+      const otherUsersWithSellerCreditRequest = await collection.find({
+        'paymentRequestForCredit': {
+          $exists: true,
+        }
+      }).toArray();
+
+
       const requestedStoreId = user.storeId; // Assuming user is the current user
 
       console.log('Requested StoreId:', requestedStoreId);
@@ -1522,6 +1529,37 @@ app.get('/getRequestsOfPayments', async (req, res) => {
               products: sellerProducts
             };
             response.requests.push(sellerRequest);
+          }
+        }
+      }
+
+      for (const otherUser of otherUsersWithSellerCreditRequest) {
+        if (otherUser.paymentRequestForCredit && otherUser.paymentRequestForCredit[requestedStoreId]) {
+          const storeIdRequests = otherUser.paymentRequestForCredit[requestedStoreId];
+          const buyerUser = await collection.findOne({ walletAddress: otherUser.walletAddress });
+          if (buyerUser) {
+            const buyerWalletAddress = buyerUser.walletAddress;
+            const sellerProducts = storeIdRequests.map(product => ({
+              productId: product.productId,
+              quantity: product.quantity,
+              totalPrice: product.totalPrice,
+              totalF3: product.totalF3Amount,
+              totalGc: product.totalGc,
+              sellerWalletAddress: user.walletAddress,
+              dateAndTime: product.dateAndTime,
+              lccAmount : product.lccAmount,
+              startedDateAndTime: product.startedDateAndTime
+            }));
+            const creditRequestRequest = {
+              totalF3: storeIdRequests[0].totalF3Amount,
+              totalGc: storeIdRequests[0].totalGc,
+              storeId: requestedStoreId,
+              buyerWalletAddress: buyerWalletAddress, 
+              sellerWalletAddress: user.walletAddress,
+              requestType: 'Credit',
+              products: sellerProducts
+            };
+            response.requests.push(creditRequestRequest);
           }
         }
       }
@@ -2907,6 +2945,226 @@ app.get('/deleteRequestAndAddApprovalCheckout', async (req, res) => {
   } catch (error) {
     console.error('Error deleting request and adding to approval checkout:', error);
     res.status(500).json({ error: 'An error occurred while processing the request' });
+  }
+});
+
+app.get('/requestForCredit',async (req,res)=>{
+
+  try {
+    const { storeId, sellerId, paymentRequestedTimestamp, totalF3Amount, f3LiveOfThisTime,lccAmount } = req.query;
+
+    console.log('Request received for credit:', storeId, sellerId, paymentRequestedTimestamp, totalF3Amount);
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    const user = await collection.findOne({ storeId });
+
+    if (!user) {
+      console.log(`User with storeId ${storeId} not found`);
+      res.status(404).json({ error: `User with storeId ${storeId} not found` });
+      return;
+    }
+
+
+    const salesHistoryArray = user.salesHistoryBuyer[sellerId];
+    //const sellerArrayReq = user.paymentRequestSeller[sellerId];
+
+    const isAlreadyRequested = salesHistoryArray.some((sellerObject) => {
+      return sellerObject.paymentRequestedForCredit === 'Yes'
+    });
+
+    if (isAlreadyRequested) {
+      salesHistoryArray.forEach((sellerObject) => {
+        if (sellerObject.paymentRequestedForCredit = 'Yes') {
+          sellerObject.paymentRequestedTimestampForCredit = paymentRequestedTimestamp;
+          sellerObject.f3LiveOfThisTimeOfCreditTime = f3LiveOfThisTime;
+        }
+      });
+
+      if (user.paymentRequestForCredit[sellerId]) {
+        const sellerArrayReq = user.paymentRequestForCredit[sellerId];
+        sellerArrayReq.forEach((sellerObjectRequest) => {
+          if (sellerObjectRequest.paymentRequestedTimestampForCredit) {
+            sellerObjectRequest.paymentRequestedTimestampForCredit = paymentRequestedTimestamp
+          }
+
+        });
+        await collection.updateOne({ storeId }, { $set: { [`paymentRequestForCredit.${sellerId}`]: sellerArrayReq } });
+      } else {
+
+      }
+
+      await collection.updateOne({ storeId }, { $set: { [`salesHistoryBuyer.${sellerId}`]: salesHistoryArray } });
+
+      console.log(`Payment requested timestamp updated successfully for sellerId ${sellerId}`);
+
+      res.status(405).json({ error: `Payment has already been requested for sellerId ${sellerId}` });
+      return;
+    }
+
+    if (typeof user.paymentRequestForCredit === 'undefined') {
+      user.paymentRequestForCredit = {};
+    }
+
+    salesHistoryArray.forEach((sellerObject) => {
+      if (!sellerObject.paymentRequestedForCredit && !sellerObject.paymentRequestedTimestampForCredit) {
+        sellerObject.paymentRequestedForCredit = 'Yes';
+        sellerObject.paymentRequestedTimestampForCredit = paymentRequestedTimestamp;
+        sellerObject.f3AmountOfCredit = totalF3Amount;
+        sellerObject.f3LivePriceOfCreditTime = f3LiveOfThisTime
+      } else if (sellerObject.paymentRequested === 'Yes') {
+        sellerObject.paymentRequestedTimestampForCredit = paymentRequestedTimestamp;
+      }
+    });
+
+    const copiedRequestArray = salesHistoryArray.map((sellerObject) => {
+      const { paymentRequested, paymentRequestedTimestamp, paymentRequestedBuyer, paymentRequestedTimestampBuyer, ...rest } = sellerObject;
+      return { ...rest, totalF3Amount,f3LiveOfThisTimeCredit:  f3LiveOfThisTime,lccAmount : lccAmount };
+    });
+
+    user.paymentRequestForCredit[sellerId] = copiedRequestArray;
+
+
+    await collection.updateOne(
+      { storeId },
+      { $set: { [`salesHistoryBuyer.${sellerId}`]: salesHistoryArray, paymentRequestForCredit: user.paymentRequestForCredit } }
+    );
+
+    // Close MongoDB connection
+    await client.close();
+
+    console.log(`Payment requested flag updated successfully for all sellers in storeId ${storeId}`);
+
+    // Send response
+    res.status(200).json({ message: 'Payment requested flag updated successfully for all sellers' });
+  } catch (error) {
+    console.error('Error updating payment requested flag:', error);
+    res.status(500).json({ error: 'An error occurred while updating payment requested flag' });
+  }
+
+});
+
+app.get('/deleteCreditRequestAndAddApproved', async (req, res) => {
+  try {
+    const { buyerWalletAddress, storeId } = req.query;
+
+    console.log('Deleting buyer request and adding to sales history for buyerWalletAddress:', buyerWalletAddress, 'and storeId:', storeId);
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user with the specified buyerWalletAddress
+    const user = await collection.findOne({ walletAddress: buyerWalletAddress });
+    if (!user) {
+      console.log(`User with walletAddress ${buyerWalletAddress} not found`);
+      return res.status(404).json({ error: `User with walletAddress ${buyerWalletAddress} not found` });
+    }
+
+    const paymentRequestCreditMap = user.paymentRequestForCredit || {};
+    const storeRequestsArray = paymentRequestCreditMap[storeId] || [];
+    
+
+    const newRequestObject = {
+      'requestProducts': [...storeRequestsArray]
+    };
+
+    if (!Array.isArray(user.paymentRequestForCredit[storeId])) {
+      console.log(`Creating new approvedPaymentRequestsCredit array for sellerStoreId ${storeId}`);
+      user.paymentRequestForCredit[storeId] = [newRequestObject];
+    } else {
+      console.log(`Adding new request to existing approvedPaymentRequestsCredit array for sellerStoreId ${storeId}`);
+      user.paymentRequestForCredit[storeId].push(newRequestObject);
+    }
+
+    // Save the updated user data
+    await collection.updateOne({ walletAddress: buyerWalletAddress }, { $set: user });
+
+    // Delete the array from paymentRequestBuyer map
+    delete paymentRequestCreditMap[storeId];
+
+    // Update the user document in the database
+    await collection.updateOne(
+      { walletAddress: buyerWalletAddress },
+      {
+        $set: {
+          paymentRequestForCredit: paymentRequestCreditMap,
+        }
+      }
+    );
+
+
+    // Close MongoDB connection
+    await client.close();
+
+    console.log(`Buyer request deleted and added to sales history successfully for walletAddress ${buyerWalletAddress}`);
+
+    // Send success response
+    res.status(200).json({ message: 'Buyer request deleted and added to sales history successfully' });
+  } catch (error) {
+    console.error('Error deleting buyer request and adding to sales history:', error);
+    res.status(500).json({ error: 'An error occurred while processing the request' });
+  }
+});
+
+app.get('/getConfirmIfRequestExisting', async (req, res) => {
+  try {
+    const { walletAddress } = req.query;
+
+    console.log('Request received:', walletAddress);
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by walletAddress
+    const user = await collection.findOne({ walletAddress });
+
+    if (!user) {
+      console.log(`User with walletAddress ${walletAddress} not found`);
+      return res.status(404).json({ error: `User with walletAddress ${walletAddress} not found` });
+    }
+
+    const response = {
+      requestsExist: "No" // Default value is "No"
+    };
+
+    // Check if paymentRequestSeller object exists and contains non-empty arrays
+    if (user.paymentRequestForCredit) {
+      const storeId = user.storeId;
+
+      console.log(storeId);
+
+      const otherUsersWithSellerCreditRequest = await collection.find({
+        'paymentRequestForCredit': {
+          $exists: true,
+        }
+      }).toArray();
+
+      const requestedStoreId = user.storeId; // Assuming user is the current user
+
+      console.log('Requested StoreId:', requestedStoreId);
+
+      for (const otherUser of otherUsersWithSellerCreditRequest) {
+        if (otherUser.paymentRequestForCredit && otherUser.paymentRequestForCredit[requestedStoreId] && otherUser.paymentRequestForCredit[requestedStoreId].length > 0) {
+          response.requestsExist = "Yes"; // If any non-empty arrays exist, set the response to "Yes"
+          break; // Break the loop as we only need to know if non-empty arrays exist or not
+        }
+      }
+    };
+
+    // Close MongoDB connection
+    await client.close();
+
+    console.log(`Payment requests retrieved successfully for walletAddress ${walletAddress}`);
+
+    // Send response
+    res.status(200).json(response);
+  } catch (error) {
+    console.error('Error retrieving payment requests:', error);
+    res.status(500).json({ error: 'An error occurred while retrieving payment requests' });
   }
 });
 
