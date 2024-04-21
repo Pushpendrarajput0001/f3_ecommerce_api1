@@ -3099,7 +3099,7 @@ app.get('/deleteCreditRequestAndAddApproved', async (req, res) => {
       return res.status(404).json({ error: `User with walletAddress ${buyerWalletAddress} not found` });
     }
 
-    const salesHistoryArray = user.salesHistoryBuyer[sellerId];
+    const salesHistoryArray = user.salesHistoryBuyer[storeId];
 
     const isAlreadyRequested = salesHistoryArray.some((sellerObject) => {
       return sellerObject.paymentRequestedForCredit === 'Yes';
