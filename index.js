@@ -1549,7 +1549,8 @@ app.get('/getRequestsOfPayments', async (req, res) => {
               dateAndTime: product.dateAndTime,
               lccAmount: product.lccAmount,
               startedDateAndTime: product.startedDateAndTime,
-              paymentRequestedTimestampForCredit: product.paymentRequestedTimestampForCredit
+              paymentRequestedTimestampForCredit: product.paymentRequestedTimestampForCredit,
+              f3LiveOfThisTimeCredit : product.f3LiveOfThisTimeCredit
             }));
             const creditRequestRequest = {
               totalF3: storeIdRequests[0].totalF3Amount,
@@ -1633,7 +1634,8 @@ app.get('/getRequestsOfPayments', async (req, res) => {
               dateAndTime: product.dateAndTime,
               lccAmount: product.lccAmount,
               startedDateAndTime: product.startedDateAndTime,
-              paymentRequestedTimestampForCredit: product.paymentRequestedTimestampForCredit
+              paymentRequestedTimestampForCredit: product.paymentRequestedTimestampForCredit,
+              f3LiveOfThisTimeCredit : product.f3LiveOfThisTimeCredit
             }));
             const creditRequestRequest = {
               totalF3: storeIdRequests[0].totalF3Amount,
