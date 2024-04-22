@@ -2074,17 +2074,17 @@ app.get('/deleteBuyerRequestAndAddSalesHistory', async (req, res) => {
       }
     );
 
-    // Delete the array from approvalcheckout map only if it exists
-    // if (user.approvalcheckoutBuyer && user.approvalcheckoutBuyer[storeId]) {
-    //   await collection.updateOne(
-    //     { walletAddress: buyerWalletAddress },
-    //     {
-    //       $unset: {
-    //         [`approvalcheckoutBuyer.${storeId}`]: 1
-    //       }
-    //     }
-    //   );
-    // }
+   // Delete the array from approvalcheckout map only if it exists
+    if (user.approvalcheckoutBuyer && user.approvalcheckoutBuyer[storeId]) {
+      await collection.updateOne(
+        { walletAddress: buyerWalletAddress },
+        {
+          $unset: {
+            [`approvalcheckoutBuyer.${storeId}`]: 1
+          }
+        }
+      );
+    }
 
     // Close MongoDB connection
     await client.close();
