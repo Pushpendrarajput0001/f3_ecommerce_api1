@@ -2050,19 +2050,15 @@ app.get('/deleteBuyerRequestAndAddSalesHistory', async (req, res) => {
     // Make a copy of the storeRequestsArray
     const storeRequestsCopy = [...storeRequestsArray];
 
+    const existingBuyerHistory = user.salesHistoryBuyer && user.salesHistoryBuyer[storeId] ? user.salesHistoryBuyer[storeId] : [];
+
+    // Combine existing sales history with new requests
+    const updatedBuyerHistory = [...existingBuyerHistory, ...storeRequestsArray];
     // Add the copied array to salesHistoryBuyer map
-    let salesHistoryBuyerMap = user.salesHistoryBuyer;
-    if (salesHistoryBuyerMap[storeId] && salesHistoryBuyerMap[storeId].length > 0) {
-      salesHistoryBuyerMap = {
-        ...salesHistoryBuyerMap,
-        [storeId]: [...salesHistoryBuyerMap[storeId], ...storeRequestsCopy]
-      };
-    } else {
-      salesHistoryBuyerMap = {
-        ...salesHistoryBuyerMap,
-        [storeId]: storeRequestsCopy
-      };
-    }
+    const salesHistoryBuyerMap = {
+      ...user.salesHistoryBuyer,
+      [storeId]: updatedBuyerHistory
+    };
 
     // Delete the array from paymentRequestBuyer map
     delete paymentRequestBuyerMap[storeId];
@@ -2079,16 +2075,16 @@ app.get('/deleteBuyerRequestAndAddSalesHistory', async (req, res) => {
     );
 
     // Delete the array from approvalcheckout map only if it exists
-    if (user.approvalcheckoutBuyer && user.approvalcheckoutBuyer[storeId]) {
-      await collection.updateOne(
-        { walletAddress: buyerWalletAddress },
-        {
-          $unset: {
-            [`approvalcheckoutBuyer.${storeId}`]: 1
-          }
-        }
-      );
-    }
+    // if (user.approvalcheckoutBuyer && user.approvalcheckoutBuyer[storeId]) {
+    //   await collection.updateOne(
+    //     { walletAddress: buyerWalletAddress },
+    //     {
+    //       $unset: {
+    //         [`approvalcheckoutBuyer.${storeId}`]: 1
+    //       }
+    //     }
+    //   );
+    // }
 
     // Close MongoDB connection
     await client.close();
@@ -3183,7 +3179,7 @@ app.get('/requestForCredit', async (req, res) => {
 
 app.get('/deleteCreditRequestAndAddApproved', async (req, res) => {
   try {
-    const { buyerWalletAddress, storeId, txhashCredit, dateAndTime } = req.query;
+    const { buyerWalletAddress, storeId, txhashCredit, dateAndTime,creditAmountInF3 } = req.query;
 
     console.log('Deleting buyer request and adding to sales history for buyerWalletAddress:', buyerWalletAddress, 'and storeId:', storeId);
 
@@ -3217,6 +3213,8 @@ app.get('/deleteCreditRequestAndAddApproved', async (req, res) => {
     storeRequestsArray.forEach(requests => {
       requests.creditTxHash = txhashCredit;
       requests.dateAndTime = dateAndTime;
+      requests.creditAmountInF3 = creditAmountInF3;
+      requests.totalF3Amount = creditAmountInF3
     })
 
     const newRequestObject = {
