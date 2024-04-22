@@ -1564,6 +1564,90 @@ app.get('/getRequestsOfPayments', async (req, res) => {
           }
         }
       }
+    }else{
+      const storeId = user.storeId;
+
+      console.log(storeId);
+      // Find other users who have seller requests with the same storeId
+      const otherUsersWithSellerRequests = await collection.find({
+        'paymentRequestSeller': {
+          $exists: true,
+        }
+      }).toArray();
+
+      const otherUsersWithSellerCreditRequest = await collection.find({
+        'paymentRequestForCredit': {
+          $exists: true,
+        }
+      }).toArray();
+
+
+      const requestedStoreId = user.storeId; // Assuming user is the current user
+
+      console.log('Requested StoreId:', requestedStoreId);
+
+      // Iterate over otherUsersWithSellerRequests to find requests for the requested storeId
+      for (const otherUser of otherUsersWithSellerRequests) {
+        if (otherUser.paymentRequestSeller && otherUser.paymentRequestSeller[requestedStoreId]) {
+          const storeIdRequests = otherUser.paymentRequestSeller[requestedStoreId];
+          const buyerUser = await collection.findOne({ walletAddress: otherUser.walletAddress });
+          if (buyerUser) {
+            const buyerWalletAddress = buyerUser.walletAddress;
+            const sellerProducts = storeIdRequests.map(product => ({
+              productId: product.productId,
+              quantity: product.quantity,
+              totalPrice: product.totalPrice,
+              totalF3: product.totalF3Amount,
+              totalGc: product.totalGc,
+              sellerWalletAddress: user.walletAddress,
+              dateAndTime: product.dateAndTime,
+              startedDateAndTime: product.startedDateAndTime
+            }));
+            const sellerRequest = {
+              totalF3: storeIdRequests[0].totalF3Amount,
+              totalGc: storeIdRequests[0].totalGc,
+              storeId: requestedStoreId,
+              buyerWalletAddress: buyerWalletAddress, // Add buyer's wallet address to each product
+              sellerWalletAddress: user.walletAddress, // The seller's wallet address is from the original user
+              requestType: 'seller',
+              products: sellerProducts
+            };
+            response.requests.push(sellerRequest);
+          }
+        }
+      }
+
+      for (const otherUser of otherUsersWithSellerCreditRequest) {
+        if (otherUser.paymentRequestForCredit && otherUser.paymentRequestForCredit[requestedStoreId]) {
+          const storeIdRequests = otherUser.paymentRequestForCredit[requestedStoreId];
+          const buyerUser = await collection.findOne({ walletAddress: otherUser.walletAddress });
+          if (buyerUser) {
+            const buyerWalletAddress = buyerUser.walletAddress;
+            const sellerProducts = storeIdRequests.map(product => ({
+              productId: product.productId,
+              quantity: product.quantity,
+              totalPrice: product.totalPrice,
+              totalF3: product.totalF3Amount,
+              totalGc: product.totalGc,
+              sellerWalletAddress: user.walletAddress,
+              dateAndTime: product.dateAndTime,
+              lccAmount: product.lccAmount,
+              startedDateAndTime: product.startedDateAndTime,
+              paymentRequestedTimestampForCredit: product.paymentRequestedTimestampForCredit
+            }));
+            const creditRequestRequest = {
+              totalF3: storeIdRequests[0].totalF3Amount,
+              totalGc: storeIdRequests[0].totalGc,
+              storeId: requestedStoreId,
+              buyerWalletAddress: buyerWalletAddress,
+              sellerWalletAddress: user.walletAddress,
+              requestType: 'Credit',
+              products: sellerProducts
+            };
+            response.requests.push(creditRequestRequest);
+          }
+        }
+      }
     };
 
 
