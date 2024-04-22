@@ -1965,10 +1965,18 @@ app.get('/deleteBuyerRequestAndAddSalesHistory', async (req, res) => {
     const storeRequestsCopy = [...storeRequestsArray];
 
     // Add the copied array to salesHistoryBuyer map
-    const salesHistoryBuyerMap = {
-      ...user.salesHistoryBuyer, // Preserve existing sales history
-      [storeId]: storeRequestsCopy
-    };
+    let salesHistoryBuyerMap = user.salesHistoryBuyer;
+    if (salesHistoryBuyerMap[storeId] && salesHistoryBuyerMap[storeId].length > 0) {
+      salesHistoryBuyerMap = {
+        ...salesHistoryBuyerMap,
+        [storeId]: [...salesHistoryBuyerMap[storeId], ...storeRequestsCopy]
+      };
+    } else {
+      salesHistoryBuyerMap = {
+        ...salesHistoryBuyerMap,
+        [storeId]: storeRequestsCopy
+      };
+    }
 
     // Delete the array from paymentRequestBuyer map
     delete paymentRequestBuyerMap[storeId];
@@ -2032,10 +2040,15 @@ app.get('/deleteSellerRequestAndAddSalesHistory', async (req, res) => {
     // Make a copy of the storeRequestsArray
     const storeRequestsCopy = [...storeRequestsArray];
 
-    // Add the copied array to salesHistoryBuyer map
+    const existingSalesHistory = user.salesHistorySeller && user.salesHistorySeller[storeId] ? user.salesHistorySeller[storeId] : [];
+
+    // Combine existing sales history with new requests
+    const updatedSalesHistory = [...existingSalesHistory, ...storeRequestsArray];
+
+    // Update salesHistorySeller map
     const salesHistorySellerMap = {
-      ...user.salesHistorySeller, // Preserve existing sales history
-      [storeId]: storeRequestsCopy
+      ...user.salesHistorySeller,
+      [storeId]: updatedSalesHistory
     };
 
     // Delete the array from paymentRequestBuyer map
