@@ -3287,7 +3287,28 @@ app.get('/getConfirmIfRequestExisting', async (req, res) => {
     };
 
     // Check if paymentRequestSeller object exists and contains non-empty arrays
-    if (user.paymentRequestForCredit) {
+    if (!user.paymentRequestForCredit) {
+      const storeId = user.storeId;
+
+      console.log(storeId);
+
+      const otherUsersWithSellerCreditRequest = await collection.find({
+        'paymentRequestForCredit': {
+          $exists: true,
+        }
+      }).toArray();
+
+      const requestedStoreId = user.storeId; // Assuming user is the current user
+
+      console.log('Requested StoreId:', requestedStoreId);
+
+      for (const otherUser of otherUsersWithSellerCreditRequest) {
+        if (otherUser.paymentRequestForCredit && otherUser.paymentRequestForCredit[requestedStoreId] && otherUser.paymentRequestForCredit[requestedStoreId].length > 0) {
+          response.requestsExist = "Yes"; // If any non-empty arrays exist, set the response to "Yes"
+          break; // Break the loop as we only need to know if non-empty arrays exist or not
+        }
+      }
+    }else{
       const storeId = user.storeId;
 
       console.log(storeId);
