@@ -3103,7 +3103,7 @@ app.get('/requestForCredit', async (req, res) => {
     //const sellerArrayReq = user.paymentRequestSeller[sellerId];
 
     const isAlreadyRequested = salesHistoryArray.some((sellerObject) => {
-      return sellerObject.paymentRequestedForCredit === 'Yes'
+      return sellerObject.paymentRequestedForCredit = 'Yes'
     });
 
     if (isAlreadyRequested) {
