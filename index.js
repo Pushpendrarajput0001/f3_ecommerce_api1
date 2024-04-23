@@ -1550,7 +1550,7 @@ app.get('/getRequestsOfPayments', async (req, res) => {
               lccAmount: product.lccAmount,
               startedDateAndTime: product.startedDateAndTime,
               paymentRequestedTimestampForCredit: product.paymentRequestedTimestampForCredit,
-              f3LiveOfThisTimeCredit : product.f3LiveOfThisTimeCredit
+              f3LiveOfThisTimeCredit: product.f3LiveOfThisTimeCredit
             }));
             const creditRequestRequest = {
               totalF3: storeIdRequests[0].totalF3Amount,
@@ -1565,7 +1565,7 @@ app.get('/getRequestsOfPayments', async (req, res) => {
           }
         }
       }
-    }else{
+    } else {
       const storeId = user.storeId;
 
       console.log(storeId);
@@ -1635,7 +1635,7 @@ app.get('/getRequestsOfPayments', async (req, res) => {
               lccAmount: product.lccAmount,
               startedDateAndTime: product.startedDateAndTime,
               paymentRequestedTimestampForCredit: product.paymentRequestedTimestampForCredit,
-              f3LiveOfThisTimeCredit : product.f3LiveOfThisTimeCredit
+              f3LiveOfThisTimeCredit: product.f3LiveOfThisTimeCredit
             }));
             const creditRequestRequest = {
               totalF3: storeIdRequests[0].totalF3Amount,
@@ -2074,7 +2074,7 @@ app.get('/deleteBuyerRequestAndAddSalesHistory', async (req, res) => {
       }
     );
 
-   // Delete the array from approvalcheckout map only if it exists
+    // Delete the array from approvalcheckout map only if it exists
     if (user.approvalcheckoutBuyer && user.approvalcheckoutBuyer[storeId]) {
       await collection.updateOne(
         { walletAddress: buyerWalletAddress },
@@ -3179,7 +3179,7 @@ app.get('/requestForCredit', async (req, res) => {
 
 app.get('/deleteCreditRequestAndAddApproved', async (req, res) => {
   try {
-    const { buyerWalletAddress, storeId, txhashCredit, dateAndTime,creditAmountInF3 } = req.query;
+    const { buyerWalletAddress, storeId, txhashCredit, dateAndTime, creditAmountInF3 } = req.query;
 
     console.log('Deleting buyer request and adding to sales history for buyerWalletAddress:', buyerWalletAddress, 'and storeId:', storeId);
 
@@ -3276,6 +3276,11 @@ app.get('/getConfirmIfRequestExisting', async (req, res) => {
 
     // Find the user by walletAddress
     const user = await collection.findOne({ walletAddress });
+    const sellerId = user.storeId;
+    const usersWithApprovalsCheckout = await collection.find({ 'approvalcheckout': { $exists: true } }).toArray();
+    const approvalCheckoutMap = user.approvalcheckoutBuyer;
+    const usdRateUser = parseFloat(user.usdtRate);
+    console.log('usdRate',usdRateUser);
 
     if (!user) {
       console.log(`User with walletAddress ${walletAddress} not found`);
@@ -3283,7 +3288,9 @@ app.get('/getConfirmIfRequestExisting', async (req, res) => {
     }
 
     const response = {
-      requestsExist: "No" // Default value is "No"
+      requestsExistForCredit: "No", 
+      requestsExistForApprovedSeller: "No", 
+      requestsExistForApprovedBuyer: "No", 
     };
 
     // Check if paymentRequestSeller object exists and contains non-empty arrays
@@ -3304,11 +3311,11 @@ app.get('/getConfirmIfRequestExisting', async (req, res) => {
 
       for (const otherUser of otherUsersWithSellerCreditRequest) {
         if (otherUser.paymentRequestForCredit && otherUser.paymentRequestForCredit[requestedStoreId] && otherUser.paymentRequestForCredit[requestedStoreId].length > 0) {
-          response.requestsExist = "Yes"; // If any non-empty arrays exist, set the response to "Yes"
+          response.requestsExistForCredit = "Yes"; // If any non-empty arrays exist, set the response to "Yes"
           break; // Break the loop as we only need to know if non-empty arrays exist or not
         }
       }
-    }else{
+    } else {
       const storeId = user.storeId;
 
       console.log(storeId);
@@ -3325,8 +3332,58 @@ app.get('/getConfirmIfRequestExisting', async (req, res) => {
 
       for (const otherUser of otherUsersWithSellerCreditRequest) {
         if (otherUser.paymentRequestForCredit && otherUser.paymentRequestForCredit[requestedStoreId] && otherUser.paymentRequestForCredit[requestedStoreId].length > 0) {
-          response.requestsExist = "Yes"; // If any non-empty arrays exist, set the response to "Yes"
+          response.requestsExistForCredit = "Yes"; // If any non-empty arrays exist, set the response to "Yes"
           break; // Break the loop as we only need to know if non-empty arrays exist or not
+        }
+      }
+    };
+
+    for (const user of usersWithApprovalsCheckout) {
+      //console.log('User:', user);
+
+      if (user.approvalcheckout[sellerId]) {
+        const sellerApprovalsCheckoutArray = user.approvalcheckout[sellerId];
+        const usdRate = parseFloat(user.usdtRate);
+        console.log(usdRate);
+        //console.log('Approvals Checkout for Seller:', sellerApprovalsCheckoutArray);
+
+        let totalUsdRate = 0;
+        for (const approvalcheckout of sellerApprovalsCheckoutArray) {
+          const { totalPrice } = approvalcheckout;
+          const totalPriceNum = parseFloat(totalPrice.replace(/[^\d.]/g, ''));
+
+          const totalusdproduct = totalPriceNum / usdRate;
+          totalUsdRate += totalusdproduct;
+          console.log(totalusdproduct,totalUsdRate,totalPriceNum);
+          console.log('totalPriceNum',totalPriceNum);
+        }
+        console.log(totalUsdRate)
+        // Check if total USD rate for seller is more than 10.00
+        if (totalUsdRate > 10.00) {
+          response.requestsExistForApprovedSeller = "Yes";
+        }
+      }
+    }
+
+    if (approvalCheckoutMap) {
+      console.log(usdRateUser);
+      for (const sellerId in approvalCheckoutMap) {
+        const sellerCheckoutApprovalsArray = approvalCheckoutMap[sellerId];
+
+        let totalUSDRate = 0;
+        // Iterate over each checkout approval in the seller's array
+        for (const approvalcheckout of sellerCheckoutApprovalsArray) {
+          const { totalPrice } = approvalcheckout;
+          console.log(totalPrice);
+          const totalPriceProduct = parseFloat(totalPrice.replace(/[^\d.]/g, ''));
+
+          const calculation = totalPriceProduct / usdRateUser;
+          totalUSDRate += calculation;
+          console.log(calculation,totalUSDRate,totalPriceProduct)
+        }
+        console.log(totalUSDRate)
+        if (totalUSDRate > 10.00) {
+          response.requestsExistForApprovedBuyer = "Yes";
         }
       }
     };
@@ -3343,6 +3400,7 @@ app.get('/getConfirmIfRequestExisting', async (req, res) => {
     res.status(500).json({ error: 'An error occurred while retrieving payment requests' });
   }
 });
+
 
 
 app.listen(PORT, '192.168.29.149', () => {
