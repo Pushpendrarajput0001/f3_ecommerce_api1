@@ -3401,6 +3401,73 @@ app.get('/getConfirmIfRequestExisting', async (req, res) => {
   }
 });
 
+app.get('resetPasswordEmailExist', async (req,res)=>{
+  try {
+    const { email } = req.query;
+
+    console.log('Request received:', email);
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by email
+    const user = await collection.findOne({ email });
+
+    if (!user) {
+      console.log(`User with email ${email} not found`);
+      return res.status(405).json({ error: `User with email ${email} not found` });
+    }
+
+    console.log(`User with email ${email} exists`);
+
+    // Close MongoDB connection
+    await client.close();
+
+    // Send response
+    res.status(200).json({ exists: "Yes" });
+  } catch (error) {
+    console.error('Error checking user existence:', error);
+    res.status(500).json({ error: 'An error occurred while checking user existence' });
+  }
+});
+
+app.get('/resetPassword', async (req, res) => {
+  try {
+    const { email, newPassword } = req.query;
+
+    console.log('Request received:', email, newPassword);
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by email
+    const user = await collection.findOne({ email });
+
+    if (!user) {
+      console.log(`User with email ${email} not found`);
+      return res.status(405).json({ error: `User with email ${email} not found` });
+    }
+
+    // Update the password
+    await collection.updateOne(
+      { email },
+      { $set: { password: newPassword } }
+    );
+
+    console.log(`Password updated successfully for user with email ${email}`);
+
+    // Close MongoDB connection
+    await client.close();
+
+    // Send response
+    res.status(200).json({ message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Error updating password:', error);
+    res.status(500).json({ error: 'An error occurred while updating password' });
+  }
+});
 
 
 app.listen(PORT, '192.168.29.149', () => {
