@@ -3432,11 +3432,11 @@ app.get('/resetPasswordEmailExist', async (req,res)=>{
   }
 });
 
-app.get('/resetPassword', async (req, res) => {
+app.get('/saveOneSignalId', async (req, res) => {
   try {
-    const { email, newPassword } = req.query;
+    const { email, onesignalId } = req.query;
 
-    console.log('Request received:', email, newPassword);
+    console.log('Request received:', email, onesignalId);
 
     const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
     const db = client.db('f3_ecommerce');
@@ -3445,29 +3445,29 @@ app.get('/resetPassword', async (req, res) => {
     // Find the user by email
     const user = await collection.findOne({ email });
 
-    if (!user) {
-      console.log(`User with email ${email} not found`);
-      return res.status(405).json({ error: `User with email ${email} not found` });
+    if (user) {
+      // User exists, update OneSignalId field
+      if(onesignalId){
+        await collection.updateOne(
+          { email },
+          { $set: { OneSignalId: onesignalId } }
+        );
+      }
+      console.log(`OneSignal ID updated successfully for user with email ${email}`);
+    } else {
+      // User does not exist, create a new document
+      await collection.insertOne({ email, OneSignalId: onesignalId });
+      console.log(`New user with email ${email} created with OneSignal ID`);
     }
-
-    // Update the password
-    if(newPassword){
-      await collection.updateOne(
-        { email },
-        { $set: { password: newPassword } }
-      );
-    }
-    
-    console.log(`Password updated successfully for user with email ${email}`);
 
     // Close MongoDB connection
     await client.close();
 
     // Send response
-    res.status(200).json({ message: 'Password updated successfully' });
+    res.status(200).json({ message: 'OneSignal ID saved successfully' });
   } catch (error) {
-    console.error('Error updating password:', error);
-    res.status(500).json({ error: 'An error occurred while updating password' });
+    console.error('Error saving OneSignal ID:', error);
+    res.status(500).json({ error: 'An error occurred while saving OneSignal ID' });
   }
 });
 
