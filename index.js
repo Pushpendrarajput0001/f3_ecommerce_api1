@@ -3401,7 +3401,7 @@ app.get('/getConfirmIfRequestExisting', async (req, res) => {
   }
 });
 
-app.get('resetPasswordEmailExist', async (req,res)=>{
+app.get('/resetPasswordEmailExist', async (req,res)=>{
   try {
     const { email } = req.query;
 
