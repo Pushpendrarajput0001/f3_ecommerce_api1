@@ -995,7 +995,7 @@ app.get('/deleteAndapprovalcheckoutsStore', async (req, res) => {
 
     await client.close();
 
-    res.status(200).json({ message: `Checkout approvals for storeId: ${storeId} removed successfully` });
+    res.status(200).json({ message: user.OneSignalId });
   } catch (error) {
     console.error('Error removing checkout approvals:', error);
     res.status(500).json({ error: 'An error occurred while removing checkout approvals' });
