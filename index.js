@@ -3451,11 +3451,13 @@ app.get('/resetPassword', async (req, res) => {
     }
 
     // Update the password
-    await collection.updateOne(
-      { email },
-      { $set: { password: newPassword } }
-    );
-
+    if(newPassword){
+      await collection.updateOne(
+        { email },
+        { $set: { password: newPassword } }
+      );
+    }
+    
     console.log(`Password updated successfully for user with email ${email}`);
 
     // Close MongoDB connection
