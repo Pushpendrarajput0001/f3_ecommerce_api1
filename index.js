@@ -714,7 +714,7 @@ app.post('/addCheckoutApproval', async (req, res) => {
     );
 
     const seller = await collection.findOne({ storeId: products[0].storeId });
-    const sellerOneSignalId = seller.onesignalId;
+    const sellerOneSignalId = seller.OneSignalId;
 
     // Close MongoDB connection
     await client.close();
