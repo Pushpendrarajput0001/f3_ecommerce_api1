@@ -714,13 +714,13 @@ app.post('/addCheckoutApproval', async (req, res) => {
     );
 
     const seller = await collection.findOne({ storeId: products[0].storeId });
-    const sellerOneSignalId = seller.OneSignalId;
+    const sellerOneSignalIdMap = seller.OneSignalId;
 
     // Close MongoDB connection
     await client.close();
 
     // Send response
-    res.status(200).json({ message: sellerOneSignalId });
+    res.status(200).json({ message: sellerOneSignalIdMap });
   } catch (error) {
     console.error('Error adding checkout approvals:', error);
     res.status(500).json({ error: 'An error occurred while adding checkout approvals' });
@@ -3450,16 +3450,23 @@ app.get('/saveOneSignalId', async (req, res) => {
 
     if (user) {
       // User exists, update OneSignalId field
-      if(onesignalId){
-        await collection.updateOne(
-          { email },
-          { $set: { OneSignalId: onesignalId } }
-        );
+      let updatedOneSignalIdMap = {};
+      if (user.OneSignalId) {
+        updatedOneSignalIdMap = { ...user.OneSignalId }; // Clone the existing map
       }
+      if (onesignalId && !updatedOneSignalIdMap[onesignalId]) {
+        updatedOneSignalIdMap[onesignalId] = true; // Add the new ID to the map
+      }
+
+      await collection.updateOne(
+        { email },
+        { $set: { OneSignalId: updatedOneSignalIdMap } }
+      );
+
       console.log(`OneSignal ID updated successfully for user with email ${email}`);
     } else {
       // User does not exist, create a new document
-      await collection.insertOne({ email, OneSignalId: onesignalId });
+      await collection.insertOne({ email, OneSignalId: { [onesignalId]: true } }); // Initialize the map with the new ID
       console.log(`New user with email ${email} created with OneSignal ID`);
     }
 
