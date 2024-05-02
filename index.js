@@ -2345,7 +2345,7 @@ app.get('/getSellerSectionSalesHistory', async (req, res) => {
             productName, startedPrice,
             f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected,
             description, totalsolds, storeId, offer, storeIdBuyer, walletAddressBuyer,
-            flagWord, storeName, images } = saleshistory;
+            flagWord, storeName,dateAndTime, images } = saleshistory;
 
           // Fetch product details from MongoDB
           const productDetails = await db.collection('users').findOne({ 'productsbackup._id': productId }, { projection: { 'productsbackup.$': 1 } });
@@ -2373,6 +2373,7 @@ app.get('/getSellerSectionSalesHistory', async (req, res) => {
             walletAddressBuyer: user.walletAddress,
             flagWord,
             storeName,
+            dateAndTime : dateAndTime,
             images,
           });
         }
