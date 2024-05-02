@@ -3481,6 +3481,44 @@ app.get('/saveOneSignalId', async (req, res) => {
   }
 });
 
+app.get('/deleteOneSignalIdOfLogout', async (req, res) => {
+  try {
+    const { email, onesignalId } = req.query;
+
+    console.log('Request received:', email, onesignalId);
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by email
+    const user = await collection.findOne({ email });
+
+    if (user && user.OneSignalId && user.OneSignalId[onesignalId]) {
+      // User exists, and the OneSignalId exists, delete the OneSignalId from the map
+      delete user.OneSignalId[onesignalId];
+
+      await collection.updateOne(
+        { email },
+        { $set: { OneSignalId: user.OneSignalId } } // Update the document with the modified OneSignalId
+      );
+
+      console.log(`OneSignal ID ${onesignalId} deleted successfully for user with email ${email}`);
+      res.status(200).json({ message: `OneSignal ID ${onesignalId} deleted successfully` });
+    } else {
+      console.log(`OneSignal ID ${onesignalId} not found for user with email ${email}`);
+      res.status(404).json({ error: `OneSignal ID ${onesignalId} not found` });
+    }
+
+    // Close MongoDB connection
+    await client.close();
+  } catch (error) {
+    console.error('Error deleting OneSignal ID:', error);
+    res.status(500).json({ error: 'An error occurred while deleting OneSignal ID' });
+  }
+});
+
+
 
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`);
