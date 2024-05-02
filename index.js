@@ -651,6 +651,7 @@ app.post('/addCheckoutApproval', async (req, res) => {
 
     // Find the user by email
     const user = await collection.findOne({ email });
+  
 
     if (!user) {
       res.status(404).json({ error: 'User not found' });
@@ -664,7 +665,6 @@ app.post('/addCheckoutApproval', async (req, res) => {
 
     for (const product of products) {
       const { productId, quantity, totalPrice, storeId, offer } = product;
-
 
       let productDetails;
       for (const key in user.userCartsProductsDetails) {
@@ -713,11 +713,14 @@ app.post('/addCheckoutApproval', async (req, res) => {
       { $set: { checkoutapproval: user.checkoutapproval } }
     );
 
+    const seller = await collection.findOne({ storeId: products[0].storeId });
+    const sellerOneSignalId = seller.onesignalId;
+
     // Close MongoDB connection
     await client.close();
 
     // Send response
-    res.status(200).json({ message: 'Checkout approvals added successfully' });
+    res.status(200).json({ message: sellerOneSignalId });
   } catch (error) {
     console.error('Error adding checkout approvals:', error);
     res.status(500).json({ error: 'An error occurred while adding checkout approvals' });
