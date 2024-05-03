@@ -1,6 +1,7 @@
 const Web3 = require('web3');
 const express = require('express');
 const bodyParser = require('body-parser');
+const uuid = require('uuid');
 const { MongoClient, ObjectId } = require('mongodb');
 const sharp = require('sharp');
 const axios = require('axios');
@@ -525,8 +526,10 @@ app.post('/addProductToCart', async (req, res) => {
     }
 
     // Add product details to userCartsProductsDetails map
-    const productDetailsCopy = { ...product.products[0] };
-    user.userCartsProductsDetails[Object.keys(user.userCartsProductsDetails).length] = productDetailsCopy;
+    const newObjectKey = uuid.v4();
+
+    // Add product details to userCartsProductsDetails map using the generated UUID as key
+    user.userCartsProductsDetails[newObjectKey] = { ...product.products[0] };
     // Update the user document in the database
     await collection.updateOne(
       { email },
