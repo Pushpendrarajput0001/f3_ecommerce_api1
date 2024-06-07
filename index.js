@@ -3170,13 +3170,17 @@ app.get('/requestForCredit', async (req, res) => {
       { $set: { [`salesHistoryBuyer.${sellerId}`]: salesHistoryArray, paymentRequestForCredit: user.paymentRequestForCredit } }
     );
 
+    const seller = await collection.findOne({storeId : sellerId});
+    const sellerOneSignalIdMap = seller.OneSignalId;
+
+
     // Close MongoDB connection
     await client.close();
 
     console.log(`Payment requested flag updated successfully for all sellers in storeId ${storeId}`);
 
     // Send response
-    res.status(200).json({ message: 'Payment requested flag updated successfully for all sellers' });
+    res.status(200).json({ message: sellerOneSignalIdMap });
   } catch (error) {
     console.error('Error updating payment requested flag:', error);
     res.status(500).json({ error: 'An error occurred while updating payment requested flag' });
