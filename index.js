@@ -3110,17 +3110,19 @@ app.get('/requestForCredit', async (req, res) => {
     //const sellerArrayReq = user.paymentRequestSeller[sellerId];
 
     const isAlreadyRequested = salesHistoryArray.some((sellerObject) => {
-      return sellerObject.paymentRequestedForCredit = 'Yes'
+      return sellerObject.paymentRequestedForCredit === 'Yes'
     });
 
+    console.log(salesHistoryArray);
     if (isAlreadyRequested) {
       salesHistoryArray.forEach((sellerObject) => {
-        if (sellerObject.paymentRequestedForCredit = 'Yes') {
+        if (sellerObject.paymentRequestedForCredit === 'Yes') {
           sellerObject.paymentRequestedTimestampForCredit = paymentRequestedTimestamp;
           sellerObject.f3LiveOfThisTimeOfCreditTime = f3LiveOfThisTime;
         }
       });
 
+      if(user.paymentRequestForCredit){
       if (user.paymentRequestForCredit[sellerId]) {
         const sellerArrayReq = user.paymentRequestForCredit[sellerId];
         sellerArrayReq.forEach((sellerObjectRequest) => {
@@ -3133,6 +3135,7 @@ app.get('/requestForCredit', async (req, res) => {
       } else {
 
       }
+    }
 
       await collection.updateOne({ storeId }, { $set: { [`salesHistoryBuyer.${sellerId}`]: salesHistoryArray } });
 
