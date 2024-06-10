@@ -3599,9 +3599,30 @@ app.get('/deleteOneSignalIdOfLogout', async (req, res) => {
 });
 
 app.get('/createapplicantonfido', async (req, res) => {
-  const { firstName, lastName } = req.query;
+  const { firstName, lastName,walletAddress,email } = req.query;
 
   try {
+    const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    await client.connect();
+
+    // Access the appropriate database and collection
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Check if the email already exists
+    const existingUser = await collection.findOne({ email });
+    const existingUserWallet = await collection.findOne({ walletAddress });
+    if (existingUser) {
+      // Close the MongoDB connection
+      await client.close();
+      return res.status(400).json({ error: 'User with this email already exists' });
+    }
+
+    if (existingUserWallet) {
+      await client.close();
+      return res.status(401).json({ error: 'User with this wallet already' })
+    }
+
     const response = await axios.post('https://api.onfido.com/v3/applicants', {
       first_name: firstName,
       last_name: lastName
@@ -3611,8 +3632,7 @@ app.get('/createapplicantonfido', async (req, res) => {
         'Content-Type': 'application/json'
       }
     });
-
-    res.json({ applicantId: response.data.id });
+    res.status(201).json({ applicantId: response.data.id });
   } catch (error) {
     res.status(500).send('Error creating applicant');
   }
