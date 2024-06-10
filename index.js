@@ -136,7 +136,10 @@ app.post('/login', async (req, res) => {
       usdRate: user.usdtRate,
       flagWord: user.flagWord,
       currencySymbol: user.currencySymbol,
-      country: user.country
+      country: user.country,
+      alpha3Code : user.alpha3Code,
+      applicantId : user.applicantId,
+      kycStatusUser : user.kycStatusUser
     };
 
     // Send the user data along with the success message
