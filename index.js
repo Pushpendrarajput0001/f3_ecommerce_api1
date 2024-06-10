@@ -20,7 +20,7 @@ const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTop
 app.post('/usersregister', async (req, res) => {
   try {
     // Extract user data from request body
-    const { email, password, storeName, walletAddress, cityAddress, localAddress, usdtRate, country, storeId, currencySymbol, currencyCode, flagWord } = req.body;
+    const { email, password, storeName, walletAddress, cityAddress, localAddress, usdtRate, country, storeId, currencySymbol, currencyCode, flagWord,alpha3Code,applicantId,kycStatusUser } = req.body;
 
     // Connect to MongoDB
     const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -56,7 +56,10 @@ app.post('/usersregister', async (req, res) => {
       currencyCode,
       flagWord,
       storeId,
-      country
+      country,
+      alpha3Code,
+      applicantId,
+      kycStatusUser
     };
 
     // Insert the document into the collection
