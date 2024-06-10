@@ -20,7 +20,7 @@ const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTop
 app.post('/usersregister', async (req, res) => {
   try {
     // Extract user data from request body
-    const { email, password, storeName, walletAddress, cityAddress, localAddress, usdtRate, country, storeId, currencySymbol, currencyCode, flagWord,alpha3Code,applicantId,kycStatusUser } = req.body;
+    const { email, password, storeName, walletAddress, cityAddress, localAddress, usdtRate, country, storeId, currencySymbol, currencyCode, flagWord, alpha3Code, applicantId, kycStatusUser } = req.body;
 
     // Connect to MongoDB
     const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -137,9 +137,9 @@ app.post('/login', async (req, res) => {
       flagWord: user.flagWord,
       currencySymbol: user.currencySymbol,
       country: user.country,
-      alpha3Code : user.alpha3Code,
-      applicantId : user.applicantId,
-      kycStatusUser : user.kycStatusUser
+      alpha3Code: user.alpha3Code,
+      applicantId: user.applicantId,
+      kycStatusUser: user.kycStatusUser
     };
 
     // Send the user data along with the success message
@@ -660,7 +660,7 @@ app.post('/addCheckoutApproval', async (req, res) => {
 
     // Find the user by email
     const user = await collection.findOne({ email });
-  
+
 
     if (!user) {
       res.status(404).json({ error: 'User not found' });
@@ -947,7 +947,7 @@ app.post('/updateProductAfterCheckoutApproval', async (req, res) => {
 
 app.get('/deleteAndapprovalcheckoutsStore', async (req, res) => {
   try {
-    const { storeId, buyerId,dateOfApprovalCheckout } = req.query;
+    const { storeId, buyerId, dateOfApprovalCheckout } = req.query;
 
     const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
     const db = client.db('f3_ecommerce');
@@ -1132,7 +1132,7 @@ app.get('/getSellerSectionApprovedCheckout', async (req, res) => {
             productName, startedPrice,
             f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected,
             description, totalsolds, storeId, offer, storeIdBuyer, walletAddressBuyer,
-            flagWord, storeName, images,dateOfApprovalCheckout } = approvalcheckout;
+            flagWord, storeName, images, dateOfApprovalCheckout } = approvalcheckout;
 
           // Fetch product details from MongoDB
           const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
@@ -1215,7 +1215,7 @@ app.get('/getBuyersSectionApprovedCheckout', async (req, res) => {
           productName, startedPrice,
           f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected,
           description, totalsolds, storeId, offer, storeIdBuyer, walletAddressBuyer,
-          flagWord, storeName, images,dateOfApprovalCheckout } = approvalcheckout;
+          flagWord, storeName, images, dateOfApprovalCheckout } = approvalcheckout;
 
         // Fetch product details from MongoDB
         const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
@@ -2359,7 +2359,7 @@ app.get('/getSellerSectionSalesHistory', async (req, res) => {
             productName, startedPrice,
             f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected,
             description, totalsolds, storeId, offer, storeIdBuyer, walletAddressBuyer,
-            flagWord, storeName,dateAndTime, images,dateOfApprovalCheckout } = saleshistory;
+            flagWord, storeName, dateAndTime, images, dateOfApprovalCheckout } = saleshistory;
 
           // Fetch product details from MongoDB
           const productDetails = await db.collection('users').findOne({ 'productsbackup._id': productId }, { projection: { 'productsbackup.$': 1 } });
@@ -2387,7 +2387,7 @@ app.get('/getSellerSectionSalesHistory', async (req, res) => {
             walletAddressBuyer: user.walletAddress,
             flagWord,
             storeName,
-            dateAndTime : dateAndTime,
+            dateAndTime: dateAndTime,
             images,
             dateOfApprovalCheckout
           });
@@ -2441,13 +2441,13 @@ app.get('/getBuyersSectionSalesHistory', async (req, res) => {
     const sellerIds = Object.keys(SalesHistoryMap);
     for (const sellerId of sellerIds) {
       const seller = await collection.findOne({ storeId: sellerId });
-      if (seller && seller.kycStatus === 'completed') {
+      if (seller && seller.kycStatusUser === 'completed') {
         kycCompletedSellerCount++;
       }
     }
 
     // Determine the KYC status of the buyer
-    const kycOfBuyer = buyer.kycStatus === 'completed' ? 'completed' : (buyer.kycStatus || 'incomplete');
+    const kycOfBuyer = buyer.kycStatusUser ?? "incomplete";
 
     // Iterate over each store's sales history
     for (const sellerId in SalesHistoryMap) {
@@ -3152,20 +3152,20 @@ app.get('/requestForCredit', async (req, res) => {
         }
       });
 
-      if(user.paymentRequestForCredit){
-      if (user.paymentRequestForCredit[sellerId]) {
-        const sellerArrayReq = user.paymentRequestForCredit[sellerId];
-        sellerArrayReq.forEach((sellerObjectRequest) => {
-          if (sellerObjectRequest.paymentRequestedTimestampForCredit) {
-            sellerObjectRequest.paymentRequestedTimestampForCredit = paymentRequestedTimestamp
-          }
+      if (user.paymentRequestForCredit) {
+        if (user.paymentRequestForCredit[sellerId]) {
+          const sellerArrayReq = user.paymentRequestForCredit[sellerId];
+          sellerArrayReq.forEach((sellerObjectRequest) => {
+            if (sellerObjectRequest.paymentRequestedTimestampForCredit) {
+              sellerObjectRequest.paymentRequestedTimestampForCredit = paymentRequestedTimestamp
+            }
 
-        });
-        await collection.updateOne({ storeId }, { $set: { [`paymentRequestForCredit.${sellerId}`]: sellerArrayReq } });
-      } else {
+          });
+          await collection.updateOne({ storeId }, { $set: { [`paymentRequestForCredit.${sellerId}`]: sellerArrayReq } });
+        } else {
 
+        }
       }
-    }
 
       await collection.updateOne({ storeId }, { $set: { [`salesHistoryBuyer.${sellerId}`]: salesHistoryArray } });
 
@@ -3203,7 +3203,7 @@ app.get('/requestForCredit', async (req, res) => {
       { $set: { [`salesHistoryBuyer.${sellerId}`]: salesHistoryArray, paymentRequestForCredit: user.paymentRequestForCredit } }
     );
 
-    const seller = await collection.findOne({storeId : sellerId});
+    const seller = await collection.findOne({ storeId: sellerId });
     const sellerOneSignalIdMap = seller.OneSignalId;
 
 
@@ -3324,7 +3324,7 @@ app.get('/getConfirmIfRequestExisting', async (req, res) => {
     const usersWithApprovalsCheckout = await collection.find({ 'approvalcheckout': { $exists: true } }).toArray();
     const approvalCheckoutMap = user.approvalcheckoutBuyer;
     const usdRateUser = parseFloat(user.usdtRate);
-    console.log('usdRate',usdRateUser);
+    console.log('usdRate', usdRateUser);
 
     if (!user) {
       console.log(`User with walletAddress ${walletAddress} not found`);
@@ -3332,9 +3332,9 @@ app.get('/getConfirmIfRequestExisting', async (req, res) => {
     }
 
     const response = {
-      requestsExistForCredit: "No", 
-      requestsExistForApprovedSeller: "No", 
-      requestsExistForApprovedBuyer: "No", 
+      requestsExistForCredit: "No",
+      requestsExistForApprovedSeller: "No",
+      requestsExistForApprovedBuyer: "No",
     };
 
     // Check if paymentRequestSeller object exists and contains non-empty arrays
@@ -3398,8 +3398,8 @@ app.get('/getConfirmIfRequestExisting', async (req, res) => {
 
           const totalusdproduct = totalPriceNum / usdRate;
           totalUsdRate += totalusdproduct;
-          console.log(totalusdproduct,totalUsdRate,totalPriceNum);
-          console.log('totalPriceNum',totalPriceNum);
+          console.log(totalusdproduct, totalUsdRate, totalPriceNum);
+          console.log('totalPriceNum', totalPriceNum);
         }
         console.log(totalUsdRate)
         // Check if total USD rate for seller is more than 10.00
@@ -3423,7 +3423,7 @@ app.get('/getConfirmIfRequestExisting', async (req, res) => {
 
           const calculation = totalPriceProduct / usdRateUser;
           totalUSDRate += calculation;
-          console.log(calculation,totalUSDRate,totalPriceProduct)
+          console.log(calculation, totalUSDRate, totalPriceProduct)
         }
         console.log(totalUSDRate)
         if (totalUSDRate > 10.00) {
@@ -3445,7 +3445,7 @@ app.get('/getConfirmIfRequestExisting', async (req, res) => {
   }
 });
 
-app.get('/resetPasswordEmailExist', async (req,res)=>{
+app.get('/resetPasswordEmailExist', async (req, res) => {
   try {
     const { email } = req.query;
 
@@ -3495,13 +3495,13 @@ app.get('/resetPassword', async (req, res) => {
     }
 
     // Update the password
-    if(newPassword){
+    if (newPassword) {
       await collection.updateOne(
         { email },
         { $set: { password: newPassword } }
       );
     }
-    
+
     console.log(`Password updated successfully for user with email ${email}`);
 
     // Close MongoDB connection
@@ -3602,48 +3602,48 @@ app.get('/createapplicantonfido', async (req, res) => {
   const { firstName, lastName } = req.query;
 
   try {
-      const response = await axios.post('https://api.onfido.com/v3/applicants', {
-          first_name: firstName,
-          last_name: lastName
-      }, {
-          headers: {
-              Authorization: `Token token=api_sandbox.N_u9MYhRW5w.EW_8-F4iGXjmL10ap_maxS2duxggR_nQ`,
-              'Content-Type': 'application/json'
-          }
-      });
+    const response = await axios.post('https://api.onfido.com/v3/applicants', {
+      first_name: firstName,
+      last_name: lastName
+    }, {
+      headers: {
+        Authorization: `Token token=api_sandbox.N_u9MYhRW5w.EW_8-F4iGXjmL10ap_maxS2duxggR_nQ`,
+        'Content-Type': 'application/json'
+      }
+    });
 
-      res.json({ applicantId: response.data.id });
+    res.json({ applicantId: response.data.id });
   } catch (error) {
-      res.status(500).send('Error creating applicant');
+    res.status(500).send('Error creating applicant');
   }
 });
 
 app.get('/generate-sdk-token', async (req, res) => {
   try {
-      const { applicant_id } = req.query;
+    const { applicant_id } = req.query;
 
-      // Replace 'YOUR_API_TOKEN' with your actual Onfido API token
-      const API_TOKEN = 'api_sandbox.N_u9MYhRW5w.EW_8-F4iGXjmL10ap_maxS2duxggR_nQ';
+    // Replace 'YOUR_API_TOKEN' with your actual Onfido API token
+    const API_TOKEN = 'api_sandbox.N_u9MYhRW5w.EW_8-F4iGXjmL10ap_maxS2duxggR_nQ';
 
-      // Make a POST request to Onfido API to generate the SDK token
-      const response = await axios.post(
-          'https://api.onfido.com/v3.6/sdk_token',
-          { applicant_id },
-          {
-              headers: {
-                  'Authorization': `Token token=${API_TOKEN}`,
-                  'Content-Type': 'application/json'
-              }
-          }
-      );
+    // Make a POST request to Onfido API to generate the SDK token
+    const response = await axios.post(
+      'https://api.onfido.com/v3.6/sdk_token',
+      { applicant_id },
+      {
+        headers: {
+          'Authorization': `Token token=${API_TOKEN}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
 
-      // Extract the SDK token from the response
-      const { token } = response.data;
+    // Extract the SDK token from the response
+    const { token } = response.data;
 
-      res.status(200).json({ sdk_token: token });
+    res.status(200).json({ sdk_token: token });
   } catch (error) {
-      console.error('Error generating SDK token:', error.response.data);
-      res.status(error.response.status).json({ error: error.response.data });
+    console.error('Error generating SDK token:', error.response.data);
+    res.status(error.response.status).json({ error: error.response.data });
   }
 });
 
@@ -3666,13 +3666,13 @@ app.get('/updateKycStatus', async (req, res) => {
     }
 
     // Update the password
-    if(status){
+    if (status) {
       await collection.updateOne(
         { email },
         { $set: { kycStatusUser: status } }
       );
     }
-    
+
     console.log(`Password updated successfully for user with email ${email}`);
 
     // Close MongoDB connection
@@ -3683,6 +3683,56 @@ app.get('/updateKycStatus', async (req, res) => {
   } catch (error) {
     console.error('Error updating password:', error);
     res.status(500).json({ error: 'An error occurred while updating password' });
+  }
+});
+
+app.get('/checkStatusOnfidoKyc', async (req, res) => {
+  const { applicantId } = req.query;
+
+  console.log(applicantId);
+  const API_TOKEN = 'api_sandbox.N_u9MYhRW5w.EW_8-F4iGXjmL10ap_maxS2duxggR_nQ';
+  const ONFIDO_API_TOKEN = 'api_sandbox.N_u9MYhRW5w.EW_8-F4iGXjmL10ap_maxS2duxggR_nQ';
+  const ONFIDO_API_URL = 'https://api.onfido.com/v3.6';
+
+  if (!applicantId) {
+    return res.status(400).json({ error: 'Applicant ID is required' });
+  }
+
+  try {
+    // Create a check for the applicant
+    const checkResponse = await axios.post(`${ONFIDO_API_URL}/checks`, {
+      applicant_id: applicantId,
+      report_names: ['document', 'facial_similarity_photo']
+    }, {
+      headers: {
+        Authorization: `Token token=${API_TOKEN}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const checkId = checkResponse.data.id;
+
+    console.log(checkId);
+    // Function to get the check status
+    const getCheckStatus = async (checkId) => {
+      const checkStatusResponse = await axios.get(`${ONFIDO_API_URL}/checks/${checkId}`, {
+        headers: {
+          Authorization: `Token token=${API_TOKEN}`
+        }
+      });
+
+      return checkStatusResponse.data;
+    };
+
+    // Get the check status
+    const checkStatus = await getCheckStatus(checkId);
+
+    // Send the status back in the response
+    res.status(200).json({ status: checkStatus.status });
+
+  } catch (error) {
+    //console.error('Error creating or checking the status of the KYC:', error);
+    res.status(500).json({ error: 'An error occurred while processing the KYC check' });
   }
 });
 
