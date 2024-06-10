@@ -941,7 +941,7 @@ app.post('/updateProductAfterCheckoutApproval', async (req, res) => {
 
 app.get('/deleteAndapprovalcheckoutsStore', async (req, res) => {
   try {
-    const { storeId, buyerId } = req.query;
+    const { storeId, buyerId,dateOfApprovalCheckout } = req.query;
 
     const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
     const db = client.db('f3_ecommerce');
@@ -960,7 +960,10 @@ app.get('/deleteAndapprovalcheckoutsStore', async (req, res) => {
     }
 
     // Copy the full array of store products
-    const store_products = user.checkoutapproval[storeId];
+    const store_products = user.checkoutapproval[storeId].map(product => ({
+      ...product,
+      dateOfApprovalCheckout: dateOfApprovalCheckout
+    }));
 
     // If approvalcheckout does not exist, create an empty object
     if (!user.approvalcheckout) {
@@ -1123,7 +1126,7 @@ app.get('/getSellerSectionApprovedCheckout', async (req, res) => {
             productName, startedPrice,
             f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected,
             description, totalsolds, storeId, offer, storeIdBuyer, walletAddressBuyer,
-            flagWord, storeName, images } = approvalcheckout;
+            flagWord, storeName, images,dateOfApprovalCheckout } = approvalcheckout;
 
           // Fetch product details from MongoDB
           const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
@@ -1149,6 +1152,7 @@ app.get('/getSellerSectionApprovedCheckout', async (req, res) => {
             flagWord,
             storeName,
             images,
+            dateOfApprovalCheckout
           });
         }
       }
@@ -1205,7 +1209,7 @@ app.get('/getBuyersSectionApprovedCheckout', async (req, res) => {
           productName, startedPrice,
           f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected,
           description, totalsolds, storeId, offer, storeIdBuyer, walletAddressBuyer,
-          flagWord, storeName, images } = approvalcheckout;
+          flagWord, storeName, images,dateOfApprovalCheckout } = approvalcheckout;
 
         // Fetch product details from MongoDB
         const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
@@ -1229,6 +1233,7 @@ app.get('/getBuyersSectionApprovedCheckout', async (req, res) => {
           offer,
           storeName,
           images,
+          dateOfApprovalCheckout
         });
       }
     }
@@ -2348,7 +2353,7 @@ app.get('/getSellerSectionSalesHistory', async (req, res) => {
             productName, startedPrice,
             f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected,
             description, totalsolds, storeId, offer, storeIdBuyer, walletAddressBuyer,
-            flagWord, storeName,dateAndTime, images } = saleshistory;
+            flagWord, storeName,dateAndTime, images,dateOfApprovalCheckout } = saleshistory;
 
           // Fetch product details from MongoDB
           const productDetails = await db.collection('users').findOne({ 'productsbackup._id': productId }, { projection: { 'productsbackup.$': 1 } });
@@ -2378,6 +2383,7 @@ app.get('/getSellerSectionSalesHistory', async (req, res) => {
             storeName,
             dateAndTime : dateAndTime,
             images,
+            dateOfApprovalCheckout
           });
         }
       }
@@ -2434,7 +2440,7 @@ app.get('/getBuyersSectionSalesHistory', async (req, res) => {
           productName, startedPrice,
           f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected,
           description, totalsolds, storeId, offer, storeIdBuyer, walletAddressBuyer,
-          flagWord, storeName, images } = saleshistory;
+          flagWord, storeName, images,dateOfApprovalCheckout } = saleshistory;
 
         // Fetch product details from MongoDB
         const productDetails = await db.collection('users').findOne({ 'productsbackup._id': productId }, { projection: { 'productsbackup.$': 1 } });
@@ -2461,6 +2467,7 @@ app.get('/getBuyersSectionSalesHistory', async (req, res) => {
           flagWord,
           storeName,
           images,
+          dateOfApprovalCheckout
         });
       }
     }
