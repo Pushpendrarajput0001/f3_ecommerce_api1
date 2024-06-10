@@ -7,7 +7,7 @@ const sharp = require('sharp');
 const axios = require('axios');
 const { ethers, JsonRpcProvider, formatEther, parseUnits, isAddress, ContractTransactionResponse, InfuraProvider } = require("ethers");
 const app = express();
-const PORT = 3000;
+const PORT = 5000;
 const MONGO_URI = 'mongodb+srv://andy:markf3ecommerce@atlascluster.gjlv4np.mongodb.net/?retryWrites=true&w=majority&appName=AtlasCluster';
 app.use(bodyParser.json({ limit: '50mb', extended: true }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
@@ -3575,7 +3575,93 @@ app.get('/deleteOneSignalIdOfLogout', async (req, res) => {
   }
 });
 
+app.get('/createapplicantonfido', async (req, res) => {
+  const { firstName, lastName } = req.query;
 
+  try {
+      const response = await axios.post('https://api.onfido.com/v3/applicants', {
+          first_name: firstName,
+          last_name: lastName
+      }, {
+          headers: {
+              Authorization: `Token token=api_sandbox.N_u9MYhRW5w.EW_8-F4iGXjmL10ap_maxS2duxggR_nQ`,
+              'Content-Type': 'application/json'
+          }
+      });
+
+      res.json({ applicantId: response.data.id });
+  } catch (error) {
+      res.status(500).send('Error creating applicant');
+  }
+});
+
+app.get('/generate-sdk-token', async (req, res) => {
+  try {
+      const { applicant_id } = req.query;
+
+      // Replace 'YOUR_API_TOKEN' with your actual Onfido API token
+      const API_TOKEN = 'api_sandbox.N_u9MYhRW5w.EW_8-F4iGXjmL10ap_maxS2duxggR_nQ';
+
+      // Make a POST request to Onfido API to generate the SDK token
+      const response = await axios.post(
+          'https://api.onfido.com/v3.6/sdk_token',
+          { applicant_id },
+          {
+              headers: {
+                  'Authorization': `Token token=${API_TOKEN}`,
+                  'Content-Type': 'application/json'
+              }
+          }
+      );
+
+      // Extract the SDK token from the response
+      const { token } = response.data;
+
+      res.status(200).json({ sdk_token: token });
+  } catch (error) {
+      console.error('Error generating SDK token:', error.response.data);
+      res.status(error.response.status).json({ error: error.response.data });
+  }
+});
+
+app.get('/updateKycStatus', async (req, res) => {
+  try {
+    const { email, status } = req.query;
+
+    console.log('Request received:', email, status);
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by email
+    const user = await collection.findOne({ email });
+
+    if (!user) {
+      console.log(`User with email ${email} not found`);
+      return res.status(405).json({ error: `User with email ${email} not found` });
+    }
+
+    // Update the password
+    if(status){
+      await collection.updateOne(
+        { email },
+        { $set: { kycStatusUser: status } }
+      );
+    }
+    
+    console.log(`Password updated successfully for user with email ${email}`);
+
+    // Close MongoDB connection
+    await client.close();
+
+    // Send response
+    res.status(200).json({ message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Error updating password:', error);
+    res.status(500).json({ error: 'An error occurred while updating password' });
+  }
+});
 
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`);
