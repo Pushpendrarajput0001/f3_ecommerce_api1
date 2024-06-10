@@ -2424,34 +2424,49 @@ app.get('/getBuyersSectionSalesHistory', async (req, res) => {
       return;
     }
 
-    // Check if the buyer has checkout approvals
+    // Check if the buyer has sales history
     const SalesHistoryMap = buyer.salesHistoryBuyer;
-    console.log('Type of checkoutApprovalMap:', typeof SalesHistoryMap);
-    console.log('Checkout Approval Map:', SalesHistoryMap);
+    console.log('Type of SalesHistoryMap:', typeof SalesHistoryMap);
+    console.log('Sales History Map:', SalesHistoryMap);
     if (!SalesHistoryMap) {
-      res.status(402).json({ error: 'Checkout approvals not found for the buyer' });
+      res.status(402).json({ error: 'Sales history not found for the buyer' });
       return;
     }
 
     // Prepare an array to store product details
     const products = [];
 
-    // Iterate over each store's checkout approval
+    // Count the total number of sellers with KYC status 'completed'
+    let kycCompletedSellerCount = 0;
+    const sellerIds = Object.keys(SalesHistoryMap);
+    for (const sellerId of sellerIds) {
+      const seller = await collection.findOne({ storeId: sellerId });
+      if (seller && seller.kycStatus === 'completed') {
+        kycCompletedSellerCount++;
+      }
+    }
+
+    // Determine the KYC status of the buyer
+    const kycOfBuyer = buyer.kycStatus === 'completed' ? 'completed' : (buyer.kycStatus || 'incomplete');
+
+    // Iterate over each store's sales history
     for (const sellerId in SalesHistoryMap) {
       const sellerSalesHistoryArray = SalesHistoryMap[sellerId];
 
-      // Iterate over each checkout approval in the seller's array
-      for (const saleshistory of sellerSalesHistoryArray) {
+      // Iterate over each sales history entry in the seller's array
+      for (const salesHistory of sellerSalesHistoryArray) {
         const { productId, quantity, totalPrice, paymentRequestedTimestampBuyer, totalF3Amount, totalGc, f3LiveOfThisTime,
-          productName, startedPrice,
-          f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected,
+          productName, startedPrice, f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected,
           description, totalsolds, storeId, offer, storeIdBuyer, walletAddressBuyer,
-          flagWord, storeName, images,dateOfApprovalCheckout } = saleshistory;
+          flagWord, storeName, images, dateOfApprovalCheckout } = salesHistory;
 
         // Fetch product details from MongoDB
-        const productDetails = await db.collection('users').findOne({ 'productsbackup._id': productId }, { projection: { 'productsbackup.$': 1 } });
+        const productDetails = await db.collection('users').findOne(
+          { 'productsbackup._id': productId },
+          { projection: { 'productsbackup.$': 1 } }
+        );
 
-        // Add product details along with quantity and totalPrice
+        // Add product details along with the new fields
         products.push({
           _id: productId,
           totalQuantity: quantity,
@@ -2473,7 +2488,9 @@ app.get('/getBuyersSectionSalesHistory', async (req, res) => {
           flagWord,
           storeName,
           images,
-          dateOfApprovalCheckout
+          dateOfApprovalCheckout,
+          kycOfAllSellers: kycCompletedSellerCount,
+          kycOfBuyer
         });
       }
     }
