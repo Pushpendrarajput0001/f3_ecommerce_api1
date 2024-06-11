@@ -3626,9 +3626,7 @@ app.get('/createapplicantonfido', async (req, res) => {
     const response = await axios.post('https://api.onfido.com/v3/applicants', {
       first_name: firstName,
       last_name: lastName,
-      address: {
-        country: countryalpha
-      }
+      issuing_country : countryalpha
     }, {
       headers: {
         Authorization: `Token token=api_sandbox.N_u9MYhRW5w.EW_8-F4iGXjmL10ap_maxS2duxggR_nQ`,
@@ -3637,6 +3635,7 @@ app.get('/createapplicantonfido', async (req, res) => {
     });
     res.status(201).json({ applicantId: response.data.id });
   } catch (error) {
+    console.log(error)
     res.status(500).send('Error creating applicant');
   }
 });
