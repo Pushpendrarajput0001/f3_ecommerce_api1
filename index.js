@@ -20,7 +20,7 @@ const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTop
 app.post('/usersregister', async (req, res) => {
   try {
     // Extract user data from request body
-    const { email, password, storeName, walletAddress, cityAddress, localAddress, usdtRate, country, storeId, currencySymbol, currencyCode, flagWord, alpha3Code, applicantId, kycStatusUser } = req.body;
+    const { email, password, storeName, walletAddress, cityAddress, localAddress, usdtRate, country, storeId, currencySymbol, currencyCode, flagWord, alpha3Code, applicantId, kycStatusUser,fullName } = req.body;
 
     // Connect to MongoDB
     const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -59,7 +59,8 @@ app.post('/usersregister', async (req, res) => {
       country,
       alpha3Code,
       applicantId,
-      kycStatusUser
+      kycStatusUser,
+      fullName
     };
 
     // Insert the document into the collection
@@ -3599,7 +3600,7 @@ app.get('/deleteOneSignalIdOfLogout', async (req, res) => {
 });
 
 app.get('/createapplicantonfido', async (req, res) => {
-  const { firstName, lastName,walletAddress,email,countryalpha } = req.query;
+  const { firstName, lastName,walletAddress,email,countryalpha,fullName } = req.query;
 
   try {
     const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -3612,6 +3613,7 @@ app.get('/createapplicantonfido', async (req, res) => {
     // Check if the email already exists
     const existingUser = await collection.findOne({ email });
     const existingUserWallet = await collection.findOne({ walletAddress });
+    const existingUserName = await collection.findOne({fullName : fullName})
     if (existingUser) {
       // Close the MongoDB connection
       await client.close();
@@ -3623,6 +3625,10 @@ app.get('/createapplicantonfido', async (req, res) => {
       return res.status(401).json({ error: 'User with this wallet already' })
     }
 
+    if(existingUserName){
+      await client.close();
+      return res.status(402).json({ error: 'User with this wallet already' })
+    }
     const response = await axios.post('https://api.onfido.com/v3/applicants', {
       first_name: firstName,
       last_name: lastName,
@@ -3714,7 +3720,7 @@ app.get('/checkStatusOnfidoKyc', async (req, res) => {
   console.log(applicantId);
   const API_TOKEN = 'api_sandbox.N_u9MYhRW5w.EW_8-F4iGXjmL10ap_maxS2duxggR_nQ';
   const ONFIDO_API_TOKEN = 'api_sandbox.N_u9MYhRW5w.EW_8-F4iGXjmL10ap_maxS2duxggR_nQ';
-  const ONFIDO_API_URL = 'https://api.onfido.com/v3.6';
+  const ONFIDO_API_URL = 'https://api.eu.onfido.com/v3.6';
 
   if (!applicantId) {
     return res.status(400).json({ error: 'Applicant ID is required' });
@@ -3722,9 +3728,9 @@ app.get('/checkStatusOnfidoKyc', async (req, res) => {
 
   try {
     // Create a check for the applicant
-    const checkResponse = await axios.post(`${ONFIDO_API_URL}/checks`, {
-      applicant_id: applicantId,
-      report_names: ['document', 'facial_similarity_photo']
+    const checkResponse = await axios.post(`https://api.onfido.com/v3/checks`, {
+      applicant_id: 'af50633d-a033-4801-92bf-c1ae0f2c4929',
+      report_names: ['document','facial_similarity_photo']
     }, {
       headers: {
         Authorization: `Token token=${API_TOKEN}`,
@@ -3734,29 +3740,51 @@ app.get('/checkStatusOnfidoKyc', async (req, res) => {
 
     const checkId = checkResponse.data.id;
 
-    console.log(checkId);
-    // Function to get the check status
-    const getCheckStatus = async (checkId) => {
-      const checkStatusResponse = await axios.get(`${ONFIDO_API_URL}/checks/${checkId}`, {
-        headers: {
-          Authorization: `Token token=${API_TOKEN}`
-        }
-      });
-
-      return checkStatusResponse.data;
-    };
-
-    // Get the check status
-    const checkStatus = await getCheckStatus(checkId);
-
+    console.log('checkId' ,checkId);
+  
     // Send the status back in the response
-    res.status(200).json({ status: checkStatus.status });
+    res.status(200).json({ status: checkId });
 
   } catch (error) {
     //console.error('Error creating or checking the status of the KYC:', error);
     res.status(500).json({ error: 'An error occurred while processing the KYC check' });
   }
 });
+
+app.get('/checkStatusOnfidoKycRetrieve', async (req, res) => {
+  const { applicantId } = req.query;
+
+  console.log(applicantId);
+  const API_TOKEN = 'api_sandbox.N_u9MYhRW5w.EW_8-F4iGXjmL10ap_maxS2duxggR_nQ';
+  const ONFIDO_API_TOKEN = 'api_sandbox.N_u9MYhRW5w.EW_8-F4iGXjmL10ap_maxS2duxggR_nQ';
+  const ONFIDO_API_URL = 'https://api.eu.onfido.com/v3.6';
+
+  if (!applicantId) {
+    return res.status(400).json({ error: 'Applicant ID is required' });
+  }
+
+  try {
+    // Create a check for the applicant
+    const checkResponse = await axios.post(`https://api.onfido.com/v3.1/checks/${applicantId}`, {
+      headers: {
+        Authorization: `Token token=${API_TOKEN}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const checkId = checkResponse.data;
+
+    console.log('checkId' ,checkId);
+  
+    // Send the status back in the response
+    res.status(200).json({ status: checkId });
+
+  } catch (error) {
+    //console.error('Error creating or checking the status of the KYC:', error);
+    res.status(500).json({ error: 'An error occurred while processing the KYC check' });
+  }
+});
+
 
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`);
