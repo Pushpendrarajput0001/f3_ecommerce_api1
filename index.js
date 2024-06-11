@@ -3599,7 +3599,7 @@ app.get('/deleteOneSignalIdOfLogout', async (req, res) => {
 });
 
 app.get('/createapplicantonfido', async (req, res) => {
-  const { firstName, lastName,walletAddress,email } = req.query;
+  const { firstName, lastName,walletAddress,email,countryalpha } = req.query;
 
   try {
     const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -3625,7 +3625,10 @@ app.get('/createapplicantonfido', async (req, res) => {
 
     const response = await axios.post('https://api.onfido.com/v3/applicants', {
       first_name: firstName,
-      last_name: lastName
+      last_name: lastName,
+      address: {
+        country: countryalpha
+      }
     }, {
       headers: {
         Authorization: `Token token=api_sandbox.N_u9MYhRW5w.EW_8-F4iGXjmL10ap_maxS2duxggR_nQ`,
