@@ -3627,9 +3627,9 @@ app.get('/createapplicantonfido', async (req, res) => {
 
     if(existingUserName){
       await client.close();
-      return res.status(402).json({ error: 'User with this wallet already' })
+      return res.status(402).json({ error: 'User with this Name already' })
     }
-    const response = await axios.post('https://api.onfido.com/v3/applicants', {
+    const response = await axios.post('https://api.onfido.com/v3.6/applicants', {
       first_name: firstName,
       last_name: lastName,
       issuing_country : countryalpha
@@ -3765,7 +3765,7 @@ app.get('/checkStatusOnfidoKycRetrieve', async (req, res) => {
 
   try {
     // Create a check for the applicant
-    const checkResponse = await axios.post(`https://api.onfido.com/v3.1/checks/${applicantId}`, {
+    const checkResponse = await axios.post(`https://api.onfido.com/v3.6/checks/${applicantId}`, {
       headers: {
         Authorization: `Token token=${API_TOKEN}`,
         'Content-Type': 'application/json'
@@ -3780,7 +3780,7 @@ app.get('/checkStatusOnfidoKycRetrieve', async (req, res) => {
     res.status(200).json({ status: checkId });
 
   } catch (error) {
-    //console.error('Error creating or checking the status of the KYC:', error);
+    console.error('Error creating or checking the status of the KYC:', error);
     res.status(500).json({ error: 'An error occurred while processing the KYC check' });
   }
 });
