@@ -20,7 +20,7 @@ const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTop
 app.post('/usersregister', async (req, res) => {
   try {
     // Extract user data from request body
-    const { email, password, storeName, walletAddress, cityAddress, localAddress, usdtRate, country, storeId, currencySymbol, currencyCode, flagWord, alpha3Code, applicantId, kycStatusUser,fullName } = req.body;
+    const { email, password, storeName, walletAddress, cityAddress, localAddress, usdtRate, country, storeId, currencySymbol, currencyCode, flagWord, alpha3Code, applicantId, kycStatusUser, fullName } = req.body;
 
     // Connect to MongoDB
     const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -3600,7 +3600,7 @@ app.get('/deleteOneSignalIdOfLogout', async (req, res) => {
 });
 
 app.get('/createapplicantonfido', async (req, res) => {
-  const { firstName, lastName,walletAddress,email,countryalpha,fullName } = req.query;
+  const { firstName, lastName, walletAddress, email, countryalpha, fullName } = req.query;
 
   try {
     const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -3613,7 +3613,7 @@ app.get('/createapplicantonfido', async (req, res) => {
     // Check if the email already exists
     const existingUser = await collection.findOne({ email });
     const existingUserWallet = await collection.findOne({ walletAddress });
-    const existingUserName = await collection.findOne({fullName : fullName})
+    const existingUserName = await collection.findOne({ fullName: fullName })
     if (existingUser) {
       // Close the MongoDB connection
       await client.close();
@@ -3625,14 +3625,14 @@ app.get('/createapplicantonfido', async (req, res) => {
       return res.status(401).json({ error: 'User with this wallet already' })
     }
 
-    if(existingUserName){
+    if (existingUserName) {
       await client.close();
       return res.status(402).json({ error: 'User with this Name already' })
     }
     const response = await axios.post('https://api.onfido.com/v3.6/applicants', {
       first_name: firstName,
       last_name: lastName,
-      issuing_country : countryalpha
+      issuing_country: countryalpha
     }, {
       headers: {
         Authorization: `Token token=api_sandbox.N_u9MYhRW5w.EW_8-F4iGXjmL10ap_maxS2duxggR_nQ`,
@@ -3730,7 +3730,7 @@ app.get('/checkStatusOnfidoKyc', async (req, res) => {
     // Create a check for the applicant
     const checkResponse = await axios.post(`https://api.onfido.com/v3/checks`, {
       applicant_id: 'af50633d-a033-4801-92bf-c1ae0f2c4929',
-      report_names: ['document','facial_similarity_photo']
+      report_names: ['document', 'facial_similarity_photo', 'identity_enhanced']
     }, {
       headers: {
         Authorization: `Token token=${API_TOKEN}`,
@@ -3740,8 +3740,9 @@ app.get('/checkStatusOnfidoKyc', async (req, res) => {
 
     const checkId = checkResponse.data.id;
 
-    console.log('checkId' ,checkId);
-  
+    console.log('data', checkResponse.data)
+    console.log('checkId', checkId);
+
     // Send the status back in the response
     res.status(200).json({ status: checkId });
 
@@ -3765,7 +3766,7 @@ app.get('/checkStatusOnfidoKycRetrieve', async (req, res) => {
 
   try {
     // Create a check for the applicant
-    const checkResponse = await axios.post(`https://api.onfido.com/v3.6/checks/${applicantId}`, {
+    const checkResponse = await axios.get(`https://api.onfido.com/v3.6/reports/811f43d2-7c27-476b-949a-526850f74238`, {
       headers: {
         Authorization: `Token token=${API_TOKEN}`,
         'Content-Type': 'application/json'
@@ -3774,8 +3775,8 @@ app.get('/checkStatusOnfidoKycRetrieve', async (req, res) => {
 
     const checkId = checkResponse.data;
 
-    console.log('checkId' ,checkId);
-  
+    console.log('checkId', checkResponse.data);
+
     // Send the status back in the response
     res.status(200).json({ status: checkId });
 
@@ -3785,6 +3786,83 @@ app.get('/checkStatusOnfidoKycRetrieve', async (req, res) => {
   }
 });
 
+const createVeriffSession = async (applicantData) => {
+  const apiKey = '55a4285f-9371-4850-8a3a-ea6d8f9fd885';
+  const url = 'https://stationapi.veriff.com/v1/sessions';
+  const headers = {
+    'X-AUTH-CLIENT': apiKey,
+    'Content-Type': 'application/json'
+  };
+  const data = {
+    'verification': {
+        'callback': 'https://veriff.com',
+        'person': {
+          'firstName': applicantData.firstName,
+          'lastName': applicantData.lastName,
+        },
+    }
+  };
+
+  try {
+    const response = await axios.post(url, data, { headers });
+    console.log(response.data);
+    return response.data.verification.url; // This is your session token'
+  } catch (error) {
+    console.error('Error creating Veriff session:', error);
+    throw error;
+  }
+};
+
+app.get('/generateVeriffSessionToken', async (req, res) => {
+  const { firstName, lastName, walletAddress, email, countryalpha, fullName } = req.query;
+
+  try {
+    const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    await client.connect();
+
+    // Access the appropriate database and collection
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Check if the email already exists
+    const existingUser = await collection.findOne({ email });
+    const existingUserWallet = await collection.findOne({ walletAddress });
+    const existingUserName = await collection.findOne({ fullName });
+
+    if (existingUser) {
+      await client.close();
+      return res.status(400).json({ error: 'User with this email already exists' });
+    }
+
+    if (existingUserWallet) {
+      await client.close();
+      return res.status(401).json({ error: 'User with this wallet address already exists' });
+    }
+
+    if (existingUserName) {
+      await client.close();
+      return res.status(402).json({ error: 'User with this name already exists' });
+    }
+
+    // Applicant data for Veriff
+    const applicantData = {
+      firstName: firstName || 'John',
+      lastName: lastName || 'Doe',
+      idNumber: '123456789', // Assuming ID number is not provided
+      country: countryalpha || 'USA',
+      documentType: 'passport' 
+    };
+
+    // Create Veriff session
+    const sessionToken = await createVeriffSession(applicantData);
+    await client.close();
+
+    res.json({ applicantId : sessionToken });
+  } catch (error) {
+    console.error('Failed to create Veriff session:', error);
+    res.status(500).json({ error: 'Failed to create Veriff session' });
+  }
+});
 
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`);
