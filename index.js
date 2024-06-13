@@ -3806,7 +3806,7 @@ const createVeriffSession = async (applicantData) => {
   try {
     const response = await axios.post(url, data, { headers });
     console.log(response.data);
-    return response.data.verification.url; // This is your session token'
+    return response.data.verification.sessionToken; // This is your session token'
   } catch (error) {
     console.error('Error creating Veriff session:', error);
     throw error;
