@@ -2445,7 +2445,7 @@ app.get('/getBuyersSectionSalesHistory', async (req, res) => {
     const sellerIds = Object.keys(SalesHistoryMap);
     for (const sellerId of sellerIds) {
       const seller = await collection.findOne({ storeId: sellerId });
-      if (seller && seller.kycStatusUser === 'completed') {
+      if (seller && seller.kycStatusUser === 'approved') {
         kycCompletedSellerCount++;
       }
     }
