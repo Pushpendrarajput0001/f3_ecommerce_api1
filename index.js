@@ -1,5 +1,6 @@
 const Web3 = require('web3');
 const express = require('express');
+const crypto = require('crypto');
 const bodyParser = require('body-parser');
 const uuid = require('uuid');
 const { MongoClient, ObjectId } = require('mongodb');
@@ -20,7 +21,7 @@ const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTop
 app.post('/usersregister', async (req, res) => {
   try {
     // Extract user data from request body
-    const { email, password, storeName, walletAddress, cityAddress, localAddress, usdtRate, country, storeId, currencySymbol, currencyCode, flagWord, alpha3Code, applicantId, kycStatusUser, fullName } = req.body;
+    const { email, password, storeName, walletAddress, cityAddress, localAddress, usdtRate, country, storeId, currencySymbol, currencyCode, flagWord, alpha3Code, applicantId, kycStatusUser, fullName,kycSessionId } = req.body;
 
     // Connect to MongoDB
     const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -60,7 +61,8 @@ app.post('/usersregister', async (req, res) => {
       alpha3Code,
       applicantId,
       kycStatusUser,
-      fullName
+      fullName,
+      kycSessionId
     };
 
     // Insert the document into the collection
@@ -140,7 +142,8 @@ app.post('/login', async (req, res) => {
       country: user.country,
       alpha3Code: user.alpha3Code,
       applicantId: user.applicantId,
-      kycStatusUser: user.kycStatusUser
+      kycStatusUser: user.kycStatusUser,
+      kycSessionId : user.kycSessionId
     };
 
     // Send the user data along with the success message
@@ -3787,7 +3790,7 @@ app.get('/checkStatusOnfidoKycRetrieve', async (req, res) => {
 });
 
 const createVeriffSession = async (applicantData) => {
-  const apiKey = '55a4285f-9371-4850-8a3a-ea6d8f9fd885';
+  const apiKey = '8e9f212a-0d44-4610-adf3-19cf7cc2e679';
   const url = 'https://stationapi.veriff.com/v1/sessions';
   const headers = {
     'X-AUTH-CLIENT': apiKey,
@@ -3806,7 +3809,7 @@ const createVeriffSession = async (applicantData) => {
   try {
     const response = await axios.post(url, data, { headers });
     console.log(response.data);
-    return response.data.verification.sessionToken; // This is your session token'
+    return response.data.verification; // This is your session token'
   } catch (error) {
     console.error('Error creating Veriff session:', error);
     throw error;
@@ -3857,10 +3860,43 @@ app.get('/generateVeriffSessionToken', async (req, res) => {
     const sessionToken = await createVeriffSession(applicantData);
     await client.close();
 
-    res.json({ applicantId : sessionToken });
+    res.json({ applicantId : sessionToken.sessionToken,sessionId : sessionToken.id});
   } catch (error) {
     console.error('Failed to create Veriff session:', error);
     res.status(500).json({ error: 'Failed to create Veriff session' });
+  }
+});
+
+app.get('/getKycDecision', async (req, res) => {
+  const { sessionId } = req.query;
+  const API_KEY = '8e9f212a-0d44-4610-adf3-19cf7cc2e679';
+  const API_SECRET = '607c1bfc-4b6e-49d3-b0f3-268917c248ad';
+  // Construct the URL for the Veriff API endpoint
+  const apiUrl = `https://stationapi.veriff.com/v1/sessions/${sessionId}/decision`;
+
+  // Compute HMAC
+  const hmac = crypto.createHmac('sha256', API_SECRET);
+  hmac.update(sessionId);
+  const hmacSignature = hmac.digest('hex');
+
+  // Set up axios request configuration
+  const options = {
+    method: 'GET',
+    url: apiUrl,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-AUTH-CLIENT': API_KEY,
+      'X-HMAC-SIGNATURE': hmacSignature
+    }
+  };
+
+  try {
+    // Make the request using axios
+    const response = await axios(options);
+    res.json(response.data.verification);
+  } catch (error) {
+    console.error('Error fetching Veriff Decision:', error.response ? error.response.data : error.message);
+    res.status(500).json({ error: 'Failed to fetch KYC decision' });
   }
 });
 
