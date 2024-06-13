@@ -9,7 +9,7 @@ const axios = require('axios');
 const { ethers, JsonRpcProvider, formatEther, parseUnits, isAddress, ContractTransactionResponse, InfuraProvider } = require("ethers");
 const app = express();
 const PORT = 5000;
-const MONGO_URI = 'mongodb+srv://andy:markf3ecommerce@atlascluster.gjlv4np.mongodb.net/?retryWrites=true&w=majority&appName=AtlasCluster';
+const MONGO_URI = 'mongodb+srv://f3bazaar:123@f3bazaar@atlascluster.ggzbtom.mongodb.net/?retryWrites=true&w=majority&appName=AtlasCluster';
 app.use(bodyParser.json({ limit: '50mb', extended: true }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 // Middleware to parse JSON body
@@ -3871,8 +3871,10 @@ app.get('/getKycDecision', async (req, res) => {
   const { sessionId } = req.query;
   const API_KEY = '8e9f212a-0d44-4610-adf3-19cf7cc2e679';
   const API_SECRET = '607c1bfc-4b6e-49d3-b0f3-268917c248ad';
-  // Construct the URL for the Veriff API endpoint
-  const apiUrl = `https://stationapi.veriff.com/v1/sessions/${sessionId}/decision`;
+  const VERSION = '1.0.0';  // Define the version
+
+  // Construct the URL for the Veriff API endpoint with the version query parameter
+  const apiUrl = `https://stationapi.veriff.com/v1/sessions/${sessionId}/decision/fullauto?version=${VERSION}`;
 
   // Compute HMAC
   const hmac = crypto.createHmac('sha256', API_SECRET);
@@ -3893,9 +3895,13 @@ app.get('/getKycDecision', async (req, res) => {
   try {
     // Make the request using axios
     const response = await axios(options);
-    res.json(response.data.verification);
+    console.log(response.data);
+    res.json(response.data);
   } catch (error) {
-    console.error('Error fetching Veriff Decision:', error.response ? error.response.data : error.message);
+    console.error('Error fetching Veriff Decision:', error.message);
+    if (error.response) {
+      console.error('Response data:', error.response.data);
+    }
     res.status(500).json({ error: 'Failed to fetch KYC decision' });
   }
 });
