@@ -9,7 +9,7 @@ const axios = require('axios');
 const { ethers, JsonRpcProvider, formatEther, parseUnits, isAddress, ContractTransactionResponse, InfuraProvider } = require("ethers");
 const app = express();
 const PORT = 5000;
-const MONGO_URI = 'mongodb+srv://f3bazaar:markf3ecommerce@atlascluster.ggzbtom.mongodb.net/?retryWrites=true&w=majority&appName=AtlasCluster';
+const MONGO_URI = 'mongodb+srv://andy:markf3ecommerce@atlascluster.gjlv4np.mongodb.net/?retryWrites=true&w=majority&appName=AtlasCluster';
 app.use(bodyParser.json({ limit: '50mb', extended: true }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 // Middleware to parse JSON body
