@@ -3990,7 +3990,6 @@ app.get('/specificStoreSoldProducts', async (req, res) => {
           ...product,
           usdRateProduct: user.usdtRate 
         }));
-        //console.log(user);
         products.push(...productsWithUserName);
       }
       return products;
