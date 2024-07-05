@@ -12,7 +12,7 @@ const PORT = 5000;
 const MONGO_URI = 'mongodb+srv://andy:markf3ecommerce@atlascluster.gjlv4np.mongodb.net/?retryWrites=true&w=majority&appName=AtlasCluster';
 app.use(bodyParser.json({ limit: '50mb', extended: true }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
-// Middleware to parse JSON body
+// Middleware to parse JSON 
 app.use(bodyParser.json());
 
 const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -3991,6 +3991,7 @@ app.get('/specificStoreSoldProducts', async (req, res) => {
           usdRateProduct: user.usdtRate 
         }));
         //console.log(user);
+        console.log(user);
         products.push(...productsWithUserName);
       }
       return products;
