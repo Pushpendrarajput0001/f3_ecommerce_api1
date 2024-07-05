@@ -3988,8 +3988,9 @@ app.get('/specificStoreSoldProducts', async (req, res) => {
         const filteredProducts = user.products.filter(product => product.totalsolds >= 1);
         const productsWithUserName = filteredProducts.map(product => ({
           ...product,
-          usdRateProduct: user.usdRate  // Assuming 'name' is the field in your users collection that stores the user's name
+          usdRateProduct: user.usdtRate 
         }));
+        //console.log(user);
         products.push(...productsWithUserName);
       }
       return products;
