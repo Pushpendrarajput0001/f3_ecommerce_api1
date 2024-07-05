@@ -3962,6 +3962,51 @@ app.get('/getKycDecision', async (req, res) => {
   }
 });
 
+app.get('/specificStoreSoldProducts', async (req, res) => {
+  try {
+    const { storeIdOrName } = req.query;
+
+    // Connect to MongoDB
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Construct the filter based on the provided store ID or store name
+    const filter = {};
+    if (storeIdOrName) {
+      filter['$or'] = [
+        { 'storeId': storeIdOrName },
+        { 'storeName': storeIdOrName }
+      ];
+    }
+
+    // Find users with matching store ID or store name and retrieve their products
+    const usersWithMatchingStore = await collection.find(filter).toArray();
+    const matchingProducts = usersWithMatchingStore.reduce((products, user) => {
+      if (user.products && user.products.length > 0) {
+        // Filter products to include only those with totalsolds value >= 1
+        const filteredProducts = user.products.filter(product => product.totalsolds >= 1);
+        const productsWithUserName = filteredProducts.map(product => ({
+          ...product,
+          usdRateProduct: user.usdRate  // Assuming 'name' is the field in your users collection that stores the user's name
+        }));
+        products.push(...productsWithUserName);
+      }
+      return products;
+    }, []);
+
+    // Close MongoDB connection
+    await client.close();
+
+    // Send response with filtered products
+    res.status(200).json({ products: matchingProducts });
+  } catch (error) {
+    console.error('Error retrieving filtered products:', error);
+    res.status(500).json({ error: 'An error occurred while fetching filtered products' });
+  }
+});
+
+
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`);
 });
