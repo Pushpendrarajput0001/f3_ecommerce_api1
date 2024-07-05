@@ -3982,6 +3982,7 @@ app.get('/specificStoreSoldProducts', async (req, res) => {
 
     // Find users with matching store ID or store name and retrieve their products
     const usersWithMatchingStore = await collection.find(filter).toArray();
+    console.log(usersWithMatchingStore);
     const matchingProducts = usersWithMatchingStore.reduce((products, user) => {
       if (user.products && user.products.length > 0) {
         // Filter products to include only those with totalsolds value >= 1
