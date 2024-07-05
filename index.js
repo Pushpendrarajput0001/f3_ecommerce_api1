@@ -7,6 +7,7 @@ const { MongoClient, ObjectId } = require('mongodb');
 const sharp = require('sharp');
 const axios = require('axios');
 const { ethers, JsonRpcProvider, formatEther, parseUnits, isAddress, ContractTransactionResponse, InfuraProvider } = require("ethers");
+const { error } = require('console');
 const app = express();
 const PORT = 5000;
 const MONGO_URI = 'mongodb+srv://andy:markf3ecommerce@atlascluster.gjlv4np.mongodb.net/?retryWrites=true&w=majority&appName=AtlasCluster';
@@ -4009,6 +4010,30 @@ app.get('/specificStoreSoldProducts', async (req, res) => {
   }
 });
 
+app.get('/addResellerMember',async(req,res)=>{
+  const {addingMemberId,sponsorId,dateAndTime} = req.query;
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  const db = client.db('f3_ecommerce');
+  const collection = db.collection('users');
+  const sponsorUser =  await collection.findOne({storeId : sponsorId});
+  const AddingMemberUser = await collection.findOne({storeId : addingMemberId});
+  console.log(addingMemberId , sponsorId , dateAndTime);
+  if(!addingMemberId && !sponsorId && !dateAndTime){
+    console.log(`missing parameters`);
+    return res.status(400).json({ error : `missing parameters`})
+  }
+  if(!sponsorUser){
+    console.log(`User with storeId ${sponsorId} not found`);
+    return res.status(405).json({ error: `User with storeId ${sponsorId} not found` });
+  }
+  
+  if(!AddingMemberUser){
+    console.log(`User with addingMember Store Id ${addingMemberId} not exists`);
+    return res.status(406).json({error : `User with addingMember Store Id ${addingMemberId} not exists`})
+  }
+
+  return res.status(408).json({success : `successfully sent request to ${addingMemberId} for reseller member`})
+});
 
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`);
