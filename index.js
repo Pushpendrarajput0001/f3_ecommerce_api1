@@ -4035,6 +4035,15 @@ app.get('/addResellerMember',async(req,res)=>{
   return res.status(408).json({success : `successfully sent request to ${addingMemberId} for reseller member`})
 });
 
+app.get('/declineAndDeleteResellerRequest',async(req,res)=>{
+  const {sponsorId,addingMemberId} = req.query;
+});
+
+app.get('/addUserToResellerListOfSponsor',async(req,res)=>{
+  const {sponsorId,addingMemberId} = req.query;
+
+});
+
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`);
 });
