@@ -3989,7 +3989,8 @@ app.get('/specificStoreSoldProducts', async (req, res) => {
         const filteredProducts = user.products.filter(product => product.totalsolds >= 1);
         const productsWithUserName = filteredProducts.map(product => ({
           ...product,
-          usdRateProduct: user.usdtRate 
+          usdRateProduct: user.usdtRate,
+          userCurrencySymbol : user.currencySymbol
         }));
         //console.log(user);
         products.push(...productsWithUserName);
