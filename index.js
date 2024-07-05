@@ -167,7 +167,7 @@ app.post('/productsAdd', async (req, res) => {
     const collection = db.collection(COLLECTION_NAME);
 
     // Extract product data and images from request body
-    const { email, productName, startedPrice, f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected, description, totalsolds, images, storeId, storeName, flagWord, offer, sellerWalletAddress } = req.body;
+    const { email, productName, startedPrice, f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected, description, totalsolds, images, storeId, storeName, flagWord, offer, sellerWalletAddress,resellers_reward } = req.body;
 
     // Resize and compress images
     const compressedImages = await Promise.all(images.map(async (image) => {
@@ -196,6 +196,7 @@ app.post('/productsAdd', async (req, res) => {
       offer,
       flagWord,
       sellerWalletAddress,
+      resellers_reward,
       images: compressedImages
     };
 
@@ -2749,6 +2750,61 @@ app.get('/updateOfferProduct', async (req, res) => {
   } catch (error) {
     console.error('Error updating product stock:', error);
     res.status(500).json({ error: 'An error occurred while updating product stock' });
+  }
+});
+
+app.get('/updateResellersRewardProduct', async (req, res) => {
+  try {
+    const { storeId, productId, newRR } = req.query;
+
+    // Check if required parameters are missing
+    if (!storeId || !productId || !newRR) {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by storeId
+    const existingUser = await collection.findOne({ storeId });
+
+    if (!existingUser) {
+      res.status(404).json({ error: `User with storeId ${storeId} not found` });
+      return;
+    }
+
+    // Find the product by productId within the user's products
+    const existingProduct = existingUser.products.find(product => product._id === productId);
+    const existingProductBackup = existingUser.productsbackup.find(product => product._id === productId);
+
+    if (!existingProduct) {
+      res.status(404).json({ error: `Product ${productId} not found in store` });
+      return;
+    }
+
+    // Update the product's RR field
+    existingProduct.resellers_reward = newRR;
+    existingProductBackup.resellers_reward = newRR;
+
+    // Update the product in the database
+    await collection.updateOne(
+      { storeId, 'products._id': productId },
+      { $set: { 'products.$.resellers_reward': newRR } }
+    );
+    await collection.updateOne(
+      { storeId, 'productsbackup._id': productId },
+      { $set: { 'productsbackup.$.resellers_reward': newRR } }
+    );
+
+    // Close MongoDB connection
+    await client.close();
+
+    // Send response
+    res.status(200).json({ message: 'Product Reward updated successfully' });
+  } catch (error) {
+    console.error('Error updating product Reward:', error);
+    res.status(500).json({ error: 'An error occurred while updating product Reward' });
   }
 });
 
