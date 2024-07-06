@@ -4209,8 +4209,10 @@ app.get('/approveAndAddMemberToReseller', async (req, res) => {
   try {
     // Find the sponsor user
     const sponsorUser = await collection.findOne({ storeId: sponsorId });
-    const isAlreadyAMember = sponsorUser.AlreadyResellerMember;
-
+    const approvingUser = await collection.findOne({storeId : userId});
+    const isAlreadyAMember = approvingUser.AlreadyResellerMember;
+    console.log(approvingUser);
+    console.log(isAlreadyAMember);
     if (!sponsorUser) {
       console.log(`User with storeId ${sponsorId} not found`);
       return res.status(404).json({ error: `User with storeId ${sponsorId} not found` });
