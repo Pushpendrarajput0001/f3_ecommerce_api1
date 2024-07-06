@@ -4041,8 +4041,9 @@ app.get('/addResellerMember', async (req, res) => {
   }
 
    let userWithReseller = await collection.findOne({ 'resellersMember': { $elemMatch: { $eq: addingMemberId } } });
+   console.log(userWithReseller);
    if (userWithReseller) {
-     return res.status(407).json({ error: 'This user is already a member of resellers view!' });
+     return res.status(408).json({ error: 'This user is already a member of resellers view!' });
    }
 
   const resellers = sponsorUser.resellersMember? sponsorUser.resellersMember : [];
@@ -4191,6 +4192,78 @@ app.get('/declineAndDeleteResellerRequest', async (req, res) => {
 
   console.log(`Successfully declined and deleted request with sponsorId ${sponsorId} for user with userId ${userId}`);
   return res.status(200).json({ success: `Successfully declined and deleted request with sponsorId ${sponsorId}` });
+});
+
+app.get('/approveAndAddMemberToReseller', async (req, res) => {
+  const { userId, sponsorId, dateAndTime } = req.query;
+
+  if (!userId || !sponsorId || !dateAndTime) {
+    console.log('Missing userId, sponsorId, or dateAndTime parameter');
+    return res.status(400).json({ error: 'Missing userId, sponsorId, or dateAndTime parameter' });
+  }
+
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  const db = client.db('f3_ecommerce');
+  const collection = db.collection('users');
+
+  try {
+    // Find the sponsor user
+    const sponsorUser = await collection.findOne({ storeId: sponsorId });
+    const isAlreadyAMember = sponsorUser.AlreadyResellerMember;
+
+    if (!sponsorUser) {
+      console.log(`User with storeId ${sponsorId} not found`);
+      return res.status(404).json({ error: `User with storeId ${sponsorId} not found` });
+    }
+    if(isAlreadyAMember){
+      console.log(`User Already a member of reseller and ${isAlreadyAMember}`);
+      return res.status(402).json({MemberOf : isAlreadyAMember})
+    }
+
+    // Check if the sponsor has a resellersMember array, if not initialize it
+    sponsorUser.resellersMember = sponsorUser.resellersMember || [];
+
+    // Add the new member to the sponsor's resellersMember array
+    sponsorUser.resellersMember.push(userId);
+
+    // Update the sponsorUser document in the database
+    await collection.updateOne(
+      { storeId: sponsorId },
+      { $set: { resellersMember: sponsorUser.resellersMember } }
+    );
+
+    // Find the user requesting to be a reseller
+    const user = await collection.findOne({ storeId: userId });
+    if (!user) {
+      console.log(`User with storeId ${userId} not found`);
+      return res.status(404).json({ error: `User with storeId ${userId} not found` });
+    }
+
+    // Update the user's account to mark them as AlreadyResellerMember: Yes
+    await collection.updateOne(
+      { storeId: userId },
+      { $set: { AlreadyResellerMember: sponsorId } }
+    );
+
+    // Delete the request from ResellerMemberRequests in the user's account
+    if (user.ResellerMemberRequests && user.ResellerMemberRequests[sponsorId]) {
+      delete user.ResellerMemberRequests[sponsorId];
+
+      // Update the user document to remove the request
+      await collection.updateOne(
+        { storeId: userId },
+        { $set: { ResellerMemberRequests: user.ResellerMemberRequests } }
+      );
+    }
+
+    console.log(`Successfully approved and added ${userId} to resellersMember of ${sponsorId}`);
+    return res.status(200).json({ success: `Successfully approved and added ${userId} to resellersMember of ${sponsorId}` });
+  } catch (error) {
+    console.error('Error approving and adding member to reseller:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    client.close();
+  }
 });
 
 
