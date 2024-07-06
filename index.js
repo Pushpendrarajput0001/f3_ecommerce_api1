@@ -4268,9 +4268,13 @@ app.get('/approveAndAddMemberToReseller', async (req, res) => {
   }
 });
 
+app.get('/getResellerViewOff', async (req, res) => {
+  const { userId } = req.query;
 
-app.get('/addUserToResellerListOfSponsor', async (req, res) => {
-  const { sponsorId, addingMemberId } = req.query;
+});
+
+app.get('/getResellerViewOn', async (req, res) => {
+  const { userId } = req.query;
 
 });
 
