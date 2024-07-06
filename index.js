@@ -4093,7 +4093,7 @@ app.get('/addResellerMember', async (req, res) => {
   const newRequest = {
     sponsorId,
     totalResellers,
-    totalProfit: parseFloat(totalProfit).toFixed(4),
+    totalProfit: parseFloat(totalProfit).toFixed(3),
     sponsorFullName,
     usdtRateSponsor,
     currencySymbol,
