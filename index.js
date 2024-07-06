@@ -8,6 +8,7 @@ const sharp = require('sharp');
 const axios = require('axios');
 const { ethers, JsonRpcProvider, formatEther, parseUnits, isAddress, ContractTransactionResponse, InfuraProvider } = require("ethers");
 const { error } = require('console');
+const { parse } = require('path');
 const app = express();
 const PORT = 5000;
 const MONGO_URI = 'mongodb+srv://andy:markf3ecommerce@atlascluster.gjlv4np.mongodb.net/?retryWrites=true&w=majority&appName=AtlasCluster';
@@ -22,7 +23,7 @@ const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTop
 app.post('/usersregister', async (req, res) => {
   try {
     // Extract user data from request body
-    const { email, password, storeName, walletAddress, cityAddress, localAddress, usdtRate, country, storeId, currencySymbol, currencyCode, flagWord, alpha3Code, applicantId, kycStatusUser, fullName,kycSessionId } = req.body;
+    const { email, password, storeName, walletAddress, cityAddress, localAddress, usdtRate, country, storeId, currencySymbol, currencyCode, flagWord, alpha3Code, applicantId, kycStatusUser, fullName, kycSessionId } = req.body;
 
     // Connect to MongoDB
     const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -144,7 +145,7 @@ app.post('/login', async (req, res) => {
       alpha3Code: user.alpha3Code,
       applicantId: user.applicantId,
       kycStatusUser: user.kycStatusUser,
-      kycSessionId : user.kycSessionId
+      kycSessionId: user.kycSessionId
     };
 
     // Send the user data along with the success message
@@ -168,7 +169,7 @@ app.post('/productsAdd', async (req, res) => {
     const collection = db.collection(COLLECTION_NAME);
 
     // Extract product data and images from request body
-    const { email, productName, startedPrice, f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected, description, totalsolds, images, storeId, storeName, flagWord, offer, sellerWalletAddress,resellers_reward } = req.body;
+    const { email, productName, startedPrice, f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected, description, totalsolds, images, storeId, storeName, flagWord, offer, sellerWalletAddress, resellers_reward } = req.body;
 
     // Resize and compress images
     const compressedImages = await Promise.all(images.map(async (image) => {
@@ -3855,11 +3856,11 @@ const createVeriffSession = async (applicantData) => {
   };
   const data = {
     'verification': {
-        'callback': 'https://veriff.com',
-        'person': {
-          'firstName': applicantData.firstName,
-          'lastName': applicantData.lastName,
-        },
+      'callback': 'https://veriff.com',
+      'person': {
+        'firstName': applicantData.firstName,
+        'lastName': applicantData.lastName,
+      },
     }
   };
 
@@ -3910,14 +3911,14 @@ app.get('/generateVeriffSessionToken', async (req, res) => {
       lastName: lastName || 'Doe',
       idNumber: '123456789', // Assuming ID number is not provided
       country: countryalpha || 'USA',
-      documentType: 'passport' 
+      documentType: 'passport'
     };
 
     // Create Veriff session
     const sessionToken = await createVeriffSession(applicantData);
     await client.close();
 
-    res.json({ applicantId : sessionToken.sessionToken,sessionId : sessionToken.id});
+    res.json({ applicantId: sessionToken.sessionToken, sessionId: sessionToken.id });
   } catch (error) {
     console.error('Failed to create Veriff session:', error);
     res.status(500).json({ error: 'Failed to create Veriff session' });
@@ -3991,7 +3992,7 @@ app.get('/specificStoreSoldProducts', async (req, res) => {
         const productsWithUserName = filteredProducts.map(product => ({
           ...product,
           usdRateProduct: user.usdtRate,
-          userCurrencySymbol : user.currencySymbol
+          userCurrencySymbol: user.currencySymbol
         }));
         //console.log(user);
         products.push(...productsWithUserName);
@@ -4010,37 +4011,117 @@ app.get('/specificStoreSoldProducts', async (req, res) => {
   }
 });
 
-app.get('/addResellerMember',async(req,res)=>{
-  const {addingMemberId,sponsorId,dateAndTime} = req.query;
+app.get('/addResellerMember', async (req, res) => {
+  const { addingMemberId, sponsorId, dateAndTime } = req.query;
+
+  if (!addingMemberId || !sponsorId || !dateAndTime) {
+    console.log('Missing parameters');
+    return res.status(400).json({ error: 'Missing parameters' });
+  }
+
   const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
   const db = client.db('f3_ecommerce');
   const collection = db.collection('users');
-  const sponsorUser =  await collection.findOne({storeId : sponsorId});
-  const AddingMemberUser = await collection.findOne({storeId : addingMemberId});
-  console.log(addingMemberId , sponsorId , dateAndTime);
-  if(!addingMemberId && !sponsorId && !dateAndTime){
-    console.log(`missing parameters`);
-    return res.status(400).json({ error : `missing parameters`})
-  }
-  if(!sponsorUser){
+
+  const sponsorUser = await collection.findOne({ storeId: sponsorId });
+  if (!sponsorUser) {
     console.log(`User with storeId ${sponsorId} not found`);
     return res.status(405).json({ error: `User with storeId ${sponsorId} not found` });
   }
-  
-  if(!AddingMemberUser){
+
+  const addingMemberUser = await collection.findOne({ storeId: addingMemberId });
+  if (!addingMemberUser) {
     console.log(`User with addingMember Store Id ${addingMemberId} not exists`);
-    return res.status(406).json({error : `User with addingMember Store Id ${addingMemberId} not exists`})
+    return res.status(406).json({ error: `User with addingMember Store Id ${addingMemberId} not exists` });
   }
 
-  return res.status(408).json({success : `successfully sent request to ${addingMemberId} for reseller member`})
+  const existingRequest = addingMemberUser.ResellerMemberRequests && addingMemberUser.ResellerMemberRequests[sponsorId];
+  if (existingRequest) {
+    return res.status(402).json({ error: 'There is already a request sent' });
+  }
+
+   let userWithReseller = await collection.findOne({ 'resellersMember': { $elemMatch: { $eq: addingMemberId } } });
+   if (userWithReseller) {
+     return res.status(407).json({ error: 'This user is already a member of resellers view!' });
+   }
+
+  const resellers = sponsorUser.resellersMember && sponsorUser.resellersMember ? sponsorUser.resellersMember : [];
+  const totalResellers = resellers.length;
+  let totalProfit = 0.00;
+
+  for (const reseller of resellers) {
+    const resellerUser = await collection.findOne({ storeId: reseller.storeId });
+    if (resellerUser && resellerUser.productsArray) {
+      resellerUser.products.forEach(product => {
+        if (product.totalsolds >= 1) {
+          const totalSold = Number(product.totalsolds);
+          const priceString = product.startedPrice.replace(/[^\d.-]/g, '');
+          const priceProduct = parseFloat((priceString).toString()) || 0;
+          const resellersReward = parseFloat(product.resellers_reward ?? 0) || 0;
+          const totalPriceProduct = (totalSold * priceProduct);
+          totalProfit += (totalPriceProduct * (resellersReward / 100));
+          console.log(`Price string ${priceString}`);
+          console.log(`Price Product ${priceProduct}`);
+          console.log(`Original Price String: ${product.startedPrice}`);
+          console.log(`Cleaned Price String: ${priceString}`);
+          console.log(`Parsed Price Product: ${priceProduct}`);
+        }
+      });
+    }
+  }
+
+  sponsorUser.products.forEach(product => {
+    if (product.totalsolds >= 1) {
+      const totalSold = Number(product.totalsolds);
+      const priceString = product.startedPrice.replace(/[^\d.-]/g, '');
+      const priceProduct = parseFloat((priceString).toString()) || 0;
+      const resellersReward = parseFloat(product.resellers_reward ?? 0) || 0;
+      const totalPriceProduct = (totalSold * priceProduct);
+      totalProfit += (totalPriceProduct * (resellersReward / 100));
+      console.log(`Price string ${priceString}`);
+      console.log(`Price Product ${priceProduct}`);
+      console.log(`Original Price String: ${product.startedPrice}`);
+      console.log(`Cleaned Price String: ${priceString}`);
+      console.log(`Parsed Price Product: ${priceProduct}`);
+    }
+  });
+
+  const sponsorFullName = sponsorUser.fullName;
+  const usdtRateSponsor = sponsorUser.usdtRate;
+  const currencySymbol = sponsorUser.currencySymbol;
+
+  const newRequest = {
+    sponsorId,
+    totalResellers,
+    totalProfit: parseFloat(totalProfit).toFixed(2),
+    sponsorFullName,
+    usdtRateSponsor,
+    currencySymbol,
+    dateAndTime
+  };
+
+  if (!addingMemberUser.ResellerMemberRequests) {
+    addingMemberUser.ResellerMemberRequests = {};
+  }
+
+  console.log(newRequest);
+  addingMemberUser.ResellerMemberRequests[sponsorId] = newRequest;
+
+  await collection.updateOne(
+    { storeId: addingMemberId },
+    { $set: { ResellerMemberRequests: addingMemberUser.ResellerMemberRequests } }
+  );
+
+  console.log(`Successfully sent request to ${addingMemberId} for reseller member`);
+  return res.status(200).json({ success: `Successfully sent request to ${addingMemberId} for reseller member and data is ${newRequest.totalProfit}` });
 });
 
-app.get('/declineAndDeleteResellerRequest',async(req,res)=>{
-  const {sponsorId,addingMemberId} = req.query;
+app.get('/declineAndDeleteResellerRequest', async (req, res) => {
+  const { sponsorId, addingMemberId } = req.query;
 });
 
-app.get('/addUserToResellerListOfSponsor',async(req,res)=>{
-  const {sponsorId,addingMemberId} = req.query;
+app.get('/addUserToResellerListOfSponsor', async (req, res) => {
+  const { sponsorId, addingMemberId } = req.query;
 
 });
 
