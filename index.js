@@ -4045,7 +4045,7 @@ app.get('/addResellerMember', async (req, res) => {
      return res.status(407).json({ error: 'This user is already a member of resellers view!' });
    }
 
-  const resellers = sponsorUser.resellersMember && sponsorUser.resellersMember ? sponsorUser.resellersMember : [];
+  const resellers = sponsorUser.resellersMember? sponsorUser.resellersMember : [];
   const totalResellers = resellers.length;
   let totalProfit = 0.00;
 
@@ -4158,8 +4158,41 @@ app.get('/getResellersRequest', async (req, res) => {
 });
 
 app.get('/declineAndDeleteResellerRequest', async (req, res) => {
-  const { sponsorId, addingMemberId } = req.query;
+  const { userId, sponsorId } = req.query;
+
+  if (!userId || !sponsorId) {
+    console.log('Missing userId or sponsorId parameter');
+    return res.status(400).json({ error: 'Missing userId or sponsorId parameter' });
+  }
+
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  const db = client.db('f3_ecommerce');
+  const collection = db.collection('users');
+
+  const user = await collection.findOne({ storeId: userId });
+  if (!user) {
+    console.log(`User with userId ${userId} not found`);
+    return res.status(404).json({ error: `User with userId ${userId} not found` });
+  }
+
+  if (!user.ResellerMemberRequests || !user.ResellerMemberRequests[sponsorId]) {
+    console.log(`Request with sponsorId ${sponsorId} not found for user with userId ${userId}`);
+    return res.status(405).json({ error: `Request with sponsorId ${sponsorId} not found` });
+  }
+
+  // Delete the request with the specified sponsorId
+  delete user.ResellerMemberRequests[sponsorId];
+
+  // Update the user document in the database to remove the request
+  await collection.updateOne(
+    { storeId: userId },
+    { $set: { ResellerMemberRequests: user.ResellerMemberRequests } }
+  );
+
+  console.log(`Successfully declined and deleted request with sponsorId ${sponsorId} for user with userId ${userId}`);
+  return res.status(200).json({ success: `Successfully declined and deleted request with sponsorId ${sponsorId}` });
 });
+
 
 app.get('/addUserToResellerListOfSponsor', async (req, res) => {
   const { sponsorId, addingMemberId } = req.query;
