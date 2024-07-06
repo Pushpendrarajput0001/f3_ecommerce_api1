@@ -4116,6 +4116,47 @@ app.get('/addResellerMember', async (req, res) => {
   return res.status(200).json({ success: `Successfully sent request to ${addingMemberId} for reseller member and data is ${newRequest.totalProfit}` });
 });
 
+app.get('/getResellersRequest', async (req, res) => {
+  const { userId } = req.query;
+
+  if (!userId) {
+    console.log('Missing userId parameter');
+    return res.status(400).json({ error: 'Missing userId parameter' });
+  }
+
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  const db = client.db('f3_ecommerce');
+  const collection = db.collection('users');
+
+  const user = await collection.findOne({ storeId: userId });
+  if (!user) {
+    console.log(`User with userId ${userId} not found`);
+    return res.status(404).json({ error: `User with userId ${userId} not found` });
+  }
+
+  const resellerRequests = user.ResellerMemberRequests || {};
+
+  if (Object.keys(resellerRequests).length === 0) {
+    console.log(`No requests found for user with userId ${userId}`);
+    return res.status(403).json({ error: `No requests exist for user with userId ${userId}` });
+  }
+
+  const formattedRequests = Object.keys(resellerRequests).map(sponsorId => {
+    const request = resellerRequests[sponsorId];
+    return {
+      sponsorId: request.sponsorId,
+      sponsorName: request.sponsorFullName,
+      totalResellers: request.totalResellers,
+      totalProfit: request.totalProfit,
+      currencyCode: request.currencySymbol,
+      usdtRate: request.usdtRateSponsor,
+      dateAndTime: request.dateAndTime
+    };
+  });
+
+  return res.status(200).json({requests : formattedRequests});
+});
+
 app.get('/declineAndDeleteResellerRequest', async (req, res) => {
   const { sponsorId, addingMemberId } = req.query;
 });
