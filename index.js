@@ -4024,11 +4024,15 @@ app.get('/addResellerMember', async (req, res) => {
   const collection = db.collection('users');
 
   const sponsorUser = await collection.findOne({ storeId: sponsorId });
+  const isAddedMember = sponsorUser.AlreadyResellerMember;
   if (!sponsorUser) {
     console.log(`User with storeId ${sponsorId} not found`);
     return res.status(405).json({ error: `User with storeId ${sponsorId} not found` });
   }
-
+  if(isAddedMember){
+    console.log(`You are not allowed to invite any user as you're not a reseller member!`);
+    return res.status(404).json({error : `You are not allowed to invite any user as you're not a reseller member!`});
+  };
   const addingMemberUser = await collection.findOne({ storeId: addingMemberId });
   if (!addingMemberUser) {
     console.log(`User with addingMember Store Id ${addingMemberId} not exists`);
@@ -4324,6 +4328,7 @@ app.get('/getResellerViewOff', async (req, res) => {
 
               currentLevelMembers.push({
                 userId: resellerId,
+                userName : resellerUser.fullName,
                 level: levels + 1,
                 totalPurchased: totalPurchased.toFixed(2),
                 totalResellersReward: totalResellersReward.toFixed(2),
