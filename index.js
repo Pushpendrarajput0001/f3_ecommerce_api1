@@ -1751,6 +1751,23 @@ app.get('/getRequestsOfPayments', async (req, res) => {
       }
     }
 
+    if (user.paymentRequestResellersReward) {
+      const walletAddresses = Object.keys(user.paymentRequestResellersReward);
+      for (const walletAddress of walletAddresses) {
+
+        const resellerRequest = {
+          totalF3: user.paymentRequestResellersReward[walletAddress][0].f3ValueOfWithdraw,
+          totalReceivableAmount: user.paymentRequestResellersReward[walletAddress][0].receivableAmount,
+          providerWalletAddress: user.paymentRequestResellersReward[walletAddress][0].providerWalletAddress,
+          payingWalletAddress: user.paymentRequestResellersReward[walletAddress][0].payingWalletAddress,
+          receivableAmount: user.paymentRequestResellersReward[walletAddress][0].receivableAmount,          
+          dateAndTime: user.paymentRequestResellersReward[walletAddress][0].dateAndTime,
+          currencySymbol: user.paymentRequestResellersReward[walletAddress][0].currencySymbol,
+          requestType : 'Resellers Reward'
+        }
+        response.requests.push(resellerRequest);
+      }
+    }
     // Close MongoDB connection
     await client.close();
 
@@ -4029,9 +4046,9 @@ app.get('/addResellerMember', async (req, res) => {
     console.log(`User with storeId ${sponsorId} not found`);
     return res.status(405).json({ error: `User with storeId ${sponsorId} not found` });
   }
-  if(!isAddedMember){
+  if (!isAddedMember) {
     console.log(`You are not allowed to invite any user as you're not a reseller member!`);
-    return res.status(404).json({error : `You are not allowed to invite any user as you're not a reseller member!`});
+    return res.status(404).json({ error: `You are not allowed to invite any user as you're not a reseller member!` });
   };
   const addingMemberUser = await collection.findOne({ storeId: addingMemberId });
   if (!addingMemberUser) {
@@ -4044,13 +4061,13 @@ app.get('/addResellerMember', async (req, res) => {
     return res.status(402).json({ error: 'There is already a request sent' });
   }
 
-   let userWithReseller = await collection.findOne({ 'resellersMember': { $elemMatch: { $eq: addingMemberId } } });
-   console.log(userWithReseller);
-   if (userWithReseller) {
-     return res.status(408).json({ error: 'This user is already a member of resellers view!' });
-   }
+  let userWithReseller = await collection.findOne({ 'resellersMember': { $elemMatch: { $eq: addingMemberId } } });
+  console.log(userWithReseller);
+  if (userWithReseller) {
+    return res.status(408).json({ error: 'This user is already a member of resellers view!' });
+  }
 
-  const resellers = sponsorUser.resellersMember? sponsorUser.resellersMember : [];
+  const resellers = sponsorUser.resellersMember ? sponsorUser.resellersMember : [];
   console.log(`Resellers : ${resellers}`);
   const totalResellers = resellers.length;
   let totalProfit = 0.00;
@@ -4161,7 +4178,7 @@ app.get('/getResellersRequest', async (req, res) => {
     };
   });
 
-  return res.status(200).json({requests : formattedRequests});
+  return res.status(200).json({ requests: formattedRequests });
 });
 
 app.get('/declineAndDeleteResellerRequest', async (req, res) => {
@@ -4215,7 +4232,7 @@ app.get('/approveAndAddMemberToReseller', async (req, res) => {
   try {
     // Find the sponsor user
     const sponsorUser = await collection.findOne({ storeId: sponsorId });
-    const approvingUser = await collection.findOne({storeId : userId});
+    const approvingUser = await collection.findOne({ storeId: userId });
     const isAlreadyAMember = approvingUser.AlreadyResellerMember;
     console.log(approvingUser);
     console.log(isAlreadyAMember);
@@ -4223,9 +4240,9 @@ app.get('/approveAndAddMemberToReseller', async (req, res) => {
       console.log(`User with storeId ${sponsorId} not found`);
       return res.status(404).json({ error: `User with storeId ${sponsorId} not found` });
     }
-    if(isAlreadyAMember){
+    if (isAlreadyAMember) {
       console.log(`User Already a member of reseller and ${isAlreadyAMember}`);
-      return res.status(402).json({MemberOf : isAlreadyAMember})
+      return res.status(402).json({ MemberOf: isAlreadyAMember })
     }
 
     // Check if the sponsor has a resellersMember array, if not initialize it
@@ -4298,7 +4315,7 @@ app.get('/getResellerViewOff', async (req, res) => {
 
     let withdrawalAmount = 0.00
     let f3ValueOfWithdrawalAmount = 0.00
-    
+
 
     let levels = 0;
     let currentLevelIds = [userId];
@@ -4334,13 +4351,13 @@ app.get('/getResellerViewOff', async (req, res) => {
 
               currentLevelMembers.push({
                 userId: resellerId,
-                userName : resellerUser.fullName,
+                userName: resellerUser.fullName,
                 level: levels + 1,
                 totalPurchased: totalPurchased.toFixed(2),
                 totalResellersReward: totalResellersReward.toFixed(2),
                 sellersWalletAddress: resellerUser.walletAddress,
-                currencySymbol : resellerUser.currencySymbol,
-                usdRate : resellerUser.usdtRate,
+                currencySymbol: resellerUser.currencySymbol,
+                usdRate: resellerUser.usdtRate,
                 totalResellers: resellerUser.resellersMember ? resellerUser.resellersMember.length : 0
               });
 
@@ -4354,7 +4371,7 @@ app.get('/getResellerViewOff', async (req, res) => {
       currentLevelIds = nextLevelIds;
       levels++;
     }
-    if(storeRequests){
+    if (storeRequests) {
       Object.keys(storeRequests).forEach(subRequestName => {
         const requestsArray = storeRequests[subRequestName];
         requestsArray.forEach(storeRequest => {
@@ -4366,12 +4383,12 @@ app.get('/getResellerViewOff', async (req, res) => {
       });
     };
     const userDetailsWithdrawals = {
-      withdrawalAmount : withdrawalAmount,
-      f3ValueOfWithdrawalAmount : f3ValueOfWithdrawalAmount,
-      currencySymbol : currencySymbol,
-      usdRate : user.usdtRate
+      withdrawalAmount: withdrawalAmount,
+      f3ValueOfWithdrawalAmount: f3ValueOfWithdrawalAmount,
+      currencySymbol: currencySymbol,
+      usdRate: user.usdtRate
     };
-    return res.status(200).json({ members: allMembers,userDetails: userDetailsWithdrawals });
+    return res.status(200).json({ members: allMembers, userDetails: userDetailsWithdrawals });
   } catch (error) {
     console.error('Error fetching reseller view:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -4385,13 +4402,62 @@ app.get('/getResellerViewOn', async (req, res) => {
 
 });
 
-app.get('/requestForResellerWithdrawal', async (req,res)=>{
-  const { providerWalletAddress } = req.query;
+app.get('/requestForResellerWithdrawal', async (req, res) => {
+  const { storeId, providerWalletAddress, payingWalletAddress, receivableAmount, dateAndTime, f3ValueOfWithdraw, currencySymbol } = req.query;
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  const db = client.db('f3_ecommerce');
+  const collection = db.collection('users');
+
+  try {
+    // Find the user by storeId
+    const user = await collection.findOne({ walletAddress: providerWalletAddress });
+    if (!user) {
+      console.log(`User with storeId ${storeId} not found`);
+      return res.status(401).json({ error: `User with walletAddress ${providerWalletAddress} not found` });
+    }
+
+    // Initialize the paymentRequestResellersReward object if it doesn't exist
+    if (!user.paymentRequestResellersReward) {
+      user.paymentRequestResellersReward = {};
+    }
+
+    // Check if there's already a request with the same providerWalletAddress
+    if (user.paymentRequestResellersReward[providerWalletAddress]) {
+      return res.status(402).json({ error: 'Request with the same providerWalletAddress already exists' });
+    }
+
+    // Create the new request object
+    const newRequest = {
+      providerWalletAddress,
+      payingWalletAddress,
+      receivableAmount,
+      dateAndTime,
+      f3ValueOfWithdraw,
+      currencySymbol
+    };
+
+    // Add the new request to the providerWalletAddress array
+    user.paymentRequestResellersReward[providerWalletAddress] = [newRequest];
+
+    // Update the user document in the database
+    await collection.updateOne(
+      { walletAddress: providerWalletAddress },
+      { $set: { paymentRequestResellersReward: user.paymentRequestResellersReward } }
+    );
+
+    return res.status(200).json({ message: 'Withdrawal request created successfully' });
+  } catch (error) {
+    console.error('Error Requesting Withdrawal:', error);
+    return res.status(500).json({ error: `Internal server error ${error}` });
+  } finally {
+    client.close();
+  }
 });
 
-app.get('/deleteResellerWithdrawRequest',async(req,res)=>{
-  
+app.get('/deleteResellerWithdrawRequest', async (req, res) => {
+
 });
+
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`);
 });
