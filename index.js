@@ -1763,6 +1763,7 @@ app.get('/getRequestsOfPayments', async (req, res) => {
           receivableAmount: user.paymentRequestResellersReward[walletAddress][0].receivableAmount,          
           dateAndTime: user.paymentRequestResellersReward[walletAddress][0].dateAndTime,
           currencySymbol: user.paymentRequestResellersReward[walletAddress][0].currencySymbol,
+          storeId : user.paymentRequestResellersReward[walletAddress][0].storeId,
           requestType : 'Resellers Reward'
         }
         response.requests.push(resellerRequest);
@@ -4412,7 +4413,7 @@ app.get('/requestForResellerWithdrawal', async (req, res) => {
     // Find the user by storeId
     const user = await collection.findOne({ walletAddress: providerWalletAddress });
     if (!user) {
-      console.log(`User with storeId ${storeId} not found`);
+      console.log(`User with storeId ${providerWalletAddress} not found`);
       return res.status(401).json({ error: `User with walletAddress ${providerWalletAddress} not found` });
     }
 
@@ -4433,7 +4434,8 @@ app.get('/requestForResellerWithdrawal', async (req, res) => {
       receivableAmount,
       dateAndTime,
       f3ValueOfWithdraw,
-      currencySymbol
+      currencySymbol,
+      storeId
     };
 
     // Add the new request to the providerWalletAddress array
