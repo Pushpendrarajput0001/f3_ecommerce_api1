@@ -4047,12 +4047,14 @@ app.get('/addResellerMember', async (req, res) => {
    }
 
   const resellers = sponsorUser.resellersMember? sponsorUser.resellersMember : [];
+  console.log(`Resellers : ${resellers}`);
   const totalResellers = resellers.length;
   let totalProfit = 0.00;
 
   for (const reseller of resellers) {
-    const resellerUser = await collection.findOne({ storeId: reseller.storeId });
-    if (resellerUser && resellerUser.productsArray) {
+    const resellerUser = await collection.findOne({ storeId: reseller });
+    console.log(`Reseller User : ${resellerUser}`);
+    if (resellerUser && resellerUser.products) {
       resellerUser.products.forEach(product => {
         if (product.totalsolds >= 1) {
           const totalSold = Number(product.totalsolds);
@@ -4302,15 +4304,33 @@ app.get('/getResellerViewOff', async (req, res) => {
           for (let resellerId of member.resellersMember) {
             let resellerUser = await collection.findOne({ storeId: resellerId });
             if (resellerUser) {
-              let resellerProducts = resellerUser.products.map(product => {
-                let { productImage, ...productDetails } = product;
-                return productDetails;
-              });
+              let totalPurchased = 0;
+              let totalResellersReward = 0;
+
+              resellerUser.products
+                .filter(product => product.totalsolds >= 1)
+                .forEach(product => {
+                  const totalSold = Number(product.totalsolds);
+                  const priceString = product.startedPrice.replace(/[^\d.-]/g, '');
+                  const priceProduct = parseFloat(priceString) || 0;
+                  const resellersReward = parseFloat(product.resellers_reward ?? 0) || 0;
+
+                  const productTotalPurchased = totalSold * priceProduct;
+                  const productResellersReward = productTotalPurchased * (resellersReward / 100);
+
+                  totalPurchased += productTotalPurchased;
+                  totalResellersReward += productResellersReward;
+                });
 
               currentLevelMembers.push({
                 userId: resellerId,
                 level: levels + 1,
-                products: resellerProducts
+                totalPurchased: totalPurchased.toFixed(2),
+                totalResellersReward: totalResellersReward.toFixed(2),
+                sellersWalletAddress: resellerUser.walletAddress,
+                currencySymbol : resellerUser.currencySymbol,
+                usdRate : resellerUser.usdtRate,
+                totalResellers: resellerUser.resellersMember ? resellerUser.resellersMember.length : 0
               });
 
               nextLevelIds.push(resellerId);
@@ -4332,7 +4352,6 @@ app.get('/getResellerViewOff', async (req, res) => {
     client.close();
   }
 });
-
 
 app.get('/getResellerViewOn', async (req, res) => {
   const { userId } = req.query;
