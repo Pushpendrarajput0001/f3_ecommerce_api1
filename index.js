@@ -3848,7 +3848,7 @@ app.get('/checkStatusOnfidoKycRetrieve', async (req, res) => {
 });
 
 const createVeriffSession = async (applicantData) => {
-  const apiKey = '8e9f212a-0d44-4610-adf3-19cf7cc2e679';
+  const apiKey = 'f7daa5b3-13f4-4ab1-98e7-8e6b6c39e39f';
   const url = 'https://stationapi.veriff.com/v1/sessions';
   const headers = {
     'X-AUTH-CLIENT': apiKey,
@@ -3927,8 +3927,8 @@ app.get('/generateVeriffSessionToken', async (req, res) => {
 
 app.get('/getKycDecision', async (req, res) => {
   const { sessionId } = req.query;
-  const API_KEY = '8e9f212a-0d44-4610-adf3-19cf7cc2e679';
-  const API_SECRET = '607c1bfc-4b6e-49d3-b0f3-268917c248ad';
+  const API_KEY = 'f7daa5b3-13f4-4ab1-98e7-8e6b6c39e39f';
+  const API_SECRET = 'd07c4bc5-db11-4de0-856b-7f1be8d54616';
   const VERSION = '1.0.0';  // Define the version
 
   // Construct the URL for the Veriff API endpoint with the version query parameter
