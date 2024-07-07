@@ -4271,7 +4271,68 @@ app.get('/approveAndAddMemberToReseller', async (req, res) => {
 app.get('/getResellerViewOff', async (req, res) => {
   const { userId } = req.query;
 
+  if (!userId) {
+    console.log('Missing userId parameter');
+    return res.status(400).json({ error: 'Missing userId parameter' });
+  }
+
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  const db = client.db('f3_ecommerce');
+  const collection = db.collection('users');
+
+  try {
+    // Find the user
+    const user = await collection.findOne({ storeId: userId });
+    if (!user) {
+      console.log(`User with storeId ${userId} not found`);
+      return res.status(404).json({ error: `User with storeId ${userId} not found` });
+    }
+
+    let levels = 0;
+    let currentLevelIds = [userId];
+    let allMembers = [];
+
+    while (levels < 15 && currentLevelIds.length > 0) {
+      let nextLevelIds = [];
+      let currentLevelMembers = [];
+
+      for (let id of currentLevelIds) {
+        let member = await collection.findOne({ storeId: id });
+        if (member && member.resellersMember) {
+          for (let resellerId of member.resellersMember) {
+            let resellerUser = await collection.findOne({ storeId: resellerId });
+            if (resellerUser) {
+              let resellerProducts = resellerUser.products.map(product => {
+                let { productImage, ...productDetails } = product;
+                return productDetails;
+              });
+
+              currentLevelMembers.push({
+                userId: resellerId,
+                level: levels + 1,
+                products: resellerProducts
+              });
+
+              nextLevelIds.push(resellerId);
+            }
+          }
+        }
+      }
+
+      allMembers = [...allMembers, ...currentLevelMembers];
+      currentLevelIds = nextLevelIds;
+      levels++;
+    }
+
+    return res.status(200).json({ members: allMembers });
+  } catch (error) {
+    console.error('Error fetching reseller view:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    client.close();
+  }
 });
+
 
 app.get('/getResellerViewOn', async (req, res) => {
   const { userId } = req.query;
