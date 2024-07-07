@@ -4293,6 +4293,12 @@ app.get('/getResellerViewOff', async (req, res) => {
       console.log(`User with storeId ${userId} not found`);
       return res.status(404).json({ error: `User with storeId ${userId} not found` });
     }
+    const storeRequests = user.approvedPaymentRequestsResellersReward;
+    const currencySymbol = user.currencySymbol;
+
+    let withdrawalAmount = 0.00
+    let f3ValueOfWithdrawalAmount = 0.00
+    
 
     let levels = 0;
     let currentLevelIds = [userId];
@@ -4348,8 +4354,23 @@ app.get('/getResellerViewOff', async (req, res) => {
       currentLevelIds = nextLevelIds;
       levels++;
     }
-
-    return res.status(200).json({ members: allMembers });
+    if(storeRequests){
+      Object.keys(storeRequests).forEach(subRequestName => {
+        const requestsArray = storeRequests[subRequestName];
+        requestsArray.forEach(storeRequest => {
+          const withdrawal = storeRequest.withdrawalAmount.replace(/[^\d.-]/g, '');
+          const withdrawalF3 = storeRequest.f3ValueOfWithdrawalAmount.replace(/[^\d.-]/g, '');
+          withdrawalAmount += withdrawal;
+          f3ValueOfWithdrawalAmount += withdrawalF3;
+        });
+      });
+    };
+    const userDetailsWithdrawals = {
+      withdrawalAmount : withdrawalAmount,
+      f3ValueOfWithdrawalAmount : f3ValueOfWithdrawalAmount,
+      currencySymbol : currencySymbol
+    };
+    return res.status(200).json({ members: allMembers,userDetails: userDetailsWithdrawals });
   } catch (error) {
     console.error('Error fetching reseller view:', error);
     return res.status(500).json({ error: 'Internal server error' });
