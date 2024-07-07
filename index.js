@@ -4360,8 +4360,8 @@ app.get('/getResellerViewOff', async (req, res) => {
         requestsArray.forEach(storeRequest => {
           const withdrawal = storeRequest.withdrawalAmount.replace(/[^\d.-]/g, '');
           const withdrawalF3 = storeRequest.f3ValueOfWithdrawalAmount.replace(/[^\d.-]/g, '');
-          withdrawalAmount += withdrawal;
-          f3ValueOfWithdrawalAmount += withdrawalF3;
+          withdrawalAmount += parseFloat(withdrawal);
+          f3ValueOfWithdrawalAmount += parseFloat(withdrawalF3);
         });
       });
     };
