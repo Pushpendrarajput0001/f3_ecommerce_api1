@@ -4368,7 +4368,8 @@ app.get('/getResellerViewOff', async (req, res) => {
     const userDetailsWithdrawals = {
       withdrawalAmount : withdrawalAmount,
       f3ValueOfWithdrawalAmount : f3ValueOfWithdrawalAmount,
-      currencySymbol : currencySymbol
+      currencySymbol : currencySymbol,
+      usdRate : user.usdtRate
     };
     return res.status(200).json({ members: allMembers,userDetails: userDetailsWithdrawals });
   } catch (error) {
