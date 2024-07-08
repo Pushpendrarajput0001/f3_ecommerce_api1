@@ -1598,7 +1598,7 @@ app.get('/getRequestsOfPayments', async (req, res) => {
 
       for (const otherUser of otherUsersWithResellersRewardRequest) {
         if (otherUser.paymentRequestResellersReward && otherUser.paymentRequestResellersReward[requestedStoreId]) {
-          const storeIdRequests = otherUser.paymentRequestForCredit[requestedStoreId];
+          const storeIdRequests = otherUser.paymentRequestResellersReward[requestedStoreId];
           const buyerUser = await collection.findOne({ walletAddress: otherUser.walletAddress });
           if (buyerUser) {
             const buyerWalletAddress = buyerUser.walletAddress;
@@ -1661,7 +1661,7 @@ app.get('/getRequestsOfPayments', async (req, res) => {
           $exists: true,
         }
       }).toArray();
-      
+
       const requestedStoreId = user.storeId; // Assuming user is the current user
 
       console.log('Requested StoreId:', requestedStoreId);
@@ -1732,7 +1732,7 @@ app.get('/getRequestsOfPayments', async (req, res) => {
 
       for (const otherUser of otherUsersWithResellersRewardRequest) {
         if (otherUser.paymentRequestResellersReward && otherUser.paymentRequestResellersReward[requestedStoreId]) {
-          const storeIdRequests = otherUser.paymentRequestForCredit[requestedStoreId];
+          const storeIdRequests = otherUser.paymentRequestResellersReward[requestedStoreId];
           const buyerUser = await collection.findOne({ walletAddress: otherUser.walletAddress });
           if (buyerUser) {
             const buyerWalletAddress = buyerUser.walletAddress;
@@ -1850,25 +1850,25 @@ app.get('/getRequestsOfPayments', async (req, res) => {
       }
     }
 
-    if (user.paymentRequestResellersReward) {
-      const walletAddresses = Object.keys(user.paymentRequestResellersReward);
-      for (const walletAddress of walletAddresses) {
+    // if (user.paymentRequestResellersReward) {
+    //   const walletAddresses = Object.keys(user.paymentRequestResellersReward);
+    //   for (const walletAddress of walletAddresses) {
 
-        const resellerRequest = {
-          totalF3: user.paymentRequestResellersReward[walletAddress][0].f3ValueOfWithdraw,
-          totalReceivableAmount: user.paymentRequestResellersReward[walletAddress][0].receivableAmount,
-          providerWalletAddress: user.paymentRequestResellersReward[walletAddress][0].providerWalletAddress,
-          payingWalletAddress: user.paymentRequestResellersReward[walletAddress][0].payingWalletAddress,
-          receivableAmount: user.paymentRequestResellersReward[walletAddress][0].receivableAmount,          
-          dateAndTime: user.paymentRequestResellersReward[walletAddress][0].dateAndTime,
-          currencySymbol: user.paymentRequestResellersReward[walletAddress][0].currencySymbol,
-          storeId : user.paymentRequestResellersReward[walletAddress][0].storeId,
-          providerStoreId : user.paymentRequestResellersReward[walletAddress][0].providerStoreId,
-          requestType : 'Resellers Reward'
-        }
-        response.requests.push(resellerRequest);
-      }
-    }
+    //     const resellerRequest = {
+    //       totalF3: user.paymentRequestResellersReward[walletAddress][0].f3ValueOfWithdraw,
+    //       totalReceivableAmount: user.paymentRequestResellersReward[walletAddress][0].receivableAmount,
+    //       providerWalletAddress: user.paymentRequestResellersReward[walletAddress][0].providerWalletAddress,
+    //       payingWalletAddress: user.paymentRequestResellersReward[walletAddress][0].payingWalletAddress,
+    //       receivableAmount: user.paymentRequestResellersReward[walletAddress][0].receivableAmount,          
+    //       dateAndTime: user.paymentRequestResellersReward[walletAddress][0].dateAndTime,
+    //       currencySymbol: user.paymentRequestResellersReward[walletAddress][0].currencySymbol,
+    //       storeId : user.paymentRequestResellersReward[walletAddress][0].storeId,
+    //       providerStoreId : user.paymentRequestResellersReward[walletAddress][0].providerStoreId,
+    //       requestType : 'Resellers Reward'
+    //     }
+    //     response.requests.push(resellerRequest);
+    //   }
+    // }
     // Close MongoDB connection
     await client.close();
 
