@@ -1764,6 +1764,7 @@ app.get('/getRequestsOfPayments', async (req, res) => {
           dateAndTime: user.paymentRequestResellersReward[walletAddress][0].dateAndTime,
           currencySymbol: user.paymentRequestResellersReward[walletAddress][0].currencySymbol,
           storeId : user.paymentRequestResellersReward[walletAddress][0].storeId,
+          providerStoreId : user.paymentRequestResellersReward[walletAddress][0].providerStoreId,
           requestType : 'Resellers Reward'
         }
         response.requests.push(resellerRequest);
@@ -4405,17 +4406,17 @@ app.get('/getResellerViewOn', async (req, res) => {
 });
 
 app.get('/requestForResellerWithdrawal', async (req, res) => {
-  const { storeId, providerWalletAddress, payingWalletAddress, receivableAmount, dateAndTime, f3ValueOfWithdraw, currencySymbol } = req.query;
+  const { providerStoreId,storeId, providerWalletAddress, payingWalletAddress, receivableAmount, dateAndTime, f3ValueOfWithdraw, currencySymbol } = req.query;
   const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
   const db = client.db('f3_ecommerce');
   const collection = db.collection('users');
 
   try {
     // Find the user by storeId
-    const user = await collection.findOne({ walletAddress: providerWalletAddress });
+    const user = await collection.findOne({ walletAddress: payingWalletAddress });
     if (!user) {
-      console.log(`User with storeId ${providerWalletAddress} not found`);
-      return res.status(401).json({ error: `User with walletAddress ${providerWalletAddress} not found` });
+      console.log(`User with storeId ${payingWalletAddress} not found`);
+      return res.status(401).json({ error: `User with walletAddress ${payingWalletAddress} not found` });
     }
 
     // Initialize the paymentRequestResellersReward object if it doesn't exist
@@ -4424,7 +4425,7 @@ app.get('/requestForResellerWithdrawal', async (req, res) => {
     }
 
     // Check if there's already a request with the same providerWalletAddress
-    if (user.paymentRequestResellersReward[providerWalletAddress]) {
+    if (user.paymentRequestResellersReward[providerStoreId]) {
       return res.status(402).json({ error: 'Request with the same providerWalletAddress already exists' });
     }
 
@@ -4436,15 +4437,16 @@ app.get('/requestForResellerWithdrawal', async (req, res) => {
       dateAndTime,
       f3ValueOfWithdraw,
       currencySymbol,
-      storeId
+      storeId,
+      providerStoreId
     };
 
     // Add the new request to the providerWalletAddress array
-    user.paymentRequestResellersReward[providerWalletAddress] = [newRequest];
+    user.paymentRequestResellersReward[providerStoreId] = [newRequest];
 
     // Update the user document in the database
     await collection.updateOne(
-      { walletAddress: providerWalletAddress },
+      { walletAddress: payingWalletAddress },
       { $set: { paymentRequestResellersReward: user.paymentRequestResellersReward } }
     );
 
