@@ -4359,6 +4359,7 @@ app.get('/getResellerViewOff', async (req, res) => {
                 sellersWalletAddress: resellerUser.walletAddress,
                 currencySymbol: resellerUser.currencySymbol,
                 usdRate: resellerUser.usdtRate,
+                cityReseller : resellerUser.cityAddress,
                 totalResellers: resellerUser.resellersMember ? resellerUser.resellersMember.length : 0
               });
 
