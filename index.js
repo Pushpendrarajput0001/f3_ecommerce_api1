@@ -1521,6 +1521,12 @@ app.get('/getRequestsOfPayments', async (req, res) => {
         }
       }).toArray();
 
+      const otherUsersWithResellersRewardRequest = await collection.find({
+        'paymentRequestResellersReward': {
+          $exists: true,
+        }
+      }).toArray();
+
 
       const requestedStoreId = user.storeId; // Assuming user is the current user
 
@@ -1587,6 +1593,50 @@ app.get('/getRequestsOfPayments', async (req, res) => {
             };
             response.requests.push(creditRequestRequest);
           }
+        }
+      }
+
+      for (const otherUser of otherUsersWithResellersRewardRequest) {
+        if (otherUser.paymentRequestResellersReward && otherUser.paymentRequestResellersReward[requestedStoreId]) {
+          const storeIdRequests = otherUser.paymentRequestForCredit[requestedStoreId];
+          const buyerUser = await collection.findOne({ walletAddress: otherUser.walletAddress });
+          if (buyerUser) {
+            const buyerWalletAddress = buyerUser.walletAddress;
+            const sellerProducts = storeIdRequests.map(product => ({
+              productId: product.productId,
+              quantity: product.quantity,
+              totalPrice: product.totalPrice,
+              totalF3: product.totalF3Amount,
+              totalGc: product.totalGc,
+              sellerWalletAddress: user.walletAddress,
+              dateAndTime: product.dateAndTime,
+              lccAmount: product.lccAmount,
+              startedDateAndTime: product.startedDateAndTime,
+              paymentRequestedTimestampForCredit: product.paymentRequestedTimestampForCredit,
+              f3LiveOfThisTimeCredit: product.f3LiveOfThisTimeCredit
+            }));
+            const creditRequestRequest = {
+              totalF3: storeIdRequests[0].totalF3Amount,
+              totalGc: storeIdRequests[0].totalGc,
+              storeId: requestedStoreId,
+              buyerWalletAddress: buyerWalletAddress,
+              sellerWalletAddress: user.walletAddress,
+              requestType: 'Credit',
+              products: sellerProducts
+            };
+            const resellerRequest = {
+              totalF3: storeIdRequests[0].f3ValueOfWithdraw,
+              totalReceivableAmount: storeIdRequests[0].receivableAmount,
+              providerWalletAddress: storeIdRequests[0].providerWalletAddress,
+              payingWalletAddress: storeIdRequests[0].payingWalletAddress,
+              receivableAmount: storeIdRequests[0].receivableAmount,          
+              dateAndTime: storeIdRequests[0].dateAndTime,
+              currencySymbol: storeIdRequests[0].currencySymbol,
+              storeId : storeIdRequests[0].storeId,
+              providerStoreId : storeIdRequests[0].providerStoreId,
+              requestType : 'Resellers Reward'
+            }
+            response.requests.push(resellerRequest);          }
         }
       }
     } else {
@@ -1606,7 +1656,12 @@ app.get('/getRequestsOfPayments', async (req, res) => {
         }
       }).toArray();
 
-
+      const otherUsersWithResellersRewardRequest = await collection.find({
+        'paymentRequestResellersReward': {
+          $exists: true,
+        }
+      }).toArray();
+      
       const requestedStoreId = user.storeId; // Assuming user is the current user
 
       console.log('Requested StoreId:', requestedStoreId);
@@ -1672,6 +1727,50 @@ app.get('/getRequestsOfPayments', async (req, res) => {
             };
             response.requests.push(creditRequestRequest);
           }
+        }
+      }
+
+      for (const otherUser of otherUsersWithResellersRewardRequest) {
+        if (otherUser.paymentRequestResellersReward && otherUser.paymentRequestResellersReward[requestedStoreId]) {
+          const storeIdRequests = otherUser.paymentRequestForCredit[requestedStoreId];
+          const buyerUser = await collection.findOne({ walletAddress: otherUser.walletAddress });
+          if (buyerUser) {
+            const buyerWalletAddress = buyerUser.walletAddress;
+            const sellerProducts = storeIdRequests.map(product => ({
+              productId: product.productId,
+              quantity: product.quantity,
+              totalPrice: product.totalPrice,
+              totalF3: product.totalF3Amount,
+              totalGc: product.totalGc,
+              sellerWalletAddress: user.walletAddress,
+              dateAndTime: product.dateAndTime,
+              lccAmount: product.lccAmount,
+              startedDateAndTime: product.startedDateAndTime,
+              paymentRequestedTimestampForCredit: product.paymentRequestedTimestampForCredit,
+              f3LiveOfThisTimeCredit: product.f3LiveOfThisTimeCredit
+            }));
+            const creditRequestRequest = {
+              totalF3: storeIdRequests[0].totalF3Amount,
+              totalGc: storeIdRequests[0].totalGc,
+              storeId: requestedStoreId,
+              buyerWalletAddress: buyerWalletAddress,
+              sellerWalletAddress: user.walletAddress,
+              requestType: 'Credit',
+              products: sellerProducts
+            };
+            const resellerRequest = {
+              totalF3: storeIdRequests[0].f3ValueOfWithdraw,
+              totalReceivableAmount: storeIdRequests[0].receivableAmount,
+              providerWalletAddress: storeIdRequests[0].providerWalletAddress,
+              payingWalletAddress: storeIdRequests[0].payingWalletAddress,
+              receivableAmount: storeIdRequests[0].receivableAmount,          
+              dateAndTime: storeIdRequests[0].dateAndTime,
+              currencySymbol: storeIdRequests[0].currencySymbol,
+              storeId : storeIdRequests[0].storeId,
+              providerStoreId : storeIdRequests[0].providerStoreId,
+              requestType : 'Resellers Reward'
+            }
+            response.requests.push(resellerRequest);          }
         }
       }
     };
