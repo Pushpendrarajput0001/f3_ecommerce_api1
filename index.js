@@ -1624,16 +1624,51 @@ app.get('/getRequestsOfPayments', async (req, res) => {
               requestType: 'Credit',
               products: sellerProducts
             };
+            const simpleJson = [
+              {
+                  "id": 1,
+                  "name": "John Doe",
+                  "email": "john.doe@example.com",
+                  "age": 25
+              },
+              {
+                  "id": 2,
+                  "name": "Jane Smith",
+                  "email": "jane.smith@example.com",
+                  "age": 30
+              },
+              {
+                  "id": 3,
+                  "name": "Emily Johnson",
+                  "email": "emily.johnson@example.com",
+                  "age": 22
+              },
+              {
+                  "id": 4,
+                  "name": "Michael Brown",
+                  "email": "michael.brown@example.com",
+                  "age": 35
+              },
+              {
+                  "id": 5,
+                  "name": "Sarah Davis",
+                  "email": "sarah.davis@example.com",
+                  "age": 28
+              }
+            ];
             const resellerRequest = {
               totalF3: storeIdRequests[0].f3ValueOfWithdraw,
               totalReceivableAmount: storeIdRequests[0].receivableAmount,
               providerWalletAddress: storeIdRequests[0].providerWalletAddress,
+              sellerWalletAddress : storeIdRequests[0].providerWalletAddress,
               payingWalletAddress: storeIdRequests[0].payingWalletAddress,
+              buyerWalletAddress : storeIdRequests[0].payingWalletAddress,
               receivableAmount: storeIdRequests[0].receivableAmount,          
               dateAndTime: storeIdRequests[0].dateAndTime,
               currencySymbol: storeIdRequests[0].currencySymbol,
               storeId : storeIdRequests[0].storeId,
               providerStoreId : storeIdRequests[0].providerStoreId,
+              products : simpleJson,
               requestType : 'Resellers Reward'
             }
             response.requests.push(resellerRequest);          }
@@ -1758,16 +1793,50 @@ app.get('/getRequestsOfPayments', async (req, res) => {
               requestType: 'Credit',
               products: sellerProducts
             };
+            const simpleJson = [
+              {
+                  "id": 1,
+                  "name": "John Doe",
+                  "email": "john.doe@example.com",
+                  "age": 25
+              },
+              {
+                  "id": 2,
+                  "name": "Jane Smith",
+                  "email": "jane.smith@example.com",
+                  "age": 30
+              },
+              {
+                  "id": 3,
+                  "name": "Emily Johnson",
+                  "email": "emily.johnson@example.com",
+                  "age": 22
+              },
+              {
+                  "id": 4,
+                  "name": "Michael Brown",
+                  "email": "michael.brown@example.com",
+                  "age": 35
+              },
+              {
+                  "id": 5,
+                  "name": "Sarah Davis",
+                  "email": "sarah.davis@example.com",
+                  "age": 28
+              }
+            ];          
             const resellerRequest = {
               totalF3: storeIdRequests[0].f3ValueOfWithdraw,
               totalReceivableAmount: storeIdRequests[0].receivableAmount,
               providerWalletAddress: storeIdRequests[0].providerWalletAddress,
+              sellerWalletAddress : storeIdRequests[0].providerWalletAddress,
               payingWalletAddress: storeIdRequests[0].payingWalletAddress,
               receivableAmount: storeIdRequests[0].receivableAmount,          
               dateAndTime: storeIdRequests[0].dateAndTime,
               currencySymbol: storeIdRequests[0].currencySymbol,
               storeId : storeIdRequests[0].storeId,
               providerStoreId : storeIdRequests[0].providerStoreId,
+              products : simpleJson,
               requestType : 'Resellers Reward'
             }
             response.requests.push(resellerRequest);          }
