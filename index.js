@@ -4630,31 +4630,31 @@ app.get('/requestForResellerWithdrawal', async (req, res) => {
 });
 
 app.get('/deleteResellerWithdrawRequest', async (req, res) => {
-  const { storeId, providerWalletAddress } = req.query;
+  const { storeId, providerWalletAddress,buyerWalletAddress } = req.query;
   const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
   const db = client.db('f3_ecommerce');
   const collection = db.collection('users');
 
   try {
     // Find the user by storeId
-    const user = await collection.findOne({ storeId: storeId });
+    const user = await collection.findOne({ walletAddress: buyerWalletAddress });
     if (!user) {
       console.log(`User with storeId ${storeId} not found`);
       return res.status(404).json({ error: `User with storeId ${storeId} not found` });
     }
 
     // Check if the paymentRequestResellersReward object exists
-    if (!user.paymentRequestResellersReward || !user.paymentRequestResellersReward[providerWalletAddress]) {
-      console.log(`Request with providerWalletAddress ${providerWalletAddress} not found`);
-      return res.status(404).json({ error: `Request with providerWalletAddress ${providerWalletAddress} not found` });
+    if (!user.paymentRequestResellersReward || !user.paymentRequestResellersReward[storeId]) {
+      console.log(`Request with buyerWalletAddress ${buyerWalletAddress} not found`);
+      return res.status(404).json({ error: `Request with buyerWalletAddress ${buyerWalletAddress} not found` });
     }
 
     // Delete the request with the given providerWalletAddress
-    delete user.paymentRequestResellersReward[providerWalletAddress];
+    delete user.paymentRequestResellersReward[storeId];
 
     // Update the user document in the database
     await collection.updateOne(
-      { storeId: storeId },
+      { walletAddress: buyerWalletAddress },
       { $set: { paymentRequestResellersReward: user.paymentRequestResellersReward } }
     );
 
