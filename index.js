@@ -2136,6 +2136,13 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
     console.log('buyerOnes', usersWithBuyerApprovedRequest)
     console.log('Found users with approved requests:', usersWithApprovedRequests);
 
+    const usersWithResellersApprovedRequest = await collection.find({
+      'storeId': sellerStoreId, // Replace 'userType' with the actual field name distinguishing sellerUser
+      'ApprovedPaymentRequestResellersReward': {
+        $exists: true,
+      }
+    }).toArray();
+
     // Extract approved payment requests from users
     const approvedRequests = usersWithApprovedRequests.reduce((acc, user) => {
       if (user.approvedPaymentRequestsSeller && user.approvedPaymentRequestsSeller[sellerStoreId]) {
@@ -2172,6 +2179,8 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
 
       return acc;
     }, []);
+
+
 
     response.requests.push(...approvedRequestsBuyers);
 
@@ -2218,9 +2227,48 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
       return acc;
     }, []);
 
-
-
     response.requests.push(...approvedRequestsCredit);
+
+    const approvedRequestsResellersReward = usersWithResellersApprovedRequest.reduce((acc, user) => {
+      const buyerWalletAddress = user.walletAddress;
+      const storeRequests = user.ApprovedPaymentRequestResellersReward;
+
+      // Iterate over the keys of storeRequests object
+      Object.keys(storeRequests).forEach(subRequestName => {
+        const requestsArray = storeRequests[subRequestName];
+
+        // Iterate over the array of requests for each subRequestName
+        requestsArray.forEach(storeRequest => {
+          if (storeRequest.requestProducts && Array.isArray(storeRequest.requestProducts)) {
+            storeRequest.requestProducts.forEach(product => {
+              const providerWalletAddress = product.providerWalletAddress;
+              const rewardAmount = product.f3ValueOfWithdraw;
+              const usdAmountRR = product.receivableAmount;
+              const txHashResellersReward = product.txhash;
+              const dateAndTimeOfApproved = product.dateAndTimeOfApproved;
+              console.log(product);
+              
+              const requestWithRequestType = {
+                buyerWalletAddress,
+                requestType: 'Resellers Reward',
+                providerWalletAddress,
+                rewardAmount,
+                usdAmountRR,
+                txHashResellersReward,
+                dateAndTimeOfApproved,
+                ...storeRequest
+              };
+              acc.push(requestWithRequestType);
+            });
+          }
+        });
+        
+      });
+
+      return acc;
+    }, []);
+
+    response.requests.push(...approvedRequestsResellersReward);
 
     console.log('buyersOne', usersWithBuyerApprovedRequest);
 
@@ -4668,7 +4716,7 @@ app.get('/deleteResellerWithdrawRequest', async (req, res) => {
 });
 
 app.get('/approveResellersRequest', async (req, res) => {
-  const { buyerWalletAddress, sellerStoreID, txhash, dateAndTime } = req.query;
+  const { buyerWalletAddress, sellerStoreId, txhash, dateAndTime } = req.query;
 
   const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
   const db = client.db('f3_ecommerce');
@@ -4684,61 +4732,50 @@ app.get('/approveResellersRequest', async (req, res) => {
 
       // Find the paymentRequestResellersReward object map
       const paymentRequestRR = user.paymentRequestResellersReward || {};
-      const paymentRequests = user.paymentRequestResellersReward;
-      const sellerRequestArray = paymentRequests[sellerStoreID];
+      const paymentRequests = paymentRequestRR[sellerStoreId];
 
-      if (!sellerRequestArray) {
+      if (!paymentRequests) {
           return res.status(404).json({ error: 'Request not found for the given sellerStoreID' });
       }
 
       // Copy the array and add the new values
-      const newRequestArray = sellerRequestArray.map(request => ({
+      const newRequestArray = paymentRequests.map(request => ({
           ...request,
           txhash,
-          dateAndTimeOfApproved : dateAndTime
+          dateAndTimeOfApproved: dateAndTime
       }));
 
       const newRequestObject = {
-        'requestProducts': [...newRequestArray]
+          'requestProducts': [...newRequestArray]
       };
 
       console.log(newRequestObject);
-      // Create new object in buyerWallet account named ApprovedPaymentRequestResellersReward
-      // const updateData = {
-      //     $set: {
-      //         [`ApprovedPaymentRequestResellersReward.${sellerStoreID}`]: newRequestArray
-      //     }
-      // };
+      console.log(dateAndTime);
 
-      if (!Array.isArray(user.ApprovedPaymentRequestResellersReward[sellerStoreID])) {
-        console.log(`Creating new approvedPaymentRequestsCredit array for sellerStoreId ${sellerStoreID}`);
-        user.ApprovedPaymentRequestResellersReward[sellerStoreID] = [newRequestObject];
+      // Initialize ApprovedPaymentRequestResellersReward if it doesn't exist
+      user.ApprovedPaymentRequestResellersReward = user.ApprovedPaymentRequestResellersReward || {};
+
+      if (!Array.isArray(user.ApprovedPaymentRequestResellersReward[sellerStoreId])) {
+          console.log(`Creating new ApprovedPaymentRequestResellersReward array for sellerStoreId ${sellerStoreId}`);
+          user.ApprovedPaymentRequestResellersReward[sellerStoreId] = [newRequestObject];
       } else {
-        console.log(`Adding new request to existing approvedPaymentRequestsCredit array for sellerStoreId ${sellerStoreID}`);
-        user.ApprovedPaymentRequestResellersReward[sellerStoreID].push(newRequestObject);
+          console.log(`Adding new request to existing ApprovedPaymentRequestResellersReward array for sellerStoreId ${sellerStoreId}`);
+          user.ApprovedPaymentRequestResellersReward[sellerStoreId].push(newRequestObject);
       }
 
+      // Update the user document in the database
       await collection.updateOne({ walletAddress: buyerWalletAddress }, { $set: user });
 
       // Remove the request from paymentRequestResellersReward
-      // const removeData = {
-      //     $unset: {
-      //         [`paymentRequestResellersReward.${sellerStoreID}`]: ""
-      //     }
-      // };
+      delete paymentRequestRR[sellerStoreId];
 
-      // await collection.updateOne({ walletAddress: buyerWalletAddress }, removeData);
-
-      delete paymentRequestRR[sellerStoreID];
-
-      // Update the user document in the database
       await collection.updateOne(
-        { walletAddress: buyerWalletAddress },
-        {
-          $set: {
-            paymentRequestResellersReward: paymentRequestRR,
+          { walletAddress: buyerWalletAddress },
+          {
+              $set: {
+                  paymentRequestResellersReward: paymentRequestRR
+              }
           }
-        }
       );
 
       res.json({ message: 'Request approved and moved to ApprovedPaymentRequestResellersReward' });
