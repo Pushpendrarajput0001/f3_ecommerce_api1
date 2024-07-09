@@ -4435,7 +4435,8 @@ app.get('/getResellerViewOff', async (req, res) => {
               let totalPurchased = 0;
               let totalResellersReward = 0;
 
-              resellerUser.products
+              if(resellerUser.products){
+                resellerUser.products
                 .filter(product => product.totalsolds >= 1)
                 .forEach(product => {
                   const totalSold = Number(product.totalsolds);
@@ -4449,6 +4450,7 @@ app.get('/getResellerViewOff', async (req, res) => {
                   totalPurchased += productTotalPurchased;
                   totalResellersReward += productResellersReward;
                 });
+              };
 
               currentLevelMembers.push({
                 userId: resellerId,
