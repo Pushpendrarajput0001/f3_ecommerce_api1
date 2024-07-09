@@ -4528,7 +4528,7 @@ app.get('/getResellerViewOff', async (req, res) => {
       console.log(`User with storeId ${userId} not found`);
       return res.status(404).json({ error: `User with storeId ${userId} not found` });
     }
-    const storeRequests = user.approvedPaymentRequestsResellersReward;
+    const storeRequests = user.ApprovedPaymentRequestResellersReward;
     const currencySymbol = user.currencySymbol;
 
     let withdrawalAmount = 0.00
