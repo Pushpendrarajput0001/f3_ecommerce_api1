@@ -4667,8 +4667,87 @@ app.get('/deleteResellerWithdrawRequest', async (req, res) => {
   }
 });
 
-app.get('/approveResellersRequest',async(req,res)=>{
-  const {} = req.query;
+app.get('/approveResellersRequest', async (req, res) => {
+  const { buyerWalletAddress, sellerStoreID, txhash, dateAndTime } = req.query;
+
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  const db = client.db('f3_ecommerce');
+  const collection = db.collection('users');
+
+  try {
+      // Find the user with the buyerWalletAddress
+      const user = await collection.findOne({ walletAddress: buyerWalletAddress });
+
+      if (!user) {
+          return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Find the paymentRequestResellersReward object map
+      const paymentRequestRR = user.paymentRequestResellersReward || {};
+      const paymentRequests = user.paymentRequestResellersReward;
+      const sellerRequestArray = paymentRequests[sellerStoreID];
+
+      if (!sellerRequestArray) {
+          return res.status(404).json({ error: 'Request not found for the given sellerStoreID' });
+      }
+
+      // Copy the array and add the new values
+      const newRequestArray = sellerRequestArray.map(request => ({
+          ...request,
+          txhash,
+          dateAndTimeOfApproved : dateAndTime
+      }));
+
+      const newRequestObject = {
+        'requestProducts': [...newRequestArray]
+      };
+
+      console.log(newRequestObject);
+      // Create new object in buyerWallet account named ApprovedPaymentRequestResellersReward
+      // const updateData = {
+      //     $set: {
+      //         [`ApprovedPaymentRequestResellersReward.${sellerStoreID}`]: newRequestArray
+      //     }
+      // };
+
+      if (!Array.isArray(user.ApprovedPaymentRequestResellersReward[sellerStoreID])) {
+        console.log(`Creating new approvedPaymentRequestsCredit array for sellerStoreId ${sellerStoreID}`);
+        user.ApprovedPaymentRequestResellersReward[sellerStoreID] = [newRequestObject];
+      } else {
+        console.log(`Adding new request to existing approvedPaymentRequestsCredit array for sellerStoreId ${sellerStoreID}`);
+        user.ApprovedPaymentRequestResellersReward[sellerStoreID].push(newRequestObject);
+      }
+
+      await collection.updateOne({ walletAddress: buyerWalletAddress }, { $set: user });
+
+      // Remove the request from paymentRequestResellersReward
+      // const removeData = {
+      //     $unset: {
+      //         [`paymentRequestResellersReward.${sellerStoreID}`]: ""
+      //     }
+      // };
+
+      // await collection.updateOne({ walletAddress: buyerWalletAddress }, removeData);
+
+      delete paymentRequestRR[sellerStoreID];
+
+      // Update the user document in the database
+      await collection.updateOne(
+        { walletAddress: buyerWalletAddress },
+        {
+          $set: {
+            paymentRequestResellersReward: paymentRequestRR,
+          }
+        }
+      );
+
+      res.json({ message: 'Request approved and moved to ApprovedPaymentRequestResellersReward' });
+  } catch (error) {
+      console.error('Error approving resellers request:', error);
+      return res.status(500).json({ error: `Internal server error: ${error}` });
+  } finally {
+      client.close();
+  }
 });
 
 app.listen(PORT, '192.168.29.149', () => {
