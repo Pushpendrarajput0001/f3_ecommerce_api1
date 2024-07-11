@@ -715,6 +715,7 @@ app.post('/addCheckoutApproval', async (req, res) => {
         totalsolds: productDetails.totalsolds,
         storeId: productDetails.storeId,
         offer: productDetails.offer,
+        resellers_reward: productDetails.resellers_reward ?? 0,
         storeIdBuyer: user.storeId,
         walletAddressBuyer: user.walletAddress,
         flagWord: productDetails.flagWord,
@@ -832,7 +833,7 @@ app.get('/getSellerProductsCheckoutById', async (req, res) => {
           const { productId, quantity, totalPrice, productName, startedPrice,
             f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected,
             description, totalsolds, storeId, offer, storeIdBuyer, walletAddressBuyer,
-            flagWord, storeName, images } = checkoutApproval;
+            flagWord, storeName, images, resellers_reward } = checkoutApproval;
 
           // Fetch product details from MongoDB
           const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
@@ -852,6 +853,7 @@ app.get('/getSellerProductsCheckoutById', async (req, res) => {
             totalsolds,
             storeId,
             offer,
+            resellers_reward,
             storeIdBuyer,
             walletAddressBuyer,
             flagWord,
@@ -1626,52 +1628,53 @@ app.get('/getRequestsOfPayments', async (req, res) => {
             };
             const simpleJson = [
               {
-                  "id": 1,
-                  "name": "John Doe",
-                  "email": "john.doe@example.com",
-                  "age": 25
+                "id": 1,
+                "name": "John Doe",
+                "email": "john.doe@example.com",
+                "age": 25
               },
               {
-                  "id": 2,
-                  "name": "Jane Smith",
-                  "email": "jane.smith@example.com",
-                  "age": 30
+                "id": 2,
+                "name": "Jane Smith",
+                "email": "jane.smith@example.com",
+                "age": 30
               },
               {
-                  "id": 3,
-                  "name": "Emily Johnson",
-                  "email": "emily.johnson@example.com",
-                  "age": 22
+                "id": 3,
+                "name": "Emily Johnson",
+                "email": "emily.johnson@example.com",
+                "age": 22
               },
               {
-                  "id": 4,
-                  "name": "Michael Brown",
-                  "email": "michael.brown@example.com",
-                  "age": 35
+                "id": 4,
+                "name": "Michael Brown",
+                "email": "michael.brown@example.com",
+                "age": 35
               },
               {
-                  "id": 5,
-                  "name": "Sarah Davis",
-                  "email": "sarah.davis@example.com",
-                  "age": 28
+                "id": 5,
+                "name": "Sarah Davis",
+                "email": "sarah.davis@example.com",
+                "age": 28
               }
             ];
             const resellerRequest = {
               totalF3: storeIdRequests[0].f3ValueOfWithdraw,
               totalReceivableAmount: storeIdRequests[0].receivableAmount,
               providerWalletAddress: storeIdRequests[0].providerWalletAddress,
-              sellerWalletAddress : storeIdRequests[0].providerWalletAddress,
+              sellerWalletAddress: storeIdRequests[0].providerWalletAddress,
               payingWalletAddress: storeIdRequests[0].payingWalletAddress,
-              buyerWalletAddress : storeIdRequests[0].payingWalletAddress,
-              receivableAmount: storeIdRequests[0].receivableAmount,          
+              buyerWalletAddress: storeIdRequests[0].payingWalletAddress,
+              receivableAmount: storeIdRequests[0].receivableAmount,
               dateAndTime: storeIdRequests[0].dateAndTime,
               currencySymbol: storeIdRequests[0].currencySymbol,
-              storeId : storeIdRequests[0].storeId,
-              providerStoreId : storeIdRequests[0].providerStoreId,
-              products : simpleJson,
-              requestType : 'Resellers Reward'
+              storeId: storeIdRequests[0].storeId,
+              providerStoreId: storeIdRequests[0].providerStoreId,
+              products: simpleJson,
+              requestType: 'Resellers Reward'
             }
-            response.requests.push(resellerRequest);          }
+            response.requests.push(resellerRequest);
+          }
         }
       }
     } else {
@@ -1795,51 +1798,52 @@ app.get('/getRequestsOfPayments', async (req, res) => {
             };
             const simpleJson = [
               {
-                  "id": 1,
-                  "name": "John Doe",
-                  "email": "john.doe@example.com",
-                  "age": 25
+                "id": 1,
+                "name": "John Doe",
+                "email": "john.doe@example.com",
+                "age": 25
               },
               {
-                  "id": 2,
-                  "name": "Jane Smith",
-                  "email": "jane.smith@example.com",
-                  "age": 30
+                "id": 2,
+                "name": "Jane Smith",
+                "email": "jane.smith@example.com",
+                "age": 30
               },
               {
-                  "id": 3,
-                  "name": "Emily Johnson",
-                  "email": "emily.johnson@example.com",
-                  "age": 22
+                "id": 3,
+                "name": "Emily Johnson",
+                "email": "emily.johnson@example.com",
+                "age": 22
               },
               {
-                  "id": 4,
-                  "name": "Michael Brown",
-                  "email": "michael.brown@example.com",
-                  "age": 35
+                "id": 4,
+                "name": "Michael Brown",
+                "email": "michael.brown@example.com",
+                "age": 35
               },
               {
-                  "id": 5,
-                  "name": "Sarah Davis",
-                  "email": "sarah.davis@example.com",
-                  "age": 28
+                "id": 5,
+                "name": "Sarah Davis",
+                "email": "sarah.davis@example.com",
+                "age": 28
               }
-            ];          
+            ];
             const resellerRequest = {
               totalF3: storeIdRequests[0].f3ValueOfWithdraw,
               totalReceivableAmount: storeIdRequests[0].receivableAmount,
               providerWalletAddress: storeIdRequests[0].providerWalletAddress,
-              sellerWalletAddress : storeIdRequests[0].providerWalletAddress,
+              sellerWalletAddress: storeIdRequests[0].providerWalletAddress,
               payingWalletAddress: storeIdRequests[0].payingWalletAddress,
-              receivableAmount: storeIdRequests[0].receivableAmount,          
+              receivableAmount: storeIdRequests[0].receivableAmount,
               dateAndTime: storeIdRequests[0].dateAndTime,
               currencySymbol: storeIdRequests[0].currencySymbol,
-              storeId : storeIdRequests[0].storeId,
-              providerStoreId : storeIdRequests[0].providerStoreId,
-              products : simpleJson,
-              requestType : 'Resellers Reward'
+              storeId: storeIdRequests[0].storeId,
+              providerStoreId: storeIdRequests[0].providerStoreId,
+              products: simpleJson,
+              requestType: 'Resellers Reward'
             }
-            response.requests.push(resellerRequest);          }
+            response.requests.push(resellerRequest);
+          }
         }
       }
     };
@@ -2247,7 +2251,7 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
               const txHashResellersReward = product.txhash;
               const dateAndTimeOfApproved = product.dateAndTimeOfApproved;
               console.log(product);
-              
+
               const requestWithRequestType = {
                 buyerWalletAddress,
                 requestType: 'Resellers Reward',
@@ -2262,7 +2266,7 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
             });
           }
         });
-        
+
       });
 
       return acc;
@@ -4549,25 +4553,72 @@ app.get('/getResellerViewOff', async (req, res) => {
           for (let resellerId of member.resellersMember) {
             let resellerUser = await collection.findOne({ storeId: resellerId });
             if (resellerUser) {
+              const storeRequests = resellerUser.ApprovedPaymentRequestResellersReward;
               let totalPurchased = 0;
               let totalResellersReward = 0;
 
-              if(resellerUser.products){
+              let totalPurchasedProducts = 0.0;
+              let totalProfitProducts = 0.0;
+              let totalWithdrawalAmountUser = 0.0;
+              let totalF3WithdrawalUser = 0.0;
+
+              if (resellerUser.products) {
                 resellerUser.products
-                .filter(product => product.totalsolds >= 1)
-                .forEach(product => {
-                  const totalSold = Number(product.totalsolds);
-                  const priceString = product.startedPrice.replace(/[^\d.-]/g, '');
-                  const priceProduct = parseFloat(priceString) || 0;
-                  const resellersReward = parseFloat(product.resellers_reward ?? 0) || 0;
+                  .filter(product => product.totalsolds >= 1)
+                  .forEach(product => {
+                    const totalSold = Number(product.totalsolds);
+                    const priceString = product.startedPrice.replace(/[^\d.-]/g, '');
+                    const priceProduct = parseFloat(priceString) || 0;
+                    const resellersReward = parseFloat(product.resellers_reward ?? 0) || 0;
 
-                  const productTotalPurchased = totalSold * priceProduct;
-                  const productResellersReward = productTotalPurchased * (resellersReward / 100);
+                    const productTotalPurchased = totalSold * priceProduct;
+                    const productResellersReward = productTotalPurchased * (resellersReward / 100);
 
-                  totalPurchased += productTotalPurchased;
-                  totalResellersReward += productResellersReward;
-                });
+                    totalPurchased += productTotalPurchased;
+                    totalResellersReward += productResellersReward;
+                  });
               };
+
+              if (resellerUser.approvalcheckoutBuyer) {
+                Object.keys(resellerUser.approvalcheckoutBuyer).forEach(storeId => {
+                  resellerUser.approvalcheckoutBuyer[storeId].forEach(productDetails => {
+                    console.log('Approval Checkout Buyer Product Details:', productDetails);
+                    const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
+                    const totalResellersReward = productDetails.resellers_reward
+                    const totalproductResellersReward = parseFloat(totalAmountProduct) * (totalResellersReward / 100);
+                    totalPurchasedProducts += parseFloat(totalAmountProduct);
+                    totalProfitProducts += parseFloat(totalproductResellersReward);
+                  });
+                });
+              }
+
+              if (resellerUser.salesHistoryBuyer) {
+                Object.keys(resellerUser.salesHistoryBuyer).forEach(storeId => {
+                  resellerUser.salesHistoryBuyer[storeId].forEach(productDetails => {
+                    console.log('Sales History Buyer Product Details:', productDetails);
+                    const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
+                    const totalResellersReward = productDetails.resellers_reward
+                    const totalproductResellersReward = parseFloat(totalAmountProduct) * (totalResellersReward / 100);
+                    totalPurchasedProducts += parseFloat(totalAmountProduct);
+                    totalProfitProducts += parseFloat(totalproductResellersReward);
+                  });
+                });
+              }
+
+              if (storeRequests) {
+                Object.keys(storeRequests).forEach(subRequesName => {
+                  const requestArray = storeRequests[subRequesName];
+                  requestArray.forEach(storeRequest => {
+                    console.lo0g(`storeRequestsParticularUser : ${storeRequest}`);
+                    const withdrawal = storeRequest.receivableAmount.replace(/[^\d.-]/g, '');
+                    const withdrawalF3 = storeRequest.f3ValueOfWithdraw.replace(/[^\d.-]/g, '');
+                    totalWithdrawalAmountUser += parseFloat(withdrawal)
+                    totalF3WithdrawalUser += parseFloat(withdrawalF3);
+                    withdrawalAmount += parseFloat(withdrawal);
+                    f3ValueOfWithdrawalAmount += parseFloat(withdrawalF3);
+                  });
+                });
+              }
 
               currentLevelMembers.push({
                 userId: resellerId,
@@ -4578,9 +4629,15 @@ app.get('/getResellerViewOff', async (req, res) => {
                 sellersWalletAddress: resellerUser.walletAddress,
                 currencySymbol: resellerUser.currencySymbol,
                 usdRate: resellerUser.usdtRate,
-                cityReseller : resellerUser.cityAddress,
+                cityReseller: resellerUser.cityAddress,
+                totalPurchasedProducts,
+                totalProfitProducts,
+                totalWithdrawalAmountUser,
+                totalF3WithdrawalUser,
                 totalResellers: resellerUser.resellersMember ? resellerUser.resellersMember.length : 0
               });
+
+
 
               nextLevelIds.push(resellerId);
             }
@@ -4596,12 +4653,12 @@ app.get('/getResellerViewOff', async (req, res) => {
       Object.keys(storeRequests).forEach(subRequestName => {
         const requestsArray = storeRequests[subRequestName];
         requestsArray.forEach(storeRequest => {
-          storeRequest.requestProducts.forEach(storeRequest =>{
-          console.log(storeRequest);
-          const withdrawal = storeRequest.receivableAmount.replace(/[^\d.-]/g, '');
-          const withdrawalF3 = storeRequest.f3ValueOfWithdraw.replace(/[^\d.-]/g, '');
-          withdrawalAmount += parseFloat(withdrawal);
-          f3ValueOfWithdrawalAmount += parseFloat(withdrawalF3);
+          storeRequest.requestProducts.forEach(storeRequest => {
+            console.log(storeRequest);
+            const withdrawal = storeRequest.receivableAmount.replace(/[^\d.-]/g, '');
+            const withdrawalF3 = storeRequest.f3ValueOfWithdraw.replace(/[^\d.-]/g, '');
+            withdrawalAmount += parseFloat(withdrawal);
+            f3ValueOfWithdrawalAmount += parseFloat(withdrawalF3);
           });
         });
       });
@@ -4627,7 +4684,7 @@ app.get('/getResellerViewOn', async (req, res) => {
 });
 
 app.get('/requestForResellerWithdrawal', async (req, res) => {
-  const { providerStoreId,storeId, providerWalletAddress, payingWalletAddress, receivableAmount, dateAndTime, f3ValueOfWithdraw, currencySymbol } = req.query;
+  const { providerStoreId, storeId, providerWalletAddress, payingWalletAddress, receivableAmount, dateAndTime, f3ValueOfWithdraw, currencySymbol } = req.query;
   const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
   const db = client.db('f3_ecommerce');
   const collection = db.collection('users');
@@ -4681,7 +4738,7 @@ app.get('/requestForResellerWithdrawal', async (req, res) => {
 });
 
 app.get('/deleteResellerWithdrawRequest', async (req, res) => {
-  const { storeId, providerWalletAddress,buyerWalletAddress } = req.query;
+  const { storeId, providerWalletAddress, buyerWalletAddress } = req.query;
   const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
   const db = client.db('f3_ecommerce');
   const collection = db.collection('users');
@@ -4726,71 +4783,71 @@ app.get('/approveResellersRequest', async (req, res) => {
   const collection = db.collection('users');
 
   try {
-      // Find the user with the buyerWalletAddress
-      const user = await collection.findOne({ walletAddress: buyerWalletAddress });
+    // Find the user with the buyerWalletAddress
+    const user = await collection.findOne({ walletAddress: buyerWalletAddress });
 
-      if (!user) {
-          return res.status(404).json({ error: 'User not found' });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Find the paymentRequestResellersReward object map
+    const paymentRequestRR = user.paymentRequestResellersReward || {};
+    const paymentRequests = paymentRequestRR[sellerStoreId];
+
+    if (!paymentRequests) {
+      return res.status(404).json({ error: 'Request not found for the given sellerStoreID' });
+    }
+
+    // Copy the array and add the new values
+    const newRequestArray = paymentRequests.map(request => ({
+      ...request,
+      txhash,
+      dateAndTimeOfApproved: dateAndTime
+    }));
+
+    const newRequestObject = {
+      'requestProducts': [...newRequestArray]
+    };
+
+    console.log(newRequestObject);
+    console.log(dateAndTime);
+
+    // Initialize ApprovedPaymentRequestResellersReward if it doesn't exist
+    user.ApprovedPaymentRequestResellersReward = user.ApprovedPaymentRequestResellersReward || {};
+
+    if (!Array.isArray(user.ApprovedPaymentRequestResellersReward[sellerStoreId])) {
+      console.log(`Creating new ApprovedPaymentRequestResellersReward array for sellerStoreId ${sellerStoreId}`);
+      user.ApprovedPaymentRequestResellersReward[sellerStoreId] = [newRequestObject];
+    } else {
+      console.log(`Adding new request to existing ApprovedPaymentRequestResellersReward array for sellerStoreId ${sellerStoreId}`);
+      user.ApprovedPaymentRequestResellersReward[sellerStoreId].push(newRequestObject);
+    }
+
+    // Update the user document in the database
+    await collection.updateOne({ walletAddress: buyerWalletAddress }, { $set: user });
+
+    // Remove the request from paymentRequestResellersReward
+    delete paymentRequestRR[sellerStoreId];
+
+    await collection.updateOne(
+      { walletAddress: buyerWalletAddress },
+      {
+        $set: {
+          paymentRequestResellersReward: paymentRequestRR
+        }
       }
+    );
 
-      // Find the paymentRequestResellersReward object map
-      const paymentRequestRR = user.paymentRequestResellersReward || {};
-      const paymentRequests = paymentRequestRR[sellerStoreId];
-
-      if (!paymentRequests) {
-          return res.status(404).json({ error: 'Request not found for the given sellerStoreID' });
-      }
-
-      // Copy the array and add the new values
-      const newRequestArray = paymentRequests.map(request => ({
-          ...request,
-          txhash,
-          dateAndTimeOfApproved: dateAndTime
-      }));
-
-      const newRequestObject = {
-          'requestProducts': [...newRequestArray]
-      };
-
-      console.log(newRequestObject);
-      console.log(dateAndTime);
-
-      // Initialize ApprovedPaymentRequestResellersReward if it doesn't exist
-      user.ApprovedPaymentRequestResellersReward = user.ApprovedPaymentRequestResellersReward || {};
-
-      if (!Array.isArray(user.ApprovedPaymentRequestResellersReward[sellerStoreId])) {
-          console.log(`Creating new ApprovedPaymentRequestResellersReward array for sellerStoreId ${sellerStoreId}`);
-          user.ApprovedPaymentRequestResellersReward[sellerStoreId] = [newRequestObject];
-      } else {
-          console.log(`Adding new request to existing ApprovedPaymentRequestResellersReward array for sellerStoreId ${sellerStoreId}`);
-          user.ApprovedPaymentRequestResellersReward[sellerStoreId].push(newRequestObject);
-      }
-
-      // Update the user document in the database
-      await collection.updateOne({ walletAddress: buyerWalletAddress }, { $set: user });
-
-      // Remove the request from paymentRequestResellersReward
-      delete paymentRequestRR[sellerStoreId];
-
-      await collection.updateOne(
-          { walletAddress: buyerWalletAddress },
-          {
-              $set: {
-                  paymentRequestResellersReward: paymentRequestRR
-              }
-          }
-      );
-
-      res.json({ message: 'Request approved and moved to ApprovedPaymentRequestResellersReward' });
+    res.json({ message: 'Request approved and moved to ApprovedPaymentRequestResellersReward' });
   } catch (error) {
-      console.error('Error approving resellers request:', error);
-      return res.status(500).json({ error: `Internal server error: ${error}` });
+    console.error('Error approving resellers request:', error);
+    return res.status(500).json({ error: `Internal server error: ${error}` });
   } finally {
-      client.close();
+    client.close();
   }
 });
 
-app.listen(PORT, '192.168.29.149', () => {
-  console.log(`Server is running on http://192.168.29.149:${PORT}`);
+app.listen(PORT, '192.168.135.158', () => {
+  console.log(`Server is running on http://192.168.135.158:${PORT}`);
 });
 
