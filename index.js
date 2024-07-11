@@ -4557,10 +4557,10 @@ app.get('/getResellerViewOff', async (req, res) => {
               let totalPurchased = 0;
               let totalResellersReward = 0;
 
-              let totalPurchasedProducts = 0.0;
-              let totalProfitProducts = 0.0;
-              let totalWithdrawalAmountUser = 0.0;
-              let totalF3WithdrawalUser = 0.0;
+              let totalPurchasedProducts = 0;
+              let totalProfitProducts = 0;
+              let totalWithdrawalAmountUser = 0;
+              let totalF3WithdrawalUser = 0;
 
               if (resellerUser.products) {
                 resellerUser.products
@@ -4584,7 +4584,7 @@ app.get('/getResellerViewOff', async (req, res) => {
                   resellerUser.approvalcheckoutBuyer[storeId].forEach(productDetails => {
                     console.log('Approval Checkout Buyer Product Details:', productDetails);
                     const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
-                    const totalResellersReward = productDetails.resellers_reward
+                    const totalResellersReward = productDetails.resellers_reward ?? 0.0
                     const totalproductResellersReward = parseFloat(totalAmountProduct) * (totalResellersReward / 100);
                     totalPurchasedProducts += parseFloat(totalAmountProduct);
                     totalProfitProducts += parseFloat(totalproductResellersReward);
@@ -4597,7 +4597,7 @@ app.get('/getResellerViewOff', async (req, res) => {
                   resellerUser.salesHistoryBuyer[storeId].forEach(productDetails => {
                     console.log('Sales History Buyer Product Details:', productDetails);
                     const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
-                    const totalResellersReward = productDetails.resellers_reward
+                    const totalResellersReward = productDetails.resellers_reward ?? 0.0
                     const totalproductResellersReward = parseFloat(totalAmountProduct) * (totalResellersReward / 100);
                     totalPurchasedProducts += parseFloat(totalAmountProduct);
                     totalProfitProducts += parseFloat(totalproductResellersReward);
