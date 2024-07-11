@@ -4557,10 +4557,10 @@ app.get('/getResellerViewOff', async (req, res) => {
               let totalPurchased = 0;
               let totalResellersReward = 0;
 
-              let totalPurchasedProducts = 0;
-              let totalProfitProducts = 0;
-              let totalWithdrawalAmountUser = 0;
-              let totalF3WithdrawalUser = 0;
+              let totalPurchasedProducts = 0.0;
+              let totalProfitProducts = 0.0;
+              let totalWithdrawalAmountUser = 0.0;
+              let totalF3WithdrawalUser = 0.0;
 
               if (resellerUser.products) {
                 resellerUser.products
