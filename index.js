@@ -4562,23 +4562,49 @@ app.get('/getResellerViewOff', async (req, res) => {
               let totalWithdrawalAmountUser = 0.0;
               let totalF3WithdrawalUser = 0.0;
 
-              if (resellerUser.products) {
-                resellerUser.products
-                  .filter(product => product.totalsolds >= 1)
-                  .forEach(product => {
-                    const totalSold = Number(product.totalsolds);
-                    const priceString = product.startedPrice.replace(/[^\d.-]/g, '');
-                    const priceProduct = parseFloat(priceString) || 0;
-                    const resellersReward = parseFloat(product.resellers_reward ?? 0) || 0;
+              // if (resellerUser.products) {
+              //   resellerUser.products
+              //     .filter(product => product.totalsolds >= 1)
+              //     .forEach(product => {
+              //       const totalSold = Number(product.totalsolds);
+              //       const priceString = product.startedPrice.replace(/[^\d.-]/g, '');
+              //       const priceProduct = parseFloat(priceString) || 0;
+              //       const resellersReward = parseFloat(product.resellers_reward ?? 0) || 0;
 
-                    const productTotalPurchased = totalSold * priceProduct;
-                    const productResellersReward = productTotalPurchased * (resellersReward / 100);
+              //       const productTotalPurchased = totalSold * priceProduct;
+              //       const productResellersReward = productTotalPurchased * (resellersReward / 100);
 
-                    totalPurchased += productTotalPurchased;
-                    totalResellersReward += productResellersReward;
+              //       totalPurchased += productTotalPurchased;
+              //       totalResellersReward += productResellersReward;
+              //     });
+              // };
+
+              if (resellerUser.checkoutapproval) {
+                Object.keys(resellerUser.checkoutapproval).forEach(storeId => {
+                  resellerUser.checkoutapproval[storeId].forEach(productDetails => {
+                    console.log('Approval Checkout Seller Product Details:', productDetails);
+                    const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
+                    const totalResellersRewardd = productDetails.resellers_reward ?? 0.0
+                    const totalproductResellersReward = parseFloat(totalAmountProduct) * (totalResellersRewardd / 100);
+                    totalPurchased += parseFloat(totalAmountProduct);
+                    totalResellersReward += parseFloat(totalproductResellersReward);
                   });
-              };
+                });
+              }
 
+              if (resellerUser.salesHistorySeller) {
+                Object.keys(resellerUser.salesHistorySeller).forEach(storeId => {
+                  resellerUser.salesHistorySeller[storeId].forEach(productDetails => {
+                    console.log('Sales History Seller Product Details:', productDetails);
+                    const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
+                    const totalResellersRewardd = productDetails.resellers_reward ?? 0.0
+                    const totalproductResellersReward = parseFloat(totalAmountProduct) * (totalResellersRewardd / 100);
+                    totalPurchased += parseFloat(totalAmountProduct);
+                    totalResellersReward += parseFloat(totalproductResellersReward);
+                  });
+                });
+              }
+              
               if (resellerUser.approvalcheckoutBuyer) {
                 Object.keys(resellerUser.approvalcheckoutBuyer).forEach(storeId => {
                   resellerUser.approvalcheckoutBuyer[storeId].forEach(productDetails => {
