@@ -4556,6 +4556,7 @@ app.get('/getResellerViewOff', async (req, res) => {
               const storeRequests = resellerUser.ApprovedPaymentRequestResellersReward;
               let totalPurchased = 0;
               let totalResellersReward = 0;
+              let totalResellersProductRewardPercentage = 0;
 
               let totalPurchasedProducts = 0.0;
               let totalProfitProducts = 0.0;
@@ -4582,12 +4583,13 @@ app.get('/getResellerViewOff', async (req, res) => {
               if (resellerUser.checkoutapproval) {
                 Object.keys(resellerUser.checkoutapproval).forEach(storeId => {
                   resellerUser.checkoutapproval[storeId].forEach(productDetails => {
-                    console.log('Approval Checkout Seller Product Details:', productDetails);
+                    //console.log('Approval Checkout Seller Product Details:', productDetails);
                     const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
                     const totalResellersRewardd = productDetails.resellers_reward ?? 0.0
-                    const totalproductResellersReward = parseFloat(totalAmountProduct) * (totalResellersRewardd / 100);
+                    const totalproductResellersReward = (parseFloat(totalAmountProduct) * (totalResellersRewardd / 100));
                     totalPurchased += parseFloat(totalAmountProduct);
                     totalResellersReward += parseFloat(totalproductResellersReward);
+                    console.log(`checkoutApprovalRR : ${totalResellersRewardd}`);
                   });
                 });
               }
@@ -4595,12 +4597,13 @@ app.get('/getResellerViewOff', async (req, res) => {
               if (resellerUser.salesHistorySeller) {
                 Object.keys(resellerUser.salesHistorySeller).forEach(storeId => {
                   resellerUser.salesHistorySeller[storeId].forEach(productDetails => {
-                    console.log('Sales History Seller Product Details:', productDetails);
+                    //console.log('Sales History Seller Product Details:', productDetails);
                     const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
                     const totalResellersRewardd = productDetails.resellers_reward ?? 0.0
-                    const totalproductResellersReward = parseFloat(totalAmountProduct) * (totalResellersRewardd / 100);
+                    const totalproductResellersReward = (parseFloat(totalAmountProduct) * (totalResellersRewardd / 100));
                     totalPurchased += parseFloat(totalAmountProduct);
                     totalResellersReward += parseFloat(totalproductResellersReward);
+                    console.log(`salesHistorySellerRR : ${totalResellersRewardd}`);
                   });
                 });
               }
@@ -4608,12 +4611,14 @@ app.get('/getResellerViewOff', async (req, res) => {
               if (resellerUser.approvalcheckoutBuyer) {
                 Object.keys(resellerUser.approvalcheckoutBuyer).forEach(storeId => {
                   resellerUser.approvalcheckoutBuyer[storeId].forEach(productDetails => {
-                    console.log('Approval Checkout Buyer Product Details:', productDetails);
+                    //console.log('Approval Checkout Buyer Product Details:', productDetails);
                     const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
                     const totalResellersReward = productDetails.resellers_reward ?? 0.0
-                    const totalproductResellersReward = parseFloat(totalAmountProduct) * (totalResellersReward / 100);
+                    const totalproductResellersReward = (parseFloat(totalAmountProduct) * (totalResellersReward / 100));
                     totalPurchasedProducts += parseFloat(totalAmountProduct);
                     totalProfitProducts += parseFloat(totalproductResellersReward);
+                    totalResellersProductRewardPercentage += totalResellersReward;
+                    console.log(`approvalCheckoutBuyerRR : ${totalResellersReward}`);
                   });
                 });
               }
@@ -4621,12 +4626,14 @@ app.get('/getResellerViewOff', async (req, res) => {
               if (resellerUser.salesHistoryBuyer) {
                 Object.keys(resellerUser.salesHistoryBuyer).forEach(storeId => {
                   resellerUser.salesHistoryBuyer[storeId].forEach(productDetails => {
-                    console.log('Sales History Buyer Product Details:', productDetails);
+                    //console.log('Sales History Buyer Product Details:', productDetails);
                     const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
                     const totalResellersReward = productDetails.resellers_reward ?? 0.0
-                    const totalproductResellersReward = parseFloat(totalAmountProduct) * (totalResellersReward / 100);
+                    const totalproductResellersReward = (parseFloat(totalAmountProduct) * (totalResellersReward / 100));
                     totalPurchasedProducts += parseFloat(totalAmountProduct);
                     totalProfitProducts += parseFloat(totalproductResellersReward);
+                    totalResellersProductRewardPercentage += totalResellersReward;
+                    console.log(`salesHistoryBuyerRR : ${totalResellersReward}`);
                   });
                 });
               }
@@ -4635,7 +4642,7 @@ app.get('/getResellerViewOff', async (req, res) => {
                 Object.keys(storeRequests).forEach(subRequesName => {
                   const requestArray = storeRequests[subRequesName];
                   requestArray.forEach(storeRequest => {
-                    console.lo0g(`storeRequestsParticularUser : ${storeRequest}`);
+                    //console.lo0g(`storeRequestsParticularUser : ${storeRequest}`);
                     const withdrawal = storeRequest.receivableAmount.replace(/[^\d.-]/g, '');
                     const withdrawalF3 = storeRequest.f3ValueOfWithdraw.replace(/[^\d.-]/g, '');
                     totalWithdrawalAmountUser += parseFloat(withdrawal)
@@ -4648,7 +4655,7 @@ app.get('/getResellerViewOff', async (req, res) => {
 
               currentLevelMembers.push({
                 userId: resellerId,
-                userName: resellerUser.fullName,
+                userName: member.fullName,
                 level: levels + 1,
                 totalPurchased: totalPurchased.toFixed(2),
                 totalResellersReward: totalResellersReward.toFixed(2),
@@ -4660,6 +4667,7 @@ app.get('/getResellerViewOff', async (req, res) => {
                 totalProfitProducts,
                 totalWithdrawalAmountUser,
                 totalF3WithdrawalUser,
+                totalResellersProductRewardPercentage,
                 totalResellers: resellerUser.resellersMember ? resellerUser.resellersMember.length : 0
               });
 
@@ -4680,7 +4688,7 @@ app.get('/getResellerViewOff', async (req, res) => {
         const requestsArray = storeRequests[subRequestName];
         requestsArray.forEach(storeRequest => {
           storeRequest.requestProducts.forEach(storeRequest => {
-            console.log(storeRequest);
+            //console.log(storeRequest);
             const withdrawal = storeRequest.receivableAmount.replace(/[^\d.-]/g, '');
             const withdrawalF3 = storeRequest.f3ValueOfWithdraw.replace(/[^\d.-]/g, '');
             withdrawalAmount += parseFloat(withdrawal);
