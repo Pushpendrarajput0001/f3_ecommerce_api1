@@ -2254,6 +2254,7 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
 
               const requestWithRequestType = {
                 buyerWalletAddress,
+                sellerWalletAddress : providerWalletAddress,
                 requestType: 'Resellers Reward',
                 providerWalletAddress,
                 rewardAmount,
@@ -4613,12 +4614,13 @@ app.get('/getResellerViewOff', async (req, res) => {
                   resellerUser.approvalcheckoutBuyer[storeId].forEach(productDetails => {
                     //console.log('Approval Checkout Buyer Product Details:', productDetails);
                     const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
-                    const totalResellersReward = productDetails.resellers_reward ?? 0.0
+                    const totalResellersReward = parseFloat(productDetails.resellers_reward ?? 0);
                     const totalproductResellersReward = (parseFloat(totalAmountProduct) * (totalResellersReward / 100));
                     totalPurchasedProducts += parseFloat(totalAmountProduct);
                     totalProfitProducts += parseFloat(totalproductResellersReward);
                     totalResellersProductRewardPercentage += totalResellersReward;
                     console.log(`approvalCheckoutBuyerRR : ${totalResellersReward}`);
+                    console.log(`approvalCheckoutBuyerRRPlused : ${totalResellersProductRewardPercentage}`);
                   });
                 });
               }
@@ -4628,12 +4630,12 @@ app.get('/getResellerViewOff', async (req, res) => {
                   resellerUser.salesHistoryBuyer[storeId].forEach(productDetails => {
                     //console.log('Sales History Buyer Product Details:', productDetails);
                     const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
-                    const totalResellersReward = productDetails.resellers_reward ?? 0.0
+                    const totalResellersReward = parseFloat(productDetails.resellers_reward ?? 0);
                     const totalproductResellersReward = (parseFloat(totalAmountProduct) * (totalResellersReward / 100));
                     totalPurchasedProducts += parseFloat(totalAmountProduct);
                     totalProfitProducts += parseFloat(totalproductResellersReward);
                     totalResellersProductRewardPercentage += totalResellersReward;
-                    console.log(`salesHistoryBuyerRR : ${totalResellersReward}`);
+                    console.log(`salesHistoryBuyerRRPlused : ${totalResellersProductRewardPercentage}`);
                   });
                 });
               }
@@ -4884,4 +4886,3 @@ app.get('/approveResellersRequest', async (req, res) => {
 app.listen(PORT, '192.168.135.158', () => {
   console.log(`Server is running on http://192.168.135.158:${PORT}`);
 });
-
