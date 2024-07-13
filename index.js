@@ -4750,7 +4750,7 @@ app.get('/getResellerViewOff', async (req, res) => {
     }
 
     const usdtRate = parseFloat(user.usdtRate);
-    const forecastedProfit = ((totalPurchasedOfLoggedInUser/usdtRate)*3)
+    const forecastedProfit = ((totalPurchasedOfLoggedInUser/usdtRate)*3) ?? 0.0
     const userDetailsWithdrawals = {
       withdrawalAmount: withdrawalAmount,
       f3ValueOfWithdrawalAmount: f3ValueOfWithdrawalAmount,
