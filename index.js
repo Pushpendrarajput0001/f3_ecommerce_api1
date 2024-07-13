@@ -4538,6 +4538,7 @@ app.get('/getResellerViewOff', async (req, res) => {
 
     let withdrawalAmount = 0.00
     let f3ValueOfWithdrawalAmount = 0.00
+    let totalPurchasedOfLoggedInUser = 0.00;
 
 
     let levels = 0;
@@ -4699,10 +4700,62 @@ app.get('/getResellerViewOff', async (req, res) => {
         });
       });
     };
+
+    if (user.checkoutapproval) {
+      Object.keys(user.checkoutapproval).forEach(storeId => {
+        user.checkoutapproval[storeId].forEach(productDetails => {
+          //console.log('Approval Checkout Seller Product Details:', productDetails);
+          const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
+          const totalResellersRewardd = productDetails.resellers_reward ?? 0.0
+          const totalproductResellersReward = (parseFloat(totalAmountProduct) * (totalResellersRewardd / 100));
+          totalPurchasedOfLoggedInUser += parseFloat(totalAmountProduct);
+        });
+      });
+    }
+
+    if (user.salesHistorySeller) {
+      Object.keys(user.salesHistorySeller).forEach(storeId => {
+        user.salesHistorySeller[storeId].forEach(productDetails => {
+          //console.log('Sales History Seller Product Details:', productDetails);
+          const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
+          const totalResellersRewardd = productDetails.resellers_reward ?? 0.0
+          const totalproductResellersReward = (parseFloat(totalAmountProduct) * (totalResellersRewardd / 100));
+          totalPurchasedOfLoggedInUser += parseFloat(totalAmountProduct);
+        });
+      });
+    }
+    
+    if (user.approvalcheckoutBuyer) {
+      Object.keys(user.approvalcheckoutBuyer).forEach(storeId => {
+        user.approvalcheckoutBuyer[storeId].forEach(productDetails => {
+          //console.log('Approval Checkout Buyer Product Details:', productDetails);
+          const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
+          const totalResellersReward = parseFloat(productDetails.resellers_reward ?? 0);
+          const totalproductResellersReward = (parseFloat(totalAmountProduct) * (totalResellersReward / 100));
+          totalPurchasedOfLoggedInUser += parseFloat(totalAmountProduct);
+        });
+      });
+    }
+
+    if (user.salesHistoryBuyer) {
+      Object.keys(user.salesHistoryBuyer).forEach(storeId => {
+        user.salesHistoryBuyer[storeId].forEach(productDetails => {
+          //console.log('Sales History Buyer Product Details:', productDetails);
+          const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
+          const totalResellersReward = parseFloat(productDetails.resellers_reward ?? 0);
+          const totalproductResellersReward = (parseFloat(totalAmountProduct) * (totalResellersReward / 100));
+          totalPurchasedOfLoggedInUser += parseFloat(totalAmountProduct);
+        });
+      });
+    }
+
+    const usdtRate = parseFloat(user.usdtRate);
+    const forecastedProfit = ((totalPurchasedOfLoggedInUser/usdtRate)*3)
     const userDetailsWithdrawals = {
       withdrawalAmount: withdrawalAmount,
       f3ValueOfWithdrawalAmount: f3ValueOfWithdrawalAmount,
       currencySymbol: currencySymbol,
+      forecastedProfit : forecastedProfit,
       usdRate: user.usdtRate
     };
     return res.status(200).json({ members: allMembers, userDetails: userDetailsWithdrawals });
@@ -4883,6 +4936,6 @@ app.get('/approveResellersRequest', async (req, res) => {
   }
 });
 
-app.listen(PORT, '192.168.135.158', () => {
-  console.log(`Server is running on http://192.168.135.158:${PORT}`);
+app.listen(PORT, '192.168.29.149', () => {
+  console.log(`Server is running on http://192.168.29.149:${PORT}`);
 });
