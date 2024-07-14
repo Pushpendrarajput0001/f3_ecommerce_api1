@@ -4936,6 +4936,35 @@ app.get('/approveResellersRequest', async (req, res) => {
   }
 });
 
+app.get('/getUserResellerMemberStatus',async(req,res)=>{
+  const { storeId } = req.query;
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  const db = client.db('f3_ecommerce');
+  const collection = db.collection('users');
+  try{
+    const user = await collection.findOne({storeId : storeId});
+    if(!user){
+      console.log(`User not existed with storeId : ${storeId}`)
+      return res.status(404).json(`User not existed with storeId : ${storeId}`);
+    };
+
+    const isAlreadyMemeber = user.AlreadyResellerMember;
+
+    if(!isAlreadyMemeber){
+      console.log(`Not Already a member ${isAlreadyMemeber}`);
+      return res.status(202).json(`Not Already A member ${isAlreadyMemeber}`);
+    }
+
+    console.log(`Already A Member ${isAlreadyMemeber}`);
+    res.json(`Already A Member ${isAlreadyMemeber}`);
+  }catch(error){
+    console.error('Error getting status:', error);
+    return res.status(500).json({ error: `Internal server error: ${error}` });
+  }finally{
+    client.close();
+  }
+})
+
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`);
 });
