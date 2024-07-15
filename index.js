@@ -5004,7 +5004,7 @@ app.get('/getItemsProfitShares', async (req, res) => {
         if (user.approvalcheckout && user.approvalcheckout[storeIdUser]) {
           const approvals = user.approvalcheckout[storeIdUser];
           for (const approvalcheckout of approvals) {
-            const { productId, quantity, totalPrice, productName, storeIdBuyer, walletAddressBuyer, dateAndTime,dateOfApprovalCheckout,resellers_reward } = approvalcheckout;
+            const { storeId,productId, quantity, totalPrice, productName, storeIdBuyer, walletAddressBuyer, dateAndTime,dateOfApprovalCheckout,resellers_reward } = approvalcheckout;
             const usdtRate = parseFloat(user.usdtRate);
             const resellerRewardValue = parseFloat(resellers_reward ?? 0.0)
             const sellerWalletAddress = user.walletAddress;
@@ -5036,7 +5036,7 @@ app.get('/getItemsProfitShares', async (req, res) => {
         if (user.salesHistorySeller && user.salesHistorySeller[storeIdUser]) {
           const approvals = user.salesHistorySeller[storeIdUser];
           for (const approvalcheckout of approvals) {
-            const { productId, quantity, totalPrice, productName, storeIdBuyer, walletAddressBuyer, dateOfApprovalCheckout,dateAndTime } = approvalcheckout;
+            const { storeId,productId, quantity, totalPrice, productName, storeIdBuyer, walletAddressBuyer, dateOfApprovalCheckout,dateAndTime } = approvalcheckout;
             const usdtRate = parseFloat(user.usdtRate);
             const sellerWalletAddress = user.walletAddress;
             const totalSoldedPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
