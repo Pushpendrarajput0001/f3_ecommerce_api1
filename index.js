@@ -4974,6 +4974,7 @@ app.get('/getItemsProfitShares', async (req, res) => {
   try {
     const users = await collection.find().toArray();
     const loggedInUser = await collection.findOne({ storeId: storeId });
+    const storeRequest = loggedInUser.approvedProfitSharePayments
     if(!loggedInUser){
       console.log(`error : No account exists with user ${storeId}`);
       return res.status(404).json({erorr : `No account exists with user ${storeId}`});
@@ -4983,6 +4984,8 @@ app.get('/getItemsProfitShares', async (req, res) => {
     const usdRate = parseFloat(loggedInUser.usdtRate ?? 0);
     let totalPurchasedLoggedInUser = 0;
     let totalSoldLoggedInUser = 0;
+    let totalWithdrawLoggedIn = 0;
+    let totalF3WithdrawLoggedIn = 0;
 
     let totalSoldGlobalUsers = 0;
     let totalPurchasedGlobalUsers = 0;
@@ -5119,6 +5122,22 @@ app.get('/getItemsProfitShares', async (req, res) => {
         });
       });
     }
+
+    
+    if (storeRequest) {
+      Object.keys(storeRequest).forEach(subRequestName => {
+        const requestsArray = storeRequest[subRequestName];
+        requestsArray.forEach(storeRequest => {
+          storeRequest.requestProducts.forEach(storeRequest => {
+            //console.log(storeRequest);
+            const withdrawal = storeRequest.receivableAmount.replace(/[^\d.-]/g, '');
+            const withdrawalF3 = storeRequest.f3ValueOfWithdraw.replace(/[^\d.-]/g, '');
+            totalWithdrawLoggedIn += parseFloat(withdrawal);
+            totalF3WithdrawLoggedIn += parseFloat(withdrawalF3);
+          });
+        });
+      });
+    };
 
     const loggedInDetail = {
       totalPurchasedLoggedInUser,
