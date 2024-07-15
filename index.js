@@ -5146,7 +5146,9 @@ app.get('/getItemsProfitShares', async (req, res) => {
 
     const globalDetails = {
       totalPurchasedGlobalUsers,
-      totalSoldGlobalUsers
+      totalSoldGlobalUsers,
+      totalWithdrawLoggedIn,
+      totalF3WithdrawLoggedIn
     };
 
     return res.status(200).json({ products: allProductDetails, loggedInDetails: loggedInDetail,globalDetails : globalDetails });
