@@ -5004,12 +5004,14 @@ app.get('/getItemsProfitShares', async (req, res) => {
         if (user.approvalcheckout && user.approvalcheckout[storeIdUser]) {
           const approvals = user.approvalcheckout[storeIdUser];
           for (const approvalcheckout of approvals) {
-            const { productId, quantity, totalPrice, productName, storeIdBuyer, walletAddressBuyer, dateAndTime,dateOfApprovalCheckout } = approvalcheckout;
+            const { productId, quantity, totalPrice, productName, storeIdBuyer, walletAddressBuyer, dateAndTime,dateOfApprovalCheckout,resellers_reward } = approvalcheckout;
             const usdtRate = parseFloat(user.usdtRate);
+            const resellerRewardValue = parseFloat(resellers_reward ?? 0.0)
             const sellerWalletAddress = user.walletAddress;
             const totalSoldedPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
             const totalSoldAmount = (totalSoldedPrice/usdtRate);
             totalSoldGlobalUsers += totalSoldAmount;
+            const shareStocks = ((resellerRewardValue/100)*3*totalSoldAmount) ?? 0.0
             const productDetails = {
               sellerStoreId: storeId,
               buyerStoreId: storeIdBuyer,
@@ -5018,6 +5020,7 @@ app.get('/getItemsProfitShares', async (req, res) => {
               totalQuantity: quantity,
               totalPrice: totalPrice,
               usdValue: totalSoldAmount,
+              shareStocks : shareStocks,
               productName: productName,
               productId: productId,
               currencySymbol: user.currencySymbol,
