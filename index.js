@@ -5018,6 +5018,7 @@ app.get('/getItemsProfitShares', async (req, res) => {
               productName: productName,
               productId: productId,
               currencySymbol: user.currencySymbol,
+              country : user.country,
               dateAndTime: dateOfApprovalCheckout
             };
             allProductDetails.push(productDetails);
@@ -5046,6 +5047,7 @@ app.get('/getItemsProfitShares', async (req, res) => {
               productName: productName,
               productId: productId,
               currencySymbol: user.currencySymbol,
+              country : user.country,
               dateAndTime: dateAndTime
             };
             allProductDetails.push(productDetails);
