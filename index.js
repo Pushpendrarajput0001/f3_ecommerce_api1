@@ -5005,7 +5005,7 @@ app.get('/getItemsProfitShares', async (req, res) => {
             const usdtRate = parseFloat(user.usdtRate);
             const sellerWalletAddress = user.walletAddress;
             const totalSoldedPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
-            const totalSoldAmount = (totalSoldedPrice / usdtRate);
+            const totalSoldAmount = (totalSoldedPrice/usdtRate);
             totalSoldGlobalUsers += totalSoldAmount;
             const productDetails = {
               sellerStoreId: storeId,
@@ -5013,7 +5013,7 @@ app.get('/getItemsProfitShares', async (req, res) => {
               walletAddressBuyer: walletAddressBuyer,
               sellerWalletAddress: sellerWalletAddress,
               totalQuantity: quantity,
-              totalPrice: totalSoldedPrice,
+              totalPrice: totalPrice,
               usdValue: totalSoldAmount,
               productName: productName,
               productId: productId,
@@ -5033,7 +5033,7 @@ app.get('/getItemsProfitShares', async (req, res) => {
             const usdtRate = parseFloat(user.usdtRate);
             const sellerWalletAddress = user.walletAddress;
             const totalSoldedPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
-            const totalSoldAmount = (totalSoldedPrice / usdtRate);
+            const totalSoldAmount = (totalSoldedPrice/usdtRate);
             totalSoldGlobalUsers += totalSoldAmount;
             const productDetails = {
               sellerStoreId: storeId,
@@ -5041,7 +5041,7 @@ app.get('/getItemsProfitShares', async (req, res) => {
               walletAddressBuyer: walletAddressBuyer,
               sellerWalletAddress: sellerWalletAddress,
               totalQuantity: quantity,
-              totalPrice: totalSoldedPrice,
+              totalPrice: totalPrice,
               usdValue: totalSoldAmount,
               productName: productName,
               productId: productId,
@@ -5062,8 +5062,8 @@ app.get('/getItemsProfitShares', async (req, res) => {
               const currencySymbol = sellerAccount.currencySymbol;
               const totalPriceP = parseFloat(product.totalPrice.replace(/[^\d.-]/g, ''));
               const usdtRate = parseFloat(sellerAccount.usdtRate);
-              const totalSoldUsdValue = (totalPriceP / usdtRate);
-              totalPurchasedLoggedInUser += totalSoldUsdValue;
+              const totalSoldUsdValue = (totalPriceP/usdtRate);
+              totalPurchasedGlobalUsers += totalSoldUsdValue;
             }
           }
         }
