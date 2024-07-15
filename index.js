@@ -4974,6 +4974,10 @@ app.get('/getItemsProfitShares', async (req, res) => {
   try {
     const users = await collection.find().toArray();
     const loggedInUser = await collection.findOne({ storeId: storeId });
+    if(!loggedInUser){
+      console.log(`error : No account exists with user ${storeId}`);
+      return res.status(404).json({erorr : `No account exists with user ${storeId}`});
+    }
     const usersWithApprovalsCheckoutSeller = await collection.find({ 'approvalcheckout': { $exists: true } }).toArray();
     const userWithSalesHistorySeller = await collection.find({ 'salesHistorySeller': { $exists: true } }).toArray();
     const usdRate = parseFloat(loggedInUser.usdtRate ?? 0);
