@@ -2688,7 +2688,7 @@ app.get('/getBuyersSectionSalesHistory', async (req, res) => {
     const sellerIds = Object.keys(SalesHistoryMap);
     for (const sellerId of sellerIds) {
       const seller = await collection.findOne({ storeId: sellerId });
-      if (seller && seller.kycStatusUser === 'approved') {
+      if (seller && seller.kycStatusUser === 'accepted') {
         kycCompletedSellerCount++;
       }
     }
@@ -4961,6 +4961,174 @@ app.get('/getUserResellerMemberStatus',async(req,res)=>{
     console.error('Error getting status:', error);
     return res.status(500).json({ error: `Internal server error: ${error}` });
   }finally{
+    client.close();
+  }
+});
+
+app.get('/getItemsProfitShares', async (req, res) => {
+  const { storeId } = req.query;
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  const db = client.db('f3_ecommerce');
+  const collection = db.collection('users');
+
+  try {
+    const users = await collection.find().toArray();
+    const loggedInUser = await collection.findOne({ storeId: storeId });
+    const usersWithApprovalsCheckoutSeller = await collection.find({ 'approvalcheckout': { $exists: true } }).toArray();
+    const userWithSalesHistorySeller = await collection.find({ 'salesHistorySeller': { $exists: true } }).toArray();
+    const usdRate = parseFloat(loggedInUser.usdtRate ?? 0);
+    let totalPurchasedLoggedInUser = 0;
+    let totalSoldLoggedInUser = 0;
+
+    let totalSoldGlobalUsers = 0;
+    let totalPurchasedGlobalUsers = 0;
+
+    let allProductDetails = [];
+
+    for (const user of users) {
+      const productMaps = [
+        user.salesHistoryBuyer,
+        user.approvalcheckoutBuyer,
+      ];
+
+      const storeIdUser = user.storeId;
+
+      for (const user of usersWithApprovalsCheckoutSeller) {
+        if (user.approvalcheckout && user.approvalcheckout[storeIdUser]) {
+          const approvals = user.approvalcheckout[storeIdUser];
+          for (const approvalcheckout of approvals) {
+            const { productId, quantity, totalPrice, productName, storeIdBuyer, walletAddressBuyer, dateAndTime } = approvalcheckout;
+            const usdtRate = parseFloat(user.usdtRate);
+            const sellerWalletAddress = user.walletAddress;
+            const totalSoldedPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
+            const totalSoldAmount = (totalSoldedPrice / usdtRate);
+            totalSoldGlobalUsers += totalSoldAmount;
+            const productDetails = {
+              sellerStoreId: storeId,
+              buyerStoreId: storeIdBuyer,
+              walletAddressBuyer: walletAddressBuyer,
+              sellerWalletAddress: sellerWalletAddress,
+              totalQuantity: quantity,
+              totalPrice: totalSoldedPrice,
+              usdValue: totalSoldAmount,
+              productName: productName,
+              productId: productId,
+              currencySymbol: user.currencySymbol,
+              dateAndTime: dateAndTime
+            };
+            allProductDetails.push(productDetails);
+          }
+        }
+      }
+
+      for (const user of userWithSalesHistorySeller) {
+        if (user.salesHistorySeller && user.salesHistorySeller[storeIdUser]) {
+          const approvals = user.salesHistorySeller[storeIdUser];
+          for (const approvalcheckout of approvals) {
+            const { productId, quantity, totalPrice, productName, storeIdBuyer, walletAddressBuyer, dateOfApprovalCheckout } = approvalcheckout;
+            const usdtRate = parseFloat(user.usdtRate);
+            const sellerWalletAddress = user.walletAddress;
+            const totalSoldedPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
+            const totalSoldAmount = (totalSoldedPrice / usdtRate);
+            totalSoldGlobalUsers += totalSoldAmount;
+            const productDetails = {
+              sellerStoreId: storeId,
+              buyerStoreId: storeIdBuyer,
+              walletAddressBuyer: walletAddressBuyer,
+              sellerWalletAddress: sellerWalletAddress,
+              totalQuantity: quantity,
+              totalPrice: totalSoldedPrice,
+              usdValue: totalSoldAmount,
+              productName: productName,
+              productId: productId,
+              currencySymbol: user.currencySymbol,
+              dateAndTime: dateOfApprovalCheckout
+            };
+            allProductDetails.push(productDetails);
+          }
+        }
+      }
+
+      for (const productMap of productMaps) {
+        if (productMap) {
+          for (const productArray of Object.values(productMap)) {
+            for (const product of productArray) {
+              const sellerAccount = await collection.findOne({ storeId: product.storeId });
+              const sellerWallet = sellerAccount ? sellerAccount.walletAddress : null;
+              const currencySymbol = sellerAccount.currencySymbol;
+              const totalPriceP = parseFloat(product.totalPrice.replace(/[^\d.-]/g, ''));
+              const usdtRate = parseFloat(sellerAccount.usdtRate);
+              const totalSoldUsdValue = (totalPriceP / usdtRate);
+              totalPurchasedLoggedInUser += totalSoldUsdValue;
+            }
+          }
+        }
+      }
+    }
+
+    if (loggedInUser.approvalcheckoutBuyer) {
+      Object.keys(loggedInUser.approvalcheckoutBuyer).forEach(storeId => {
+        loggedInUser.approvalcheckoutBuyer[storeId].forEach(productDetails => {
+          const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
+          const totalPurchases = parseFloat(totalAmountProduct);
+          const totalPurchasedLogged = (totalPurchases / usdRate);
+          totalPurchasedLoggedInUser += totalPurchasedLogged;
+        });
+      });
+    }
+
+    for (const user of usersWithApprovalsCheckoutSeller) {
+      if (user.approvalcheckout && user.approvalcheckout[storeId]) {
+        const approvalCheckoutSellerMap = user.approvalcheckout[storeId];
+        for (const approvalCS of approvalCheckoutSellerMap) {
+          const { totalPrice } = approvalCS;
+          const usdtRate = parseFloat(user.usdtRate);
+          const totalPriceSolded = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
+          const totalAmountSold = (totalPriceSolded / usdtRate);
+          totalSoldLoggedInUser += totalAmountSold;
+        }
+      }
+    }
+
+    for (const user of userWithSalesHistorySeller) {
+      if (user.salesHistorySeller && user.salesHistorySeller[storeId]) {
+        const salesHistoryS = user.salesHistorySeller[storeId];
+        for (const salesHistorySellerS of salesHistoryS) {
+          const { totalPrice } = salesHistorySellerS;
+          const usdtRate = parseFloat(user.usdtRate);
+          const totalAmountSolded = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
+          const totalAmountSold = (totalAmountSolded / usdtRate);
+          totalSoldLoggedInUser += totalAmountSold;
+        }
+      }
+    }
+
+    if (loggedInUser.salesHistoryBuyer) {
+      Object.keys(loggedInUser.salesHistoryBuyer).forEach(storeId => {
+        loggedInUser.salesHistoryBuyer[storeId].forEach(productDetails => {
+          const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
+          const totalPurchases = parseFloat(totalAmountProduct);
+          const totalPurchasedLogged = (totalPurchases / usdRate);
+          totalPurchasedLoggedInUser += totalPurchasedLogged;
+        });
+      });
+    }
+
+    const loggedInDetail = {
+      totalPurchasedLoggedInUser,
+      totalSoldLoggedInUser
+    };
+
+    const globalDetails = {
+      totalPurchasedGlobalUsers,
+      totalSoldGlobalUsers
+    };
+
+    return res.status(200).json({ products: allProductDetails, loggedInDetails: loggedInDetail,globalDetails : globalDetails });
+  } catch (error) {
+    console.log(`error: ${error}`);
+    return res.status(500).json({ error: `Internal server error: ${error}` });
+  } finally {
     client.close();
   }
 });
