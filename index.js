@@ -5001,35 +5001,7 @@ app.get('/getItemsProfitShares', async (req, res) => {
         if (user.approvalcheckout && user.approvalcheckout[storeIdUser]) {
           const approvals = user.approvalcheckout[storeIdUser];
           for (const approvalcheckout of approvals) {
-            const { productId, quantity, totalPrice, productName, storeIdBuyer, walletAddressBuyer, dateAndTime } = approvalcheckout;
-            const usdtRate = parseFloat(user.usdtRate);
-            const sellerWalletAddress = user.walletAddress;
-            const totalSoldedPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
-            const totalSoldAmount = (totalSoldedPrice/usdtRate);
-            totalSoldGlobalUsers += totalSoldAmount;
-            const productDetails = {
-              sellerStoreId: storeId,
-              buyerStoreId: storeIdBuyer,
-              walletAddressBuyer: walletAddressBuyer,
-              sellerWalletAddress: sellerWalletAddress,
-              totalQuantity: quantity,
-              totalPrice: totalPrice,
-              usdValue: totalSoldAmount,
-              productName: productName,
-              productId: productId,
-              currencySymbol: user.currencySymbol,
-              dateAndTime: dateAndTime
-            };
-            allProductDetails.push(productDetails);
-          }
-        }
-      }
-
-      for (const user of userWithSalesHistorySeller) {
-        if (user.salesHistorySeller && user.salesHistorySeller[storeIdUser]) {
-          const approvals = user.salesHistorySeller[storeIdUser];
-          for (const approvalcheckout of approvals) {
-            const { productId, quantity, totalPrice, productName, storeIdBuyer, walletAddressBuyer, dateOfApprovalCheckout } = approvalcheckout;
+            const { productId, quantity, totalPrice, productName, storeIdBuyer, walletAddressBuyer, dateAndTime,dateOfApprovalCheckout } = approvalcheckout;
             const usdtRate = parseFloat(user.usdtRate);
             const sellerWalletAddress = user.walletAddress;
             const totalSoldedPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
@@ -5047,6 +5019,34 @@ app.get('/getItemsProfitShares', async (req, res) => {
               productId: productId,
               currencySymbol: user.currencySymbol,
               dateAndTime: dateOfApprovalCheckout
+            };
+            allProductDetails.push(productDetails);
+          }
+        }
+      }
+
+      for (const user of userWithSalesHistorySeller) {
+        if (user.salesHistorySeller && user.salesHistorySeller[storeIdUser]) {
+          const approvals = user.salesHistorySeller[storeIdUser];
+          for (const approvalcheckout of approvals) {
+            const { productId, quantity, totalPrice, productName, storeIdBuyer, walletAddressBuyer, dateOfApprovalCheckout,dateAndTime } = approvalcheckout;
+            const usdtRate = parseFloat(user.usdtRate);
+            const sellerWalletAddress = user.walletAddress;
+            const totalSoldedPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
+            const totalSoldAmount = (totalSoldedPrice/usdtRate);
+            totalSoldGlobalUsers += totalSoldAmount;
+            const productDetails = {
+              sellerStoreId: storeId,
+              buyerStoreId: storeIdBuyer,
+              walletAddressBuyer: walletAddressBuyer,
+              sellerWalletAddress: sellerWalletAddress,
+              totalQuantity: quantity,
+              totalPrice: totalPrice,
+              usdValue: totalSoldAmount,
+              productName: productName,
+              productId: productId,
+              currencySymbol: user.currencySymbol,
+              dateAndTime: dateAndTime
             };
             allProductDetails.push(productDetails);
           }
