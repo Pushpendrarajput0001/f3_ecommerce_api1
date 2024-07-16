@@ -4991,6 +4991,7 @@ app.get('/getItemsProfitShares', async (req, res) => {
     let totalPurchasedGlobalUsers = 0;
 
     let allProductDetails = [];
+    let allProductDetailsBuyer = [];
 
     for (const user of users) {
       const productMaps = [
@@ -5072,6 +5073,21 @@ app.get('/getItemsProfitShares', async (req, res) => {
               const usdtRate = parseFloat(sellerAccount.usdtRate);
               const totalSoldUsdValue = (totalPriceP/usdtRate);
               totalPurchasedGlobalUsers += totalSoldUsdValue;
+              const productDetails = {
+                sellerStoreId: product.storeId,
+                buyerStoreId: product.storeIdBuyer,
+                walletAddressBuyer: product.walletAddressBuyer,
+                sellerWalletAddress: sellerWallet,
+                totalQuantity: product.quantity,
+                totalPrice: product.totalPrice,
+                usdValue: totalSoldUsdValue,
+                productName: product.productName,
+                productId: product.productId,
+                currencySymbol: currencySymbol,
+                country : sellerAccount.country,
+                dateAndTime: product.dateAndTime ?? product.dateOfApprovalCheckout
+              };
+              allProductDetailsBuyer.push(productDetails);
             }
           }
         }
@@ -5154,7 +5170,7 @@ app.get('/getItemsProfitShares', async (req, res) => {
       totalF3WithdrawLoggedIn
     };
 
-    return res.status(200).json({ products: allProductDetails, loggedInDetails: loggedInDetail,globalDetails : globalDetails });
+    return res.status(200).json({ products: allProductDetails,productBuyer : allProductDetailsBuyer, loggedInDetails: loggedInDetail,globalDetails : globalDetails });
   } catch (error) {
     console.log(`error: ${error}`);
     return res.status(500).json({ error: `Internal server error: ${error}` });
