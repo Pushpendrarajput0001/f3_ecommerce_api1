@@ -5229,6 +5229,7 @@ app.get('/getItemsProfitShares', async (req, res) => {
         if (user.approvalcheckout && user.approvalcheckout[storeIdUser]) {
           const approvals = user.approvalcheckout[storeIdUser];
           for (const approvalcheckout of approvals) {
+            let totalWithdrawalAmountUser = 0;
             const { storeId,productId, quantity, totalPrice, productName, storeIdBuyer, walletAddressBuyer, dateAndTime,dateOfApprovalCheckout,resellers_reward } = approvalcheckout;
             const usdtRate = parseFloat(user.usdtRate);
             const resellerRewardValue = parseFloat(resellers_reward ?? 0.0)
@@ -5237,6 +5238,20 @@ app.get('/getItemsProfitShares', async (req, res) => {
             const totalSoldAmount = (totalSoldedPrice/usdtRate);
             totalSoldGlobalUsers += totalSoldAmount;
             const shareStocks = ((resellerRewardValue/100)*3*totalSoldAmount) ?? 0.0
+            //StoreRequests
+            const StoreRequests = user.ApprovedPaymentRequestResellersReward;
+            if (StoreRequests) {
+              Object.keys(StoreRequests).forEach(subRequesName => {
+                const requestArray = StoreRequests[subRequesName];
+                requestArray.forEach(storeRequest => {
+                  storeRequest.requestProducts.forEach(storeRequest => {
+                    //console.log(storeRequest);
+                    const withdrawal = storeRequest.receivableAmount.replace(/[^\d.-]/g, '');
+                    totalWithdrawalAmountUser += parseFloat(withdrawal)
+                  });
+                });
+              });
+            }
             const productDetails = {
               sellerStoreId: storeId,
               buyerStoreId: storeIdBuyer,
@@ -5248,8 +5263,12 @@ app.get('/getItemsProfitShares', async (req, res) => {
               shareStocks : shareStocks,
               productName: productName,
               productId: productId,
+              resellers_reward : resellerRewardValue,
               currencySymbol: user.currencySymbol,
               country : user.country,
+              city : user.cityAddress,
+              usdtRate : user.usdtRate,
+              totalWithdrawalAmountUser,
               dateAndTime: dateOfApprovalCheckout
             };
             allProductDetails.push(productDetails);
