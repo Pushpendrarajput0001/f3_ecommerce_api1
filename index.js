@@ -1757,7 +1757,7 @@ app.get('/getRequestsOfPayments', async (req, res) => {
               storeId: storeIdRequests[0].storeId,
               providerStoreId: storeIdRequests[0].providerStoreId,
               products: simpleJson,
-              requestType: 'Resellers Reward'
+              requestType: 'Profit Share'
             }
             response.requests.push(resellerRequest);
           }
@@ -2012,7 +2012,7 @@ app.get('/getRequestsOfPayments', async (req, res) => {
               storeId: storeIdRequests[0].storeId,
               providerStoreId: storeIdRequests[0].providerStoreId,
               products: simpleJson,
-              requestType: 'Resellers Reward'
+              requestType: 'Profit Share'
             }
             response.requests.push(resellerRequest);
           }
@@ -2319,7 +2319,7 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
       }
     }).toArray();
 
-    
+
     const usersWithProfitShareApprovedRequest = await collection.find({
       'storeId': sellerStoreId, // Replace 'userType' with the actual field name distinguishing sellerUser
       'approvedProfitSharePayments': {
@@ -2434,7 +2434,7 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
 
               const requestWithRequestType = {
                 buyerWalletAddress,
-                sellerWalletAddress : providerWalletAddress,
+                sellerWalletAddress: providerWalletAddress,
                 requestType: 'Resellers Reward',
                 providerWalletAddress,
                 rewardAmount,
@@ -2476,8 +2476,8 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
 
               const requestWithRequestType = {
                 buyerWalletAddress,
-                sellerWalletAddress : providerWalletAddress,
-                requestType: 'Resellers Reward',
+                sellerWalletAddress: providerWalletAddress,
+                requestType: 'Profit Share',
                 providerWalletAddress,
                 rewardAmount,
                 usdAmountRR,
@@ -4831,7 +4831,7 @@ app.get('/getResellerViewOff', async (req, res) => {
                   });
                 });
               }
-              
+
               if (resellerUser.approvalcheckoutBuyer) {
                 Object.keys(resellerUser.approvalcheckoutBuyer).forEach(storeId => {
                   resellerUser.approvalcheckoutBuyer[storeId].forEach(productDetails => {
@@ -4947,7 +4947,7 @@ app.get('/getResellerViewOff', async (req, res) => {
         });
       });
     }
-    
+
     if (user.approvalcheckoutBuyer) {
       Object.keys(user.approvalcheckoutBuyer).forEach(storeId => {
         user.approvalcheckoutBuyer[storeId].forEach(productDetails => {
@@ -4973,12 +4973,12 @@ app.get('/getResellerViewOff', async (req, res) => {
     }
 
     const usdtRate = parseFloat(user.usdtRate);
-    const forecastedProfit = ((totalPurchasedOfLoggedInUser/usdtRate)*3) ?? 0.0
+    const forecastedProfit = ((totalPurchasedOfLoggedInUser / usdtRate) * 3) ?? 0.0
     const userDetailsWithdrawals = {
       withdrawalAmount: withdrawalAmount,
       f3ValueOfWithdrawalAmount: f3ValueOfWithdrawalAmount,
       currencySymbol: currencySymbol,
-      forecastedProfit : forecastedProfit,
+      forecastedProfit: forecastedProfit,
       usdRate: user.usdtRate
     };
     return res.status(200).json({ members: allMembers, userDetails: userDetailsWithdrawals });
@@ -5159,31 +5159,31 @@ app.get('/approveResellersRequest', async (req, res) => {
   }
 });
 
-app.get('/getUserResellerMemberStatus',async(req,res)=>{
+app.get('/getUserResellerMemberStatus', async (req, res) => {
   const { storeId } = req.query;
   const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
   const db = client.db('f3_ecommerce');
   const collection = db.collection('users');
-  try{
-    const user = await collection.findOne({storeId : storeId});
-    if(!user){
+  try {
+    const user = await collection.findOne({ storeId: storeId });
+    if (!user) {
       console.log(`User not existed with storeId : ${storeId}`)
       return res.status(404).json(`User not existed with storeId : ${storeId}`);
     };
 
     const isAlreadyMemeber = user.AlreadyResellerMember;
 
-    if(!isAlreadyMemeber && storeId != '42539347'){
+    if (!isAlreadyMemeber && storeId != '42539347') {
       console.log(`Not Already a member ${isAlreadyMemeber}`);
       return res.status(202).json(`Not Already A member ${isAlreadyMemeber}`);
     }
 
     console.log(`Already A Member ${isAlreadyMemeber}`);
     res.json(`Already A Member ${isAlreadyMemeber}`);
-  }catch(error){
+  } catch (error) {
     console.error('Error getting status:', error);
     return res.status(500).json({ error: `Internal server error: ${error}` });
-  }finally{
+  } finally {
     client.close();
   }
 });
@@ -5199,9 +5199,9 @@ app.get('/getItemsProfitShares', async (req, res) => {
     const users = await collection.find().toArray();
     const loggedInUser = await collection.findOne({ storeId: storeId });
     const storeRequest = loggedInUser.approvedProfitSharePayments
-    if(!loggedInUser){
+    if (!loggedInUser) {
       console.log(`error : No account exists with user ${storeId}`);
-      return res.status(404).json({erorr : `No account exists with user ${storeId}`});
+      return res.status(404).json({ erorr: `No account exists with user ${storeId}` });
     }
     const usersWithApprovalsCheckoutSeller = await collection.find({ 'approvalcheckout': { $exists: true } }).toArray();
     const userWithSalesHistorySeller = await collection.find({ 'salesHistorySeller': { $exists: true } }).toArray();
@@ -5230,14 +5230,14 @@ app.get('/getItemsProfitShares', async (req, res) => {
           const approvals = user.approvalcheckout[storeIdUser];
           for (const approvalcheckout of approvals) {
             let totalWithdrawalAmountUser = 0;
-            const { storeId,productId, quantity, totalPrice, productName, storeIdBuyer, walletAddressBuyer, dateAndTime,dateOfApprovalCheckout,resellers_reward } = approvalcheckout;
+            const { storeId, productId, quantity, totalPrice, productName, storeIdBuyer, walletAddressBuyer, dateAndTime, dateOfApprovalCheckout, resellers_reward } = approvalcheckout;
             const usdtRate = parseFloat(user.usdtRate);
             const resellerRewardValue = parseFloat(resellers_reward ?? 0.0)
             const sellerWalletAddress = user.walletAddress;
             const totalSoldedPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
-            const totalSoldAmount = (totalSoldedPrice/usdtRate);
+            const totalSoldAmount = (totalSoldedPrice / usdtRate);
             totalSoldGlobalUsers += totalSoldAmount;
-            const shareStocks = ((resellerRewardValue/100)*3*totalSoldAmount) ?? 0.0
+            const shareStocks = ((resellerRewardValue / 100) * 3 * totalSoldAmount) ?? 0.0
             //StoreRequests
             const StoreRequests = user.ApprovedPaymentRequestResellersReward;
             if (StoreRequests) {
@@ -5260,14 +5260,14 @@ app.get('/getItemsProfitShares', async (req, res) => {
               totalQuantity: quantity,
               totalPrice: totalPrice,
               usdValue: totalSoldAmount,
-              shareStocks : shareStocks,
+              shareStocks: shareStocks,
               productName: productName,
               productId: productId,
-              resellers_reward : resellerRewardValue,
+              resellers_reward: resellerRewardValue,
               currencySymbol: user.currencySymbol,
-              country : user.country,
-              city : user.cityAddress,
-              usdtRate : user.usdtRate,
+              country: user.country,
+              city: user.cityAddress,
+              usdtRate: user.usdtRate,
               totalWithdrawalAmountUser,
               dateAndTime: dateOfApprovalCheckout
             };
@@ -5280,11 +5280,11 @@ app.get('/getItemsProfitShares', async (req, res) => {
         if (user.salesHistorySeller && user.salesHistorySeller[storeIdUser]) {
           const approvals = user.salesHistorySeller[storeIdUser];
           for (const approvalcheckout of approvals) {
-            const { storeId,productId, quantity, totalPrice, productName, storeIdBuyer, walletAddressBuyer, dateOfApprovalCheckout,dateAndTime } = approvalcheckout;
+            const { storeId, productId, quantity, totalPrice, productName, storeIdBuyer, walletAddressBuyer, dateOfApprovalCheckout, dateAndTime } = approvalcheckout;
             const usdtRate = parseFloat(user.usdtRate);
             const sellerWalletAddress = user.walletAddress;
             const totalSoldedPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
-            const totalSoldAmount = (totalSoldedPrice/usdtRate);
+            const totalSoldAmount = (totalSoldedPrice / usdtRate);
             totalSoldGlobalUsers += totalSoldAmount;
             const productDetails = {
               sellerStoreId: storeId,
@@ -5297,7 +5297,7 @@ app.get('/getItemsProfitShares', async (req, res) => {
               productName: productName,
               productId: productId,
               currencySymbol: user.currencySymbol,
-              country : user.country,
+              country: user.country,
               dateAndTime: dateAndTime
             };
             allProductDetails.push(productDetails);
@@ -5314,7 +5314,7 @@ app.get('/getItemsProfitShares', async (req, res) => {
               const currencySymbol = sellerAccount.currencySymbol;
               const totalPriceP = parseFloat(product.totalPrice.replace(/[^\d.-]/g, ''));
               const usdtRate = parseFloat(sellerAccount.usdtRate);
-              const totalSoldUsdValue = (totalPriceP/usdtRate);
+              const totalSoldUsdValue = (totalPriceP / usdtRate);
               totalPurchasedGlobalUsers += totalSoldUsdValue;
               const productDetails = {
                 sellerStoreId: product.storeId,
@@ -5327,7 +5327,7 @@ app.get('/getItemsProfitShares', async (req, res) => {
                 productName: product.productName,
                 productId: product.productId,
                 currencySymbol: currencySymbol,
-                country : sellerAccount.country,
+                country: sellerAccount.country,
                 dateAndTime: product.dateAndTime ?? product.dateOfApprovalCheckout
               };
               allProductDetailsBuyer.push(productDetails);
@@ -5385,7 +5385,7 @@ app.get('/getItemsProfitShares', async (req, res) => {
       });
     }
 
-    
+
     if (storeRequest) {
       Object.keys(storeRequest).forEach(subRequestName => {
         const requestsArray = storeRequest[subRequestName];
@@ -5401,9 +5401,14 @@ app.get('/getItemsProfitShares', async (req, res) => {
       });
     };
 
+    const kycStatusUser = loggedInUser.kycStatusUser;
+    const finalKycStatusYesNo = kycStatusUser === 'accepted' ? 'Yes' : 'No';
     const loggedInDetail = {
       totalPurchasedLoggedInUser,
-      totalSoldLoggedInUser
+      totalSoldLoggedInUser,
+      totalWithdrawLoggedIn,
+      totalF3WithdrawLoggedIn,
+      kycStatus: finalKycStatusYesNo
     };
 
     const globalDetails = {
@@ -5413,7 +5418,7 @@ app.get('/getItemsProfitShares', async (req, res) => {
       totalF3WithdrawLoggedIn
     };
 
-    return res.status(200).json({ products: allProductDetails,productBuyer : allProductDetailsBuyer, loggedInDetails: loggedInDetail,globalDetails : globalDetails });
+    return res.status(200).json({ products: allProductDetails, productBuyer: allProductDetailsBuyer, loggedInDetails: loggedInDetail, globalDetails: globalDetails });
   } catch (error) {
     console.log(`error: ${error}`);
     return res.status(500).json({ error: `Internal server error: ${error}` });
