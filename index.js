@@ -1529,6 +1529,12 @@ app.get('/getRequestsOfPayments', async (req, res) => {
         }
       }).toArray();
 
+      const otherUsersWithProfitShareRequest = await collection.find({
+        'paymentRequestProfitShare': {
+          $exists: true,
+        }
+      }).toArray();
+
 
       const requestedStoreId = user.storeId; // Assuming user is the current user
 
@@ -1677,6 +1683,86 @@ app.get('/getRequestsOfPayments', async (req, res) => {
           }
         }
       }
+
+      for (const otherUser of otherUsersWithProfitShareRequest) {
+        if (otherUser.paymentRequestProfitShare && otherUser.paymentRequestProfitShare[requestedStoreId]) {
+          const storeIdRequests = otherUser.paymentRequestProfitShare[requestedStoreId];
+          const buyerUser = await collection.findOne({ walletAddress: otherUser.walletAddress });
+          if (buyerUser) {
+            const buyerWalletAddress = buyerUser.walletAddress;
+            const sellerProducts = storeIdRequests.map(product => ({
+              productId: product.productId,
+              quantity: product.quantity,
+              totalPrice: product.totalPrice,
+              totalF3: product.totalF3Amount,
+              totalGc: product.totalGc,
+              sellerWalletAddress: user.walletAddress,
+              dateAndTime: product.dateAndTime,
+              lccAmount: product.lccAmount,
+              startedDateAndTime: product.startedDateAndTime,
+              paymentRequestedTimestampForCredit: product.paymentRequestedTimestampForCredit,
+              f3LiveOfThisTimeCredit: product.f3LiveOfThisTimeCredit
+            }));
+            const creditRequestRequest = {
+              totalF3: storeIdRequests[0].totalF3Amount,
+              totalGc: storeIdRequests[0].totalGc,
+              storeId: requestedStoreId,
+              buyerWalletAddress: buyerWalletAddress,
+              sellerWalletAddress: user.walletAddress,
+              requestType: 'Credit',
+              products: sellerProducts
+            };
+            const simpleJson = [
+              {
+                "id": 1,
+                "name": "John Doe",
+                "email": "john.doe@example.com",
+                "age": 25
+              },
+              {
+                "id": 2,
+                "name": "Jane Smith",
+                "email": "jane.smith@example.com",
+                "age": 30
+              },
+              {
+                "id": 3,
+                "name": "Emily Johnson",
+                "email": "emily.johnson@example.com",
+                "age": 22
+              },
+              {
+                "id": 4,
+                "name": "Michael Brown",
+                "email": "michael.brown@example.com",
+                "age": 35
+              },
+              {
+                "id": 5,
+                "name": "Sarah Davis",
+                "email": "sarah.davis@example.com",
+                "age": 28
+              }
+            ];
+            const resellerRequest = {
+              totalF3: storeIdRequests[0].f3ValueOfWithdraw,
+              totalReceivableAmount: storeIdRequests[0].receivableAmount,
+              providerWalletAddress: storeIdRequests[0].providerWalletAddress,
+              sellerWalletAddress: storeIdRequests[0].providerWalletAddress,
+              payingWalletAddress: storeIdRequests[0].payingWalletAddress,
+              buyerWalletAddress: storeIdRequests[0].payingWalletAddress,
+              receivableAmount: storeIdRequests[0].receivableAmount,
+              dateAndTime: storeIdRequests[0].dateAndTime,
+              currencySymbol: storeIdRequests[0].currencySymbol,
+              storeId: storeIdRequests[0].storeId,
+              providerStoreId: storeIdRequests[0].providerStoreId,
+              products: simpleJson,
+              requestType: 'Resellers Reward'
+            }
+            response.requests.push(resellerRequest);
+          }
+        }
+      }
     } else {
       const storeId = user.storeId;
 
@@ -1696,6 +1782,12 @@ app.get('/getRequestsOfPayments', async (req, res) => {
 
       const otherUsersWithResellersRewardRequest = await collection.find({
         'paymentRequestResellersReward': {
+          $exists: true,
+        }
+      }).toArray();
+
+      const otherUsersWithProfitShareRequest = await collection.find({
+        'paymentRequestProfitShare': {
           $exists: true,
         }
       }).toArray();
@@ -1834,6 +1926,86 @@ app.get('/getRequestsOfPayments', async (req, res) => {
               providerWalletAddress: storeIdRequests[0].providerWalletAddress,
               sellerWalletAddress: storeIdRequests[0].providerWalletAddress,
               payingWalletAddress: storeIdRequests[0].payingWalletAddress,
+              receivableAmount: storeIdRequests[0].receivableAmount,
+              dateAndTime: storeIdRequests[0].dateAndTime,
+              currencySymbol: storeIdRequests[0].currencySymbol,
+              storeId: storeIdRequests[0].storeId,
+              providerStoreId: storeIdRequests[0].providerStoreId,
+              products: simpleJson,
+              requestType: 'Resellers Reward'
+            }
+            response.requests.push(resellerRequest);
+          }
+        }
+      }
+
+      for (const otherUser of otherUsersWithProfitShareRequest) {
+        if (otherUser.paymentRequestProfitShare && otherUser.paymentRequestProfitShare[requestedStoreId]) {
+          const storeIdRequests = otherUser.paymentRequestProfitShare[requestedStoreId];
+          const buyerUser = await collection.findOne({ walletAddress: otherUser.walletAddress });
+          if (buyerUser) {
+            const buyerWalletAddress = buyerUser.walletAddress;
+            const sellerProducts = storeIdRequests.map(product => ({
+              productId: product.productId,
+              quantity: product.quantity,
+              totalPrice: product.totalPrice,
+              totalF3: product.totalF3Amount,
+              totalGc: product.totalGc,
+              sellerWalletAddress: user.walletAddress,
+              dateAndTime: product.dateAndTime,
+              lccAmount: product.lccAmount,
+              startedDateAndTime: product.startedDateAndTime,
+              paymentRequestedTimestampForCredit: product.paymentRequestedTimestampForCredit,
+              f3LiveOfThisTimeCredit: product.f3LiveOfThisTimeCredit
+            }));
+            const creditRequestRequest = {
+              totalF3: storeIdRequests[0].totalF3Amount,
+              totalGc: storeIdRequests[0].totalGc,
+              storeId: requestedStoreId,
+              buyerWalletAddress: buyerWalletAddress,
+              sellerWalletAddress: user.walletAddress,
+              requestType: 'Credit',
+              products: sellerProducts
+            };
+            const simpleJson = [
+              {
+                "id": 1,
+                "name": "John Doe",
+                "email": "john.doe@example.com",
+                "age": 25
+              },
+              {
+                "id": 2,
+                "name": "Jane Smith",
+                "email": "jane.smith@example.com",
+                "age": 30
+              },
+              {
+                "id": 3,
+                "name": "Emily Johnson",
+                "email": "emily.johnson@example.com",
+                "age": 22
+              },
+              {
+                "id": 4,
+                "name": "Michael Brown",
+                "email": "michael.brown@example.com",
+                "age": 35
+              },
+              {
+                "id": 5,
+                "name": "Sarah Davis",
+                "email": "sarah.davis@example.com",
+                "age": 28
+              }
+            ];
+            const resellerRequest = {
+              totalF3: storeIdRequests[0].f3ValueOfWithdraw,
+              totalReceivableAmount: storeIdRequests[0].receivableAmount,
+              providerWalletAddress: storeIdRequests[0].providerWalletAddress,
+              sellerWalletAddress: storeIdRequests[0].providerWalletAddress,
+              payingWalletAddress: storeIdRequests[0].payingWalletAddress,
+              buyerWalletAddress: storeIdRequests[0].payingWalletAddress,
               receivableAmount: storeIdRequests[0].receivableAmount,
               dateAndTime: storeIdRequests[0].dateAndTime,
               currencySymbol: storeIdRequests[0].currencySymbol,
@@ -4965,6 +5137,7 @@ app.get('/getUserResellerMemberStatus',async(req,res)=>{
   }
 });
 
+//ProfitShares
 app.get('/getItemsProfitShares', async (req, res) => {
   const { storeId } = req.query;
   const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -5173,6 +5346,170 @@ app.get('/getItemsProfitShares', async (req, res) => {
     return res.status(200).json({ products: allProductDetails,productBuyer : allProductDetailsBuyer, loggedInDetails: loggedInDetail,globalDetails : globalDetails });
   } catch (error) {
     console.log(`error: ${error}`);
+    return res.status(500).json({ error: `Internal server error: ${error}` });
+  } finally {
+    client.close();
+  }
+});
+
+app.get('/requestForProfitShareWithdrawal', async (req, res) => {
+  const { providerStoreId, storeId, providerWalletAddress, payingWalletAddress, receivableAmount, dateAndTime, f3ValueOfWithdraw, currencySymbol } = req.query;
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  const db = client.db('f3_ecommerce');
+  const collection = db.collection('users');
+
+  try {
+    // Find the user by storeId
+    const user = await collection.findOne({ walletAddress: payingWalletAddress });
+    if (!user) {
+      console.log(`User with storeId ${payingWalletAddress} not found`);
+      return res.status(401).json({ error: `User with walletAddress ${payingWalletAddress} not found` });
+    }
+
+    // Initialize the paymentRequestResellersReward object if it doesn't exist
+    if (!user.paymentRequestProfitShare) {
+      user.paymentRequestProfitShare = {};
+    }
+
+    // Check if there's already a request with the same providerWalletAddress
+    if (user.paymentRequestProfitShare[providerStoreId]) {
+      return res.status(402).json({ error: 'Request with the same providerWalletAddress already exists' });
+    }
+
+    // Create the new request object
+    const newRequest = {
+      providerWalletAddress,
+      payingWalletAddress,
+      receivableAmount,
+      dateAndTime,
+      f3ValueOfWithdraw,
+      currencySymbol,
+      storeId,
+      providerStoreId
+    };
+
+    // Add the new request to the providerWalletAddress array
+    user.paymentRequestProfitShare[providerStoreId] = [newRequest];
+
+    // Update the user document in the database
+    await collection.updateOne(
+      { walletAddress: payingWalletAddress },
+      { $set: { paymentRequestProfitShare: user.paymentRequestProfitShare } }
+    );
+
+    return res.status(200).json({ message: 'Withdrawal request created successfully' });
+  } catch (error) {
+    console.error('Error Requesting Withdrawal:', error);
+    return res.status(500).json({ error: `Internal server error ${error}` });
+  } finally {
+    client.close();
+  }
+});
+
+app.get('/deleteResellerWithdrawRequest', async (req, res) => {
+  const { storeId, providerWalletAddress, buyerWalletAddress } = req.query;
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  const db = client.db('f3_ecommerce');
+  const collection = db.collection('users');
+
+  try {
+    // Find the user by storeId
+    const user = await collection.findOne({ walletAddress: buyerWalletAddress });
+    if (!user) {
+      console.log(`User with storeId ${storeId} not found`);
+      return res.status(404).json({ error: `User with storeId ${storeId} not found` });
+    }
+
+    // Check if the paymentRequestProfitShare object exists
+    if (!user.paymentRequestProfitShare || !user.paymentRequestProfitShare[storeId]) {
+      console.log(`Request with buyerWalletAddress ${buyerWalletAddress} not found`);
+      return res.status(404).json({ error: `Request with buyerWalletAddress ${buyerWalletAddress} not found` });
+    }
+
+    // Delete the request with the given providerWalletAddress
+    delete user.paymentRequestProfitShare[storeId];
+
+    // Update the user document in the database
+    await collection.updateOne(
+      { walletAddress: buyerWalletAddress },
+      { $set: { paymentRequestProfitShare: user.paymentRequestProfitShare } }
+    );
+
+    return res.status(200).json({ message: 'Withdrawal request deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting withdrawal request:', error);
+    return res.status(500).json({ error: `Internal server error ${error}` });
+  } finally {
+    client.close();
+  }
+});
+
+app.get('/approveResellersRequest', async (req, res) => {
+  const { buyerWalletAddress, sellerStoreId, txhash, dateAndTime } = req.query;
+
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  const db = client.db('f3_ecommerce');
+  const collection = db.collection('users');
+
+  try {
+    // Find the user with the buyerWalletAddress
+    const user = await collection.findOne({ walletAddress: buyerWalletAddress });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Find the paymentRequestProfitShare object map
+    const paymentRequestRR = user.paymentRequestProfitShare || {};
+    const paymentRequests = paymentRequestRR[sellerStoreId];
+
+    if (!paymentRequests) {
+      return res.status(404).json({ error: 'Request not found for the given sellerStoreID' });
+    }
+
+    // Copy the array and add the new values
+    const newRequestArray = paymentRequests.map(request => ({
+      ...request,
+      txhash,
+      dateAndTimeOfApproved: dateAndTime
+    }));
+
+    const newRequestObject = {
+      'requestProducts': [...newRequestArray]
+    };
+
+    console.log(newRequestObject);
+    console.log(dateAndTime);
+
+    // Initialize ApprovedPaymentRequestResellersReward if it doesn't exist
+    user.approvedProfitSharePayments = user.approvedProfitSharePayments || {};
+
+    if (!Array.isArray(user.approvedProfitSharePayments[sellerStoreId])) {
+      console.log(`Creating new ApprovedPaymentRequestResellersReward array for sellerStoreId ${sellerStoreId}`);
+      user.approvedProfitSharePayments[sellerStoreId] = [newRequestObject];
+    } else {
+      console.log(`Adding new request to existing ApprovedPaymentRequestResellersReward array for sellerStoreId ${sellerStoreId}`);
+      user.approvedProfitSharePayments[sellerStoreId].push(newRequestObject);
+    }
+
+    // Update the user document in the database
+    await collection.updateOne({ walletAddress: buyerWalletAddress }, { $set: user });
+
+    // Remove the request from paymentRequestResellersReward
+    delete paymentRequestRR[sellerStoreId];
+
+    await collection.updateOne(
+      { walletAddress: buyerWalletAddress },
+      {
+        $set: {
+          paymentRequestProfitShare: paymentRequestRR
+        }
+      }
+    );
+
+    res.json({ message: 'Request approved and moved to ApprovedPaymentRequestProfitShare' });
+  } catch (error) {
+    console.error('Error approving resellers request:', error);
     return res.status(500).json({ error: `Internal server error: ${error}` });
   } finally {
     client.close();
