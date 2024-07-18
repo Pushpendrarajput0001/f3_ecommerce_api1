@@ -5367,7 +5367,7 @@ app.get('/getItemsProfitShares', async (req, res) => {
                 productId: product.productId,
                 currencySymbol: currencySymbol,
                 country: sellerAccount.country,
-                city : sellerAccount.city,
+                city : sellerAccount.cityAddress,
                 shareStocks: shareStocks,
                 usdtRate: user.usdtRate,
                 totalWithdrawalAmountUser,
