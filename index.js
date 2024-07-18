@@ -5280,26 +5280,48 @@ app.get('/getItemsProfitShares', async (req, res) => {
         if (user.salesHistorySeller && user.salesHistorySeller[storeIdUser]) {
           const approvals = user.salesHistorySeller[storeIdUser];
           for (const approvalcheckout of approvals) {
+            let totalWithdrawalAmountUser = 0;
             const { storeId, productId, quantity, totalPrice, productName, storeIdBuyer, walletAddressBuyer, dateOfApprovalCheckout, dateAndTime } = approvalcheckout;
             const usdtRate = parseFloat(user.usdtRate);
             const sellerWalletAddress = user.walletAddress;
+            const resellerRewardValue = parseFloat(resellers_reward ?? 0.0)
             const totalSoldedPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
             const totalSoldAmount = (totalSoldedPrice / usdtRate);
             totalSoldGlobalUsers += totalSoldAmount;
-            const productDetails = {
-              sellerStoreId: storeId,
-              buyerStoreId: storeIdBuyer,
-              walletAddressBuyer: walletAddressBuyer,
-              sellerWalletAddress: sellerWalletAddress,
-              totalQuantity: quantity,
-              totalPrice: totalPrice,
-              usdValue: totalSoldAmount,
-              productName: productName,
-              productId: productId,
-              currencySymbol: user.currencySymbol,
-              country: user.country,
-              dateAndTime: dateAndTime
-            };
+            const shareStocks = ((resellerRewardValue / 100) * 3 * totalSoldAmount) ?? 0.0
+             //StoreRequests
+             const StoreRequests = user.ApprovedPaymentRequestResellersReward;
+             if (StoreRequests) {
+               Object.keys(StoreRequests).forEach(subRequesName => {
+                 const requestArray = StoreRequests[subRequesName];
+                 requestArray.forEach(storeRequest => {
+                   storeRequest.requestProducts.forEach(storeRequest => {
+                     //console.log(storeRequest);
+                     const withdrawal = storeRequest.receivableAmount.replace(/[^\d.-]/g, '');
+                     totalWithdrawalAmountUser += parseFloat(withdrawal)
+                   });
+                 });
+               });
+             }
+             const productDetails = {
+               sellerStoreId: storeId,
+               buyerStoreId: storeIdBuyer,
+               walletAddressBuyer: walletAddressBuyer,
+               sellerWalletAddress: sellerWalletAddress,
+               totalQuantity: quantity,
+               totalPrice: totalPrice,
+               usdValue: totalSoldAmount,
+               shareStocks: shareStocks,
+               productName: productName,
+               productId: productId,
+               resellers_reward: resellerRewardValue,
+               currencySymbol: user.currencySymbol,
+               country: user.country,
+               city: user.cityAddress,
+               usdtRate: user.usdtRate,
+               totalWithdrawalAmountUser,
+               dateAndTime: dateAndTime
+             };
             allProductDetails.push(productDetails);
           }
         }
@@ -5309,13 +5331,30 @@ app.get('/getItemsProfitShares', async (req, res) => {
         if (productMap) {
           for (const productArray of Object.values(productMap)) {
             for (const product of productArray) {
+              let totalWithdrawalAmountUser = 0;
               const sellerAccount = await collection.findOne({ storeId: product.storeId });
               const sellerWallet = sellerAccount ? sellerAccount.walletAddress : null;
               const currencySymbol = sellerAccount.currencySymbol;
               const totalPriceP = parseFloat(product.totalPrice.replace(/[^\d.-]/g, ''));
               const usdtRate = parseFloat(sellerAccount.usdtRate);
+              const resellerRewardValue = parseFloat(product.resellers_reward ?? 0.0)
               const totalSoldUsdValue = (totalPriceP / usdtRate);
               totalPurchasedGlobalUsers += totalSoldUsdValue;
+              const shareStocks = ((resellerRewardValue / 100) * 3 * totalSoldUsdValue) ?? 0.0
+              //StoreRequests
+              const StoreRequests = sellerAccount.ApprovedPaymentRequestResellersReward;
+              if (StoreRequests) {
+                Object.keys(StoreRequests).forEach(subRequesName => {
+                  const requestArray = StoreRequests[subRequesName];
+                  requestArray.forEach(storeRequest => {
+                    storeRequest.requestProducts.forEach(storeRequest => {
+                      //console.log(storeRequest);
+                      const withdrawal = storeRequest.receivableAmount.replace(/[^\d.-]/g, '');
+                      totalWithdrawalAmountUser += parseFloat(withdrawal)
+                    });
+                  });
+                });
+              }
               const productDetails = {
                 sellerStoreId: product.storeId,
                 buyerStoreId: product.storeIdBuyer,
@@ -5328,6 +5367,11 @@ app.get('/getItemsProfitShares', async (req, res) => {
                 productId: product.productId,
                 currencySymbol: currencySymbol,
                 country: sellerAccount.country,
+                city : sellerAccount.city,
+                shareStocks: shareStocks,
+                usdtRate: user.usdtRate,
+                totalWithdrawalAmountUser,
+                resellers_reward : resellerRewardValue, 
                 dateAndTime: product.dateAndTime ?? product.dateOfApprovalCheckout
               };
               allProductDetailsBuyer.push(productDetails);
