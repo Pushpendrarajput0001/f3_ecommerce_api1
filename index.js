@@ -4879,6 +4879,7 @@ app.get('/getResellerViewOff', async (req, res) => {
               }
 
               currentLevelMembers.push({
+                sponsorId: member.storeId,
                 userId: resellerId,
                 userName: member.fullName,
                 level: levels + 1,
