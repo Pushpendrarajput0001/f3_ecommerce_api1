@@ -5231,6 +5231,7 @@ app.get('/getItemsProfitShares', async (req, res) => {
           for (const approvalcheckout of approvals) {
             let totalWithdrawalAmountUser = 0;
             const { storeId, productId, quantity, totalPrice, productName, storeIdBuyer, walletAddressBuyer, dateAndTime, dateOfApprovalCheckout, resellers_reward } = approvalcheckout;
+            const user = await collection.findOne({storeId : storeId});
             const usdtRate = parseFloat(user.usdtRate);
             const resellerRewardValue = parseFloat(resellers_reward ?? 0.0)
             const sellerWalletAddress = user.walletAddress;
@@ -5282,6 +5283,7 @@ app.get('/getItemsProfitShares', async (req, res) => {
           for (const approvalcheckout of approvals) {
             let totalWithdrawalAmountUser = 0;
             const { storeId, productId, quantity, totalPrice, productName, storeIdBuyer, walletAddressBuyer, dateOfApprovalCheckout, dateAndTime } = approvalcheckout;
+            const user = await collection.findOne({storeId : storeId});
             const usdtRate = parseFloat(user.usdtRate);
             const sellerWalletAddress = user.walletAddress;
             const resellerRewardValue = parseFloat(resellers_reward ?? 0.0)
