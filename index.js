@@ -5481,7 +5481,7 @@ app.get('/requestForProfitShareWithdrawal', async (req, res) => {
   }
 });
 
-app.get('/deleteResellerWithdrawRequest', async (req, res) => {
+app.get('/deleteProfitShareWithdrawRequest', async (req, res) => {
   const { storeId, providerWalletAddress, buyerWalletAddress } = req.query;
   const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
   const db = client.db('f3_ecommerce');
@@ -5519,7 +5519,7 @@ app.get('/deleteResellerWithdrawRequest', async (req, res) => {
   }
 });
 
-app.get('/approveResellersRequest', async (req, res) => {
+app.get('/approveProfitShareRequest', async (req, res) => {
   const { buyerWalletAddress, sellerStoreId, txhash, dateAndTime } = req.query;
 
   const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
