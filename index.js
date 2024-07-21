@@ -4750,6 +4750,8 @@ app.get('/getResellerViewOff', async (req, res) => {
 
   try {
     // Find the user
+    const usersWithApprovalsCheckoutSeller = await collection.find({ 'approvalcheckout': { $exists: true } }).toArray();
+    const userWithSalesHistorySeller = await collection.find({ 'salesHistorySeller': { $exists: true } }).toArray();
     const user = await collection.findOne({ storeId: userId });
     if (!user) {
       console.log(`User with storeId ${userId} not found`);
@@ -4820,71 +4822,52 @@ app.get('/getResellerViewOff', async (req, res) => {
                 });
               }
 
-              if (resellerUser.checkoutapproval) {
-                Object.keys(resellerUser.checkoutapproval).forEach(storeId => {
-                  resellerUser.checkoutapproval[storeId].forEach(productDetails => {
-                    //console.log('Approval Checkout Seller Product Details:', productDetails);
-                    const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
-                    const totalResellersRewardd = productDetails.resellers_reward ?? 0.0
-                    const totalproductResellersReward = (parseFloat(totalAmountProduct) * (totalResellersRewardd / 100));
-                    totalPurchased += parseFloat(totalAmountProduct);
-                    totalResellersReward += parseFloat(totalproductResellersReward);
-                    console.log(`checkoutApprovalRR : ${totalResellersRewardd}`);
-                    const productDetailsEach = {
-                      sponsorId: resellerUser.storeId,
-                      userId: member.storeId,
-                      userName: resellerUser.fullName,
-                      level: levels + 1,
-                      totalPurchased: parseFloat(totalAmountProduct).toFixed(2),
-                      totalResellersReward: parseFloat(totalproductResellersReward).toFixed(2),
-                      sellersWalletAddress: resellerUser.walletAddress,
-                      currencySymbol: resellerUser.currencySymbol,
-                      usdRate: resellerUser.usdtRate,
-                      cityReseller: resellerUser.cityAddress,
-                      totalPurchasedProducts : '0',
-                      totalProfitProducts : '0',
-                      totalWithdrawalAmountUser,
-                      totalF3WithdrawalUser,
-                      totalResellersProductRewardPercentage : parseFloat(totalResellersRewardd),
-                      totalResellers: resellerUser.resellersMember ? resellerUser.resellersMember.length : 0
-                    };
-                    withdrawaScreenProducts.push(productDetailsEach);
-                  });
-                });
-              }
+              // if (resellerUser.checkoutapproval) {
+              //   Object.keys(resellerUser.checkoutapproval).forEach(storeId => {
+              //     resellerUser.checkoutapproval[storeId].forEach(productDetails => {
+              //       //console.log('Approval Checkout Seller Product Details:', productDetails);
+              //       const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
+              //       const totalResellersRewardd = productDetails.resellers_reward ?? 0.0
+              //       const totalproductResellersReward = (parseFloat(totalAmountProduct) * (totalResellersRewardd / 100));
+              //       totalPurchased += parseFloat(totalAmountProduct);
+              //       totalResellersReward += parseFloat(totalproductResellersReward);
+              //       console.log(`checkoutApprovalRR : ${totalResellersRewardd}`);
+              //       const productDetailsEach = {
+              //         sponsorId: resellerUser.storeId,
+              //         userId: member.storeId,
+              //         userName: resellerUser.fullName,
+              //         level: levels + 1,
+              //         totalPurchased: parseFloat(totalAmountProduct).toFixed(2),
+              //         totalResellersReward: parseFloat(totalproductResellersReward).toFixed(2),
+              //         sellersWalletAddress: resellerUser.walletAddress,
+              //         currencySymbol: resellerUser.currencySymbol,
+              //         usdRate: resellerUser.usdtRate,
+              //         cityReseller: resellerUser.cityAddress,
+              //         totalPurchasedProducts : '0',
+              //         totalProfitProducts : '0',
+              //         totalWithdrawalAmountUser,
+              //         totalF3WithdrawalUser,
+              //         totalResellersProductRewardPercentage : parseFloat(totalResellersRewardd),
+              //         totalResellers: resellerUser.resellersMember ? resellerUser.resellersMember.length : 0
+              //       };
+              //       withdrawaScreenProducts.push(productDetailsEach);
+              //     });
+              //   });
+              // }
 
-              if (resellerUser.salesHistorySeller) {
-                Object.keys(resellerUser.salesHistorySeller).forEach(storeId => {
-                  resellerUser.salesHistorySeller[storeId].forEach(productDetails => {
-                    //console.log('Sales History Seller Product Details:', productDetails);
-                    const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
-                    const totalResellersRewardd = productDetails.resellers_reward ?? 0.0
-                    const totalproductResellersReward = (parseFloat(totalAmountProduct) * (totalResellersRewardd / 100));
-                    totalPurchased += parseFloat(totalAmountProduct);
-                    totalResellersReward += parseFloat(totalproductResellersReward);
-                    console.log(`salesHistorySellerRR : ${totalResellersRewardd}`);
-                    const productDetailsEach = {
-                      sponsorId: resellerUser.storeId,
-                      userId: member.storeId,
-                      userName: resellerUser.fullName,
-                      level: levels + 1,
-                      totalPurchased: parseFloat(totalAmountProduct).toFixed(2),
-                      totalResellersReward: parseFloat(totalproductResellersReward).toFixed(2),
-                      sellersWalletAddress: resellerUser.walletAddress,
-                      currencySymbol: resellerUser.currencySymbol,
-                      usdRate: resellerUser.usdtRate,
-                      cityReseller: resellerUser.cityAddress,
-                      totalPurchasedProducts : '0',
-                      totalProfitProducts : '0',
-                      totalWithdrawalAmountUser,
-                      totalF3WithdrawalUser,
-                      totalResellersProductRewardPercentage : parseFloat(totalResellersRewardd),
-                      totalResellers: resellerUser.resellersMember ? resellerUser.resellersMember.length : 0
-                    };
-                    withdrawaScreenProducts.push(productDetailsEach);
-                  });
-                });
-              }
+              // if (resellerUser.salesHistorySeller) {
+              //   Object.keys(resellerUser.salesHistorySeller).forEach(storeId => {
+              //     resellerUser.salesHistorySeller[storeId].forEach(productDetails => {
+              //       //console.log('Sales History Seller Product Details:', productDetails);
+              //       const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
+              //       const totalResellersRewardd = productDetails.resellers_reward ?? 0.0
+              //       const totalproductResellersReward = (parseFloat(totalAmountProduct) * (totalResellersRewardd / 100));
+              //       totalPurchased += parseFloat(totalAmountProduct);
+              //       totalResellersReward += parseFloat(totalproductResellersReward);
+              //       console.log(`salesHistorySellerRR : ${totalResellersRewardd}`);
+              //     });
+              //   });
+              // }
 
               if (resellerUser.approvalcheckoutBuyer) {
                 Object.keys(resellerUser.approvalcheckoutBuyer).forEach(storeId => {
@@ -4915,6 +4898,90 @@ app.get('/getResellerViewOff', async (req, res) => {
                     console.log(`salesHistoryBuyerRRPlused : ${totalResellersProductRewardPercentage}`);
                   });
                 });
+              }
+
+              for(const user of usersWithApprovalsCheckoutSeller){
+                if(user.approvalcheckout && user.approvalcheckout[resellerId]){
+                  const approvalCheckouts = user.approvalcheckout[resellerId]
+                  for(const approvals of approvalCheckouts){
+                    const { storeId, productId, quantity, totalPrice, productName,
+                       storeIdBuyer, walletAddressBuyer, dateAndTime, dateOfApprovalCheckout,
+                        resellers_reward } = approvals;
+                        const sellerAccount = await collection.findOne({storeId : storeId});
+                        const totalAmount = totalPrice.replace(/[^\d.-]/g,'')
+                        const totalAmountProduct = parseFloat(totalAmount);
+                        const resellersReward = parseFloat(resellers_reward ?? 0.0)
+                        const totalproductResellersReward = (parseFloat(totalAmountProduct) * (resellersReward / 100));
+                        totalPurchased += parseFloat(totalAmountProduct);
+                        totalResellersReward += parseFloat(totalproductResellersReward);
+                        console.log(`checkoutApprovalRR : ${totalproductResellersReward}`);
+                        const sellerWalletAddress = sellerAccount.walletAddress;
+                        const sellerCountry = sellerAccount.country;
+                        const sellerCity = sellerAccount.cityAddress;
+                        const sellerId = storeId;
+                        const productDetailsEach = {
+                          sponsorId: sellerId,
+                          userId: storeIdBuyer,
+                          userName: sellerAccount.fullName,
+                          level: 0,
+                          totalPurchased: totalAmountProduct.toFixed(2),
+                          totalResellersReward: totalproductResellersReward.toFixed(2),
+                          sellersWalletAddress: sellerWalletAddress,
+                          currencySymbol: sellerAccount.currencySymbol,
+                          usdRate: sellerAccount.usdtRate,
+                          cityReseller: sellerAccount.cityAddress,
+                          totalPurchasedProducts : '0',
+                          totalProfitProducts : '0',
+                          totalWithdrawalAmountUser,
+                          totalF3WithdrawalUser,
+                          totalResellersProductRewardPercentage : resellersReward,
+                          totalResellers: resellerUser.resellersMember ? resellerUser.resellersMember.length : 0
+                        };
+                        withdrawaScreenProducts.push(productDetailsEach);
+                  }
+                }
+              }
+
+              for(const user of userWithSalesHistorySeller){
+                if(user.salesHistorySeller && user.salesHistorySeller[resellerId]){
+                  const salesSeller = user.salesHistorySeller[resellerId]
+                  for(const sales of salesSeller){
+                    const { storeId, productId, quantity, totalPrice, productName,
+                       storeIdBuyer, walletAddressBuyer, dateAndTime, dateOfApprovalCheckout,
+                        resellers_reward } = sales;
+                        const sellerAccount = await collection.findOne({storeId : storeId});
+                        const totalAmount = totalPrice.replace(/[^\d.-]/g,'')
+                        const totalAmountProduct = parseFloat(totalAmount);
+                        const resellersReward = parseFloat(resellers_reward ?? 0.0)
+                        const totalproductResellersReward = (parseFloat(totalAmountProduct) * (resellersReward / 100));
+                        totalPurchased += parseFloat(totalAmountProduct);
+                        totalResellersReward += parseFloat(totalproductResellersReward);
+                        console.log(`salesHistoryRR : ${resellersReward}`);
+                        const sellerWalletAddress = sellerAccount.walletAddress;
+                        const sellerCountry = sellerAccount.country;
+                        const sellerCity = sellerAccount.cityAddress;
+                        const sellerId = storeId;
+                        const productDetailsEach = {
+                          sponsorId: sellerId,
+                          userId: storeIdBuyer,
+                          userName: sellerAccount.fullName,
+                          level: 0,
+                          totalPurchased: totalAmountProduct.toFixed(2),
+                          totalResellersReward: totalproductResellersReward.toFixed(2),
+                          sellersWalletAddress: sellerWalletAddress,
+                          currencySymbol: sellerAccount.currencySymbol,
+                          usdRate: sellerAccount.usdtRate,
+                          cityReseller: sellerAccount.cityAddress,
+                          totalPurchasedProducts : '0',
+                          totalProfitProducts : '0',
+                          totalWithdrawalAmountUser,
+                          totalF3WithdrawalUser,
+                          totalResellersProductRewardPercentage : resellersReward,
+                          totalResellers: resellerUser.resellersMember ? resellerUser.resellersMember.length : 0
+                        };
+                        withdrawaScreenProducts.push(productDetailsEach);
+                  }
+                }
               }
 
               currentLevelMembers.push({
