@@ -4878,7 +4878,7 @@ app.get('/getResellerViewOff', async (req, res) => {
                     const totalproductResellersReward = (parseFloat(totalAmountProduct) * (totalResellersReward / 100));
                     totalPurchasedProducts += parseFloat(totalAmountProduct);
                     totalProfitProducts += parseFloat(totalproductResellersReward);
-                    totalResellersProductRewardPercentage += totalResellersReward;
+                    //totalResellersProductRewardPercentage += totalResellersReward;
                     console.log(`approvalCheckoutBuyerRR : ${totalResellersReward}`);
                     console.log(`approvalCheckoutBuyerRRPlused : ${totalResellersProductRewardPercentage}`);
                   });
@@ -4894,7 +4894,7 @@ app.get('/getResellerViewOff', async (req, res) => {
                     const totalproductResellersReward = (parseFloat(totalAmountProduct) * (totalResellersReward / 100));
                     totalPurchasedProducts += parseFloat(totalAmountProduct);
                     totalProfitProducts += parseFloat(totalproductResellersReward);
-                    totalResellersProductRewardPercentage += totalResellersReward;
+                    //totalResellersProductRewardPercentage += totalResellersReward;
                     console.log(`salesHistoryBuyerRRPlused : ${totalResellersProductRewardPercentage}`);
                   });
                 });
@@ -4910,10 +4910,11 @@ app.get('/getResellerViewOff', async (req, res) => {
                         const sellerAccount = await collection.findOne({storeId : storeId});
                         const totalAmount = totalPrice.replace(/[^\d.-]/g,'')
                         const totalAmountProduct = parseFloat(totalAmount);
-                        const resellersReward = parseFloat(resellers_reward ?? 0.0)
+                        const resellersReward = parseFloat(resellers_reward ?? 0)
                         const totalproductResellersReward = (parseFloat(totalAmountProduct) * (resellersReward / 100));
                         totalPurchased += parseFloat(totalAmountProduct);
                         totalResellersReward += parseFloat(totalproductResellersReward);
+                        totalResellersProductRewardPercentage += resellersReward;
                         console.log(`checkoutApprovalRR : ${totalproductResellersReward}`);
                         const sellerWalletAddress = sellerAccount.walletAddress;
                         const sellerCountry = sellerAccount.country;
@@ -4952,10 +4953,11 @@ app.get('/getResellerViewOff', async (req, res) => {
                         const sellerAccount = await collection.findOne({storeId : storeId});
                         const totalAmount = totalPrice.replace(/[^\d.-]/g,'')
                         const totalAmountProduct = parseFloat(totalAmount);
-                        const resellersReward = parseFloat(resellers_reward ?? 0.0)
+                        const resellersReward = parseFloat(resellers_reward ?? 0)
                         const totalproductResellersReward = (parseFloat(totalAmountProduct) * (resellersReward / 100));
                         totalPurchased += parseFloat(totalAmountProduct);
                         totalResellersReward += parseFloat(totalproductResellersReward);
+                        totalResellersProductRewardPercentage += resellersReward;
                         console.log(`salesHistoryRR : ${resellersReward}`);
                         const sellerWalletAddress = sellerAccount.walletAddress;
                         const sellerCountry = sellerAccount.country;
