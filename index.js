@@ -4763,6 +4763,7 @@ app.get('/getResellerViewOff', async (req, res) => {
     let totalPurchasedOfLoggedInUser = 0.00;
 
 
+    let withdrawaScreenProducts = [];
     let levels = 0;
     let currentLevelIds = [userId];
     let allMembers = [];
@@ -4804,6 +4805,21 @@ app.get('/getResellerViewOff', async (req, res) => {
               //     });
               // };
 
+              if (storeRequests) {
+                Object.keys(storeRequests).forEach(subRequesName => {
+                  const requestArray = storeRequests[subRequesName];
+                  requestArray.forEach(storeRequest => {
+                    //console.lo0g(`storeRequestsParticularUser : ${storeRequest}`);
+                    const withdrawal = storeRequest.receivableAmount.replace(/[^\d.-]/g, '');
+                    const withdrawalF3 = storeRequest.f3ValueOfWithdraw.replace(/[^\d.-]/g, '');
+                    totalWithdrawalAmountUser += parseFloat(withdrawal)
+                    totalF3WithdrawalUser += parseFloat(withdrawalF3);
+                    withdrawalAmount += parseFloat(withdrawal);
+                    f3ValueOfWithdrawalAmount += parseFloat(withdrawalF3);
+                  });
+                });
+              }
+
               if (resellerUser.checkoutapproval) {
                 Object.keys(resellerUser.checkoutapproval).forEach(storeId => {
                   resellerUser.checkoutapproval[storeId].forEach(productDetails => {
@@ -4814,6 +4830,25 @@ app.get('/getResellerViewOff', async (req, res) => {
                     totalPurchased += parseFloat(totalAmountProduct);
                     totalResellersReward += parseFloat(totalproductResellersReward);
                     console.log(`checkoutApprovalRR : ${totalResellersRewardd}`);
+                    const productDetailsEach = {
+                      sponsorId: resellerUser.storeId,
+                      userId: member.storeId,
+                      userName: resellerUser.fullName,
+                      level: levels + 1,
+                      totalPurchased: parseFloat(totalAmountProduct).toFixed(2),
+                      totalResellersReward: parseFloat(totalproductResellersReward).toFixed(2),
+                      sellersWalletAddress: resellerUser.walletAddress,
+                      currencySymbol: resellerUser.currencySymbol,
+                      usdRate: resellerUser.usdtRate,
+                      cityReseller: resellerUser.cityAddress,
+                      totalPurchasedProducts : '0',
+                      totalProfitProducts : '0',
+                      totalWithdrawalAmountUser,
+                      totalF3WithdrawalUser,
+                      totalResellersProductRewardPercentage : parseFloat(totalResellersRewardd),
+                      totalResellers: resellerUser.resellersMember ? resellerUser.resellersMember.length : 0
+                    };
+                    withdrawaScreenProducts.push(productDetailsEach);
                   });
                 });
               }
@@ -4828,6 +4863,25 @@ app.get('/getResellerViewOff', async (req, res) => {
                     totalPurchased += parseFloat(totalAmountProduct);
                     totalResellersReward += parseFloat(totalproductResellersReward);
                     console.log(`salesHistorySellerRR : ${totalResellersRewardd}`);
+                    const productDetailsEach = {
+                      sponsorId: resellerUser.storeId,
+                      userId: member.storeId,
+                      userName: resellerUser.fullName,
+                      level: levels + 1,
+                      totalPurchased: parseFloat(totalAmountProduct).toFixed(2),
+                      totalResellersReward: parseFloat(totalproductResellersReward).toFixed(2),
+                      sellersWalletAddress: resellerUser.walletAddress,
+                      currencySymbol: resellerUser.currencySymbol,
+                      usdRate: resellerUser.usdtRate,
+                      cityReseller: resellerUser.cityAddress,
+                      totalPurchasedProducts : '0',
+                      totalProfitProducts : '0',
+                      totalWithdrawalAmountUser,
+                      totalF3WithdrawalUser,
+                      totalResellersProductRewardPercentage : parseFloat(totalResellersRewardd),
+                      totalResellers: resellerUser.resellersMember ? resellerUser.resellersMember.length : 0
+                    };
+                    withdrawaScreenProducts.push(productDetailsEach);
                   });
                 });
               }
@@ -4859,21 +4913,6 @@ app.get('/getResellerViewOff', async (req, res) => {
                     totalProfitProducts += parseFloat(totalproductResellersReward);
                     totalResellersProductRewardPercentage += totalResellersReward;
                     console.log(`salesHistoryBuyerRRPlused : ${totalResellersProductRewardPercentage}`);
-                  });
-                });
-              }
-
-              if (storeRequests) {
-                Object.keys(storeRequests).forEach(subRequesName => {
-                  const requestArray = storeRequests[subRequesName];
-                  requestArray.forEach(storeRequest => {
-                    //console.lo0g(`storeRequestsParticularUser : ${storeRequest}`);
-                    const withdrawal = storeRequest.receivableAmount.replace(/[^\d.-]/g, '');
-                    const withdrawalF3 = storeRequest.f3ValueOfWithdraw.replace(/[^\d.-]/g, '');
-                    totalWithdrawalAmountUser += parseFloat(withdrawal)
-                    totalF3WithdrawalUser += parseFloat(withdrawalF3);
-                    withdrawalAmount += parseFloat(withdrawal);
-                    f3ValueOfWithdrawalAmount += parseFloat(withdrawalF3);
                   });
                 });
               }
@@ -4981,7 +5020,7 @@ app.get('/getResellerViewOff', async (req, res) => {
       forecastedProfit: forecastedProfit,
       usdRate: user.usdtRate
     };
-    return res.status(200).json({ members: allMembers, userDetails: userDetailsWithdrawals });
+    return res.status(200).json({ members: allMembers,withdrawScreens : withdrawaScreenProducts, userDetails: userDetailsWithdrawals });
   } catch (error) {
     console.error('Error fetching reseller view:', error);
     return res.status(500).json({ error: 'Internal server error' });
