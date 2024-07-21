@@ -4491,7 +4491,7 @@ app.get('/addResellerMember', async (req, res) => {
     console.log(`User with storeId ${sponsorId} not found`);
     return res.status(405).json({ error: `User with storeId ${sponsorId} not found` });
   }
-  if (!isAddedMember && sponsorId != '42539347') {
+  if (!isAddedMember && sponsorId != '99474749') {
     console.log(`You are not allowed to invite any user as you're not a reseller member!`);
     return res.status(404).json({ error: `You are not allowed to invite any user as you're not a reseller member!` });
   };
@@ -5212,7 +5212,7 @@ app.get('/getUserResellerMemberStatus', async (req, res) => {
 
     const isAlreadyMemeber = user.AlreadyResellerMember;
 
-    if (!isAlreadyMemeber && storeId != '42539347') {
+    if (!isAlreadyMemeber && storeId != '99474749') {
       console.log(`Not Already a member ${isAlreadyMemeber}`);
       return res.status(202).json(`Not Already A member ${isAlreadyMemeber}`);
     }
