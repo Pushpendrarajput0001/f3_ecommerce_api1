@@ -3927,7 +3927,7 @@ app.get('/getConfirmIfRequestExisting', async (req, res) => {
         }
         console.log(totalUsdRate)
         // Check if total USD rate for seller is more than 10.00
-        if (totalUsdRate > 10.00) {
+        if (totalUsdRate > 50.00) {
           response.requestsExistForApprovedSeller = "Yes";
         }
       }
@@ -3950,7 +3950,7 @@ app.get('/getConfirmIfRequestExisting', async (req, res) => {
           console.log(calculation, totalUSDRate, totalPriceProduct)
         }
         console.log(totalUSDRate)
-        if (totalUSDRate > 10.00) {
+        if (totalUSDRate > 50.00) {
           response.requestsExistForApprovedBuyer = "Yes";
         }
       }
