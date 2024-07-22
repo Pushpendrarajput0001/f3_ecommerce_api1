@@ -5274,6 +5274,8 @@ app.get('/getUserResellerMemberStatus', async (req, res) => {
   const collection = db.collection('users');
   try {
     const user = await collection.findOne({ storeId: storeId });
+    const userEmail = user.email;
+    console.log(`email : ${userEmail}`);
     if (!user) {
       console.log(`User not existed with storeId : ${storeId}`)
       return res.status(404).json(`User not existed with storeId : ${storeId}`);
@@ -5281,7 +5283,7 @@ app.get('/getUserResellerMemberStatus', async (req, res) => {
 
     const isAlreadyMemeber = user.AlreadyResellerMember;
 
-    if (!isAlreadyMemeber && storeId != '99474749') {
+    if (!isAlreadyMemeber && storeId !== '99474749') {
       console.log(`Not Already a member ${isAlreadyMemeber}`);
       return res.status(202).json(`Not Already A member ${isAlreadyMemeber}`);
     }
