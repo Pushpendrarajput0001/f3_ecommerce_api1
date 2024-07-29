@@ -5748,34 +5748,37 @@ app.get('/approveProfitShareRequest', async (req, res) => {
 });
 
 //AdFunctions
-app.get('/getUserRelevantAdsCount',async(req,res)=>{
-  const {email,date} = req.query;
-  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
-  const db = client.db('f3_ecommerce');
-  const collection = db.collection('users');
-  try{
-    const user = collection.findOne({email});
-    if(!user){
+app.get('/getUserRelevantAdsCount', async (req, res) => {
+  const { email, date } = req.query;
+
+  let client;
+
+  try {
+    client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    const user = await collection.findOne({ email });
+    if (!user) {
       console.log(`No user exists with this email : ${email}`);
       return res.status(401).json(`No User Exists with email : ${email}`);
     }
+
     let totalCountAd = 0;
-    const adsValues = user.dateOfAdsCount && user.adsCount;
-    const dateOfRelevantAd = user.dateOfAdsCount;
-    const adsCount = user.adsCount;
-    if(adsValues){
-      if(dateOfRelevantAd === date){
-        totalCountAd = Number(adsCount);
-      }
-    };
-    res.status(200).json({totalCountAds : totalCountAd})
-  }catch(error){
+    const { dateOfAdsCount, adsCount } = user;
+    if (dateOfAdsCount && adsCount && dateOfAdsCount === date) {
+      totalCountAd = Number(adsCount);
+    }
+
+    res.status(200).json({ totalCountAds: totalCountAd });
+  } catch (error) {
     console.error('Error getting User Ads Count:', error);
     return res.status(500).json({ error: `Internal server error: ${error}` });
-  }finally{
-    client.close();
+  } finally {
+    if (client) {
+      client.close();
+    }
   }
-
 });
 
 app.get('/updateUserAdsCount',async(req,res)=>{
