@@ -433,13 +433,13 @@ app.get('/filteredProducts', async (req, res) => {
     // Construct the filter based on the provided query parameters
     const filter = {};
     if (country) {
-      filter['country'] = country;
+      filter['country'] = { $regex: new RegExp(`^${country}$`, 'i') };
     }
     if (city) {
-      filter['cityAddress'] = city;
+      filter['cityAddress'] = { $regex: new RegExp(`^${city}$`, 'i') };
     }
     if (localAddress) {
-      filter['localAddress'] = localAddress;
+      filter['localAddress'] = { $regex: new RegExp(`^${localAddress}$`, 'i') };
     }
 
     // Find users with matching filters and retrieve their products
@@ -5806,6 +5806,6 @@ app.get('/updateUserAdsCount',async(req,res)=>{
 
 });
 
-app.listen(PORT, '192.168.29.149', () => {
-  console.log(`Server is running on http://192.168.29.149:${PORT}`)
+app.listen(PORT, '192.168.2.158', () => {
+  console.log(`Server is running on http://192.168.2.158:${PORT}`)
 });
