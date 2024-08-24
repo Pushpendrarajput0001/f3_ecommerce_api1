@@ -5283,7 +5283,7 @@ app.get('/getUserResellerMemberStatus', async (req, res) => {
 
     const isAlreadyMemeber = user.AlreadyResellerMember;
 
-    if (!isAlreadyMemeber && storeId !== '99474749') {
+    if (!isAlreadyMemeber && storeId !== '77715423') {
       console.log(`Not Already a member ${isAlreadyMemeber}`);
       return res.status(202).json(`Not Already A member ${isAlreadyMemeber}`);
     }
