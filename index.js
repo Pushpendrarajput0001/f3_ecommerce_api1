@@ -5806,6 +5806,19 @@ app.get('/updateUserAdsCount',async(req,res)=>{
 
 });
 
+//SalesManiaBooster
+app.get('/getMyDroplets',async(req,res)=>{
+
+});
+
+app.get('/addDroplets',async(req,res)=>{
+
+});
+
+app.get('/getUserDetailsForMyDroplets',async(req,res)=>{
+
+});
+
 app.listen(PORT, '192.168.2.158', () => {
   console.log(`Server is running on http://192.168.2.158:${PORT}`)
 });
