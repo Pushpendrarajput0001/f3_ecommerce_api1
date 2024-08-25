@@ -5807,18 +5807,110 @@ app.get('/updateUserAdsCount',async(req,res)=>{
 });
 
 //SalesManiaBooster
-app.get('/getMyDroplets',async(req,res)=>{
+app.get('/getMyDroplets', async (req, res) => {
+  const { storeId, walletAddress } = req.query;
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  const db = client.db('f3_ecommerce');
+  const collection = db.collection('users');
 
+  const TOKEN_CONTRACT_ADDRESS = '0xfB265e16e882d3d32639253ffcfC4b0a2E861467';
+  const BSC_RPC_URL = 'https://bsc-dataseed.binance.org/';
+  const web3 = new Web3(new Web3.providers.HttpProvider(BSC_RPC_URL));
+
+  try {
+    // Step 1: Find the user with the provided storeId
+    const user = await collection.findOne({ storeId: storeId });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Step 2: Retrieve the myDroplets array
+    const myDroplets = user.myDroplets || [];
+
+    // Extract the required fields from each droplet
+    const dropletsData = myDroplets.map(droplet => ({
+      amount: droplet.amount,
+      f3Value: droplet.f3Value,
+      f3Price: droplet.f3Price,
+      dateAndTime: droplet.dateAndTime
+    }));
+
+    // Step 3: Get the token balance of the provided wallet address
+    const contract = new web3.eth.Contract([
+      {
+        constant: true,
+        inputs: [{ name: "_owner", type: "address" }],
+        name: "balanceOf",
+        outputs: [{ name: "balance", type: "uint256" }],
+        type: "function"
+      }
+    ], TOKEN_CONTRACT_ADDRESS);
+
+    const balance = await contract.methods.balanceOf(walletAddress).call();
+    const formattedBalance = web3.utils.fromWei(balance, 'ether'); // Assuming the token has 18 decimals
+
+    // Step 4: Send the response
+    res.status(200).json({
+      myDroplets : dropletsData,
+      tokenBalance: formattedBalance
+    });
+  } catch (error) {
+    console.error('Error Retrieving Droplets and Token Balance:', error);
+    res.status(500).json({ error: `Internal server error: ${error}` });
+  } finally {
+    client.close();
+  }
 });
 
-app.get('/addDroplets',async(req,res)=>{
 
+app.get('/addDroplets', async (req, res) => {
+  const { storeId, amount, f3Value, f3Price, dateAndTime } = req.query;
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  const db = client.db('f3_ecommerce');
+  const collection = db.collection('users');
+
+  try {
+    // Find the user with the provided storeId
+    const user = await collection.findOne({ storeId: storeId });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Prepare the new droplet object
+    const newDroplet = {
+      amount: amount,
+      f3Value: f3Value,
+      f3Price: f3Price,
+      dateAndTime: dateAndTime
+    };
+
+    // Check if the myDroplets array map exists, if not, create it and add the new droplet
+    if (!user.myDroplets) {
+      user.myDroplets = [];
+    }
+
+    // Add the new droplet to the myDroplets array
+    user.myDroplets.push(newDroplet);
+
+    // Update the user's document with the modified myDroplets array
+    await collection.updateOne({ storeId: storeId }, { $set: { myDroplets: user.myDroplets } });
+
+    res.status(200).json({ message: 'Droplet added successfully' });
+  } catch (error) {
+    console.error('Error Adding Droplet:', error);
+    res.status(500).json({ error: `Internal server error: ${error}` });
+  } finally {
+    client.close();
+  }
 });
+
 
 app.get('/getUserDetailsForMyDroplets',async(req,res)=>{
 
 });
 
-app.listen(PORT, '192.168.2.158', () => {
-  console.log(`Server is running on http://192.168.2.158:${PORT}`)
+app.listen(PORT, '192.168.29.149', () => {
+  console.log(`Server is running on http://192.168.29.149:${PORT}`)
 });
