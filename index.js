@@ -3,6 +3,7 @@ const express = require('express');
 const crypto = require('crypto');
 const bodyParser = require('body-parser');
 const uuid = require('uuid');
+const { v4: uuidv4 } = require('uuid');
 const { MongoClient, ObjectId } = require('mongodb');
 const sharp = require('sharp');
 const axios = require('axios');
@@ -5830,6 +5831,7 @@ app.get('/getMyDroplets', async (req, res) => {
 
     // Extract the required fields from each droplet
     const dropletsData = myDroplets.map(droplet => ({
+      uniqueId : droplet.uniqueId,
       amount: droplet.amount,
       f3Value: droplet.f3Value,
       f3Price: droplet.f3Price,
@@ -5863,7 +5865,6 @@ app.get('/getMyDroplets', async (req, res) => {
   }
 });
 
-
 app.get('/addDroplets', async (req, res) => {
   const { storeId, amount, f3Value, f3Price, dateAndTime } = req.query;
   const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -5880,6 +5881,7 @@ app.get('/addDroplets', async (req, res) => {
 
     // Prepare the new droplet object
     const newDroplet = {
+      uniqueId: uuidv4(),
       amount: amount,
       f3Value: f3Value,
       f3Price: f3Price,
@@ -5906,11 +5908,13 @@ app.get('/addDroplets', async (req, res) => {
   }
 });
 
-
 app.get('/getUserDetailsForMyDroplets',async(req,res)=>{
 
 });
 
+app.get('/removeAndAddToMyDropletHistory', async(req,res)=>{
+
+});
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`)
 });
