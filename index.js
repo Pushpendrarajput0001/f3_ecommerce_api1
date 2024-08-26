@@ -5912,8 +5912,44 @@ app.get('/getUserDetailsForMyDroplets',async(req,res)=>{
 
 });
 
-app.get('/removeAndAddToMyDropletHistory', async(req,res)=>{
+app.get('/removeAndAddToMyDropletHistory', async (req, res) => {
+  const { storeId, uniqueId } = req.query;
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  const db = client.db('f3_ecommerce');
+  const collection = db.collection('users');
 
+  try {
+    const user = await collection.findOne({ storeId: storeId });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const dropletIndex = user.myDroplets.findIndex(droplet => droplet.uniqueId === uniqueId);
+
+    if (dropletIndex === -1) {
+      return res.status(404).json({ error: 'Droplet not found' });
+    }
+
+    const dropletToMove = user.myDroplets[dropletIndex];
+
+    user.myDroplets.splice(dropletIndex, 1);
+
+    if (!user.myDropletHistory) {
+      user.myDropletHistory = [];
+    }
+
+    user.myDropletHistory.push(dropletToMove);
+
+    await collection.updateOne({ storeId: storeId }, { $set: { myDroplets: user.myDroplets, myDropletHistory: user.myDropletHistory } });
+
+    res.status(200).json({ message: 'Droplet moved to history successfully' });
+  } catch (error) {
+    console.error('Error moving droplet to history:', error);
+    res.status(500).json({ error: `Internal server error: ${error}` });
+  } finally {
+    client.close();
+  }
 });
 
 app.get('getMyDropletsHistory',async(req,res)=>{
