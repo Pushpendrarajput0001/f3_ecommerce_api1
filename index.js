@@ -5952,7 +5952,7 @@ app.get('/removeAndAddToMyDropletHistory', async (req, res) => {
   }
 });
 
-app.get('getMyDropletsHistory', async (req, res) => {
+app.get('/getMyDropletsHistory', async (req, res) => {
   const { storeId, walletAddress, uniqueId } = req.query;
   const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
   const db = client.db('f3_ecommerce');
@@ -5974,6 +5974,36 @@ app.get('getMyDropletsHistory', async (req, res) => {
       dateAndTime: droplet.dateAndTime
     }));
     res.status(200).json({myDropletsHistory: dropletsData});
+  } catch (error) {
+    console.log(`Interenal Server Error : ${error}`);
+    res.status(500).json({ error: `Internal server error: ${error}` });
+  } finally {
+    client.close();
+  }
+});
+
+app.get('/getGroupDropletsHistory',async(req,res)=>{
+  const { storeId, walletAddress, uniqueId } = req.query;
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  const db = client.db('f3_ecommerce');
+  const collection = db.collection('users');
+  try {
+    const user = await collection.findOne({ storeId: storeId });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const groupDropletsHistory = user.groupDropletsHistory || [];
+
+    const dropletsData = groupDropletsHistory.map(droplet => ({
+      uniqueId: droplet.uniqueId,
+      amount: droplet.amount,
+      f3Value: droplet.f3Value,
+      f3Price: droplet.f3Price,
+      dateAndTime: droplet.dateAndTime
+    }));
+    res.status(200).json({groupDropletsHistory: dropletsData});
   } catch (error) {
     console.log(`Interenal Server Error : ${error}`);
     res.status(500).json({ error: `Internal server error: ${error}` });
