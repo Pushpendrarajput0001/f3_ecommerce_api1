@@ -5915,6 +5915,19 @@ app.get('/getUserDetailsForMyDroplets',async(req,res)=>{
 app.get('/removeAndAddToMyDropletHistory', async(req,res)=>{
 
 });
+
+app.get('getMyDropletsHistory',async(req,res)=>{
+  const {storeId,walletAddress,uniqueId} = req.query;
+});
+
+app.get('boosterFeesMyDroplet',async(req,res)=>{
+  const {storeId,walletAddress} = req.query;
+});
+
+app.get('commissionRequestGroupDroplet',async(req,res)=>{
+  const {storeId,walletAddress} = req.query;
+});
+
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`)
 });
