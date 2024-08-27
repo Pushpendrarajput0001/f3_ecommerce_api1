@@ -5668,7 +5668,7 @@ app.get('/getMyDroplets', async (req, res) => {
     let levels = 0;
     let currentLevelIds = [storeId];
     let allMembers = [];
-    let multiplierQuantity = 0;
+    let multiplierQuantity = 1;
 
     while (levels < 1 && currentLevelIds.length > 0) {
       let nextLevelIds = [];
