@@ -12,6 +12,7 @@ const { error } = require('console');
 const { parse } = require('path');
 const app = express();
 const PORT = 5000;
+//const MONGO_URI = 'mongodb+srv://f3bazaar:f3bazaarapppass@atlascluster.ggzbtom.mongodb.net/?retryWrites=true&w=majority&appName=AtlasCluster';
 const MONGO_URI = 'mongodb+srv://f3bazaar:f3bazaarapppass@atlascluster.ggzbtom.mongodb.net/?retryWrites=true&w=majority&appName=AtlasCluster';
 app.use(bodyParser.json({ limit: '50mb', extended: true }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
@@ -4745,236 +4746,107 @@ app.get('/getResellerViewOff', async (req, res) => {
     return res.status(400).json({ error: 'Missing userId parameter' });
   }
 
-  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
-  const db = client.db('f3_ecommerce');
-  const collection = db.collection('users');
+  let client;
 
   try {
-    // Find the user
-    const usersWithApprovalsCheckoutSeller = await collection.find({ 'approvalcheckout': { $exists: true } }).toArray();
-    const userWithSalesHistorySeller = await collection.find({ 'salesHistorySeller': { $exists: true } }).toArray();
-    const user = await collection.findOne({ storeId: userId });
+    client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Fetch necessary data in parallel to minimize overall time.
+    const [usersWithApprovalsCheckoutSeller, userWithSalesHistorySeller, user] = await Promise.all([
+      collection.find({ 'approvalcheckout': { $exists: true } }).toArray(),
+      collection.find({ 'salesHistorySeller': { $exists: true } }).toArray(),
+      collection.findOne({ storeId: userId })
+    ]);
+
     if (!user) {
       console.log(`User with storeId ${userId} not found`);
       return res.status(404).json({ error: `User with storeId ${userId} not found` });
     }
+
     const storeRequests = user.ApprovedPaymentRequestResellersReward;
     const currencySymbol = user.currencySymbol;
 
-    let withdrawalAmount = 0.00
-    let f3ValueOfWithdrawalAmount = 0.00
+    let withdrawalAmount = 0.00;
+    let f3ValueOfWithdrawalAmount = 0.00;
     let totalPurchasedOfLoggedInUser = 0.00;
-
-
     let withdrawaScreenProducts = [];
     let levels = 0;
     let currentLevelIds = [userId];
     let allMembers = [];
 
+    // Use parallel processing for level-based member retrieval
     while (levels < 15 && currentLevelIds.length > 0) {
       let nextLevelIds = [];
       let currentLevelMembers = [];
 
-      for (let id of currentLevelIds) {
-        let member = await collection.findOne({ storeId: id });
+      await Promise.all(currentLevelIds.map(async (id) => {
+        const member = await collection.findOne({ storeId: id });
         if (member && member.resellersMember) {
-          for (let resellerId of member.resellersMember) {
-            let resellerUser = await collection.findOne({ storeId: resellerId });
+          await Promise.all(member.resellersMember.map(async (resellerId) => {
+            const resellerUser = await collection.findOne({ storeId: resellerId });
             if (resellerUser) {
-              const storeRequests = resellerUser.ApprovedPaymentRequestResellersReward;
               let totalPurchased = 0;
               let totalResellersReward = 0;
               let totalResellersProductRewardPercentage = 0;
-
               let totalPurchasedProducts = 0.0;
               let totalProfitProducts = 0.0;
               let totalWithdrawalAmountUser = 0.0;
               let totalF3WithdrawalUser = 0.0;
 
-              // if (resellerUser.products) {
-              //   resellerUser.products
-              //     .filter(product => product.totalsolds >= 1)
-              //     .forEach(product => {
-              //       const totalSold = Number(product.totalsolds);
-              //       const priceString = product.startedPrice.replace(/[^\d.-]/g, '');
-              //       const priceProduct = parseFloat(priceString) || 0;
-              //       const resellersReward = parseFloat(product.resellers_reward ?? 0) || 0;
-
-              //       const productTotalPurchased = totalSold * priceProduct;
-              //       const productResellersReward = productTotalPurchased * (resellersReward / 100);
-
-              //       totalPurchased += productTotalPurchased;
-              //       totalResellersReward += productResellersReward;
-              //     });
-              // };
-
-              if (storeRequests) {
-                Object.keys(storeRequests).forEach(subRequesName => {
-                  const requestArray = storeRequests[subRequesName];
-                  requestArray.forEach(storeRequest => {
-                    //console.lo0g(`storeRequestsParticularUser : ${storeRequest}`);
-                    const withdrawal = storeRequest.receivableAmount.replace(/[^\d.-]/g, '');
-                    const withdrawalF3 = storeRequest.f3ValueOfWithdraw.replace(/[^\d.-]/g, '');
-                    totalWithdrawalAmountUser += parseFloat(withdrawal)
-                    totalF3WithdrawalUser += parseFloat(withdrawalF3);
-                    withdrawalAmount += parseFloat(withdrawal);
-                    f3ValueOfWithdrawalAmount += parseFloat(withdrawalF3);
-                  });
+              if (resellerUser.ApprovedPaymentRequestResellersReward) {
+                Object.values(resellerUser.ApprovedPaymentRequestResellersReward).flat().forEach(storeRequest => {
+                  const withdrawal = storeRequest.receivableAmount.replace(/[^\d.-]/g, '');
+                  const withdrawalF3 = storeRequest.f3ValueOfWithdraw.replace(/[^\d.-]/g, '');
+                  totalWithdrawalAmountUser += parseFloat(withdrawal);
+                  totalF3WithdrawalUser += parseFloat(withdrawalF3);
+                  withdrawalAmount += parseFloat(withdrawal);
+                  f3ValueOfWithdrawalAmount += parseFloat(withdrawalF3);
                 });
               }
 
-              // if (resellerUser.checkoutapproval) {
-              //   Object.keys(resellerUser.checkoutapproval).forEach(storeId => {
-              //     resellerUser.checkoutapproval[storeId].forEach(productDetails => {
-              //       //console.log('Approval Checkout Seller Product Details:', productDetails);
-              //       const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
-              //       const totalResellersRewardd = productDetails.resellers_reward ?? 0.0
-              //       const totalproductResellersReward = (parseFloat(totalAmountProduct) * (totalResellersRewardd / 100));
-              //       totalPurchased += parseFloat(totalAmountProduct);
-              //       totalResellersReward += parseFloat(totalproductResellersReward);
-              //       console.log(`checkoutApprovalRR : ${totalResellersRewardd}`);
-              //       const productDetailsEach = {
-              //         sponsorId: resellerUser.storeId,
-              //         userId: member.storeId,
-              //         userName: resellerUser.fullName,
-              //         level: levels + 1,
-              //         totalPurchased: parseFloat(totalAmountProduct).toFixed(2),
-              //         totalResellersReward: parseFloat(totalproductResellersReward).toFixed(2),
-              //         sellersWalletAddress: resellerUser.walletAddress,
-              //         currencySymbol: resellerUser.currencySymbol,
-              //         usdRate: resellerUser.usdtRate,
-              //         cityReseller: resellerUser.cityAddress,
-              //         totalPurchasedProducts : '0',
-              //         totalProfitProducts : '0',
-              //         totalWithdrawalAmountUser,
-              //         totalF3WithdrawalUser,
-              //         totalResellersProductRewardPercentage : parseFloat(totalResellersRewardd),
-              //         totalResellers: resellerUser.resellersMember ? resellerUser.resellersMember.length : 0
-              //       };
-              //       withdrawaScreenProducts.push(productDetailsEach);
-              //     });
-              //   });
-              // }
+              // Processing approvalcheckoutBuyer and salesHistoryBuyer in parallel
+              await Promise.all([
+                resellerUser.approvalcheckoutBuyer && Object.values(resellerUser.approvalcheckoutBuyer).flat().forEach(productDetails => {
+                  const totalAmountProduct = parseFloat(productDetails.totalPrice.replace(/[^\d.-]/g, ''));
+                  const totalResellersReward = parseFloat(productDetails.resellers_reward ?? 0);
+                  const totalproductResellersReward = (totalAmountProduct * (totalResellersReward / 100));
+                  totalPurchasedProducts += totalAmountProduct;
+                  totalProfitProducts += totalproductResellersReward;
+                }),
+                resellerUser.salesHistoryBuyer && Object.values(resellerUser.salesHistoryBuyer).flat().forEach(productDetails => {
+                  const totalAmountProduct = parseFloat(productDetails.totalPrice.replace(/[^\d.-]/g, ''));
+                  const totalResellersReward = parseFloat(productDetails.resellers_reward ?? 0);
+                  const totalproductResellersReward = (totalAmountProduct * (totalResellersReward / 100));
+                  totalPurchasedProducts += totalAmountProduct;
+                  totalProfitProducts += totalproductResellersReward;
+                })
+              ]);
 
-              // if (resellerUser.salesHistorySeller) {
-              //   Object.keys(resellerUser.salesHistorySeller).forEach(storeId => {
-              //     resellerUser.salesHistorySeller[storeId].forEach(productDetails => {
-              //       //console.log('Sales History Seller Product Details:', productDetails);
-              //       const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
-              //       const totalResellersRewardd = productDetails.resellers_reward ?? 0.0
-              //       const totalproductResellersReward = (parseFloat(totalAmountProduct) * (totalResellersRewardd / 100));
-              //       totalPurchased += parseFloat(totalAmountProduct);
-              //       totalResellersReward += parseFloat(totalproductResellersReward);
-              //       console.log(`salesHistorySellerRR : ${totalResellersRewardd}`);
-              //     });
-              //   });
-              // }
-
-              if (resellerUser.approvalcheckoutBuyer) {
-                Object.keys(resellerUser.approvalcheckoutBuyer).forEach(storeId => {
-                  resellerUser.approvalcheckoutBuyer[storeId].forEach(productDetails => {
-                    //console.log('Approval Checkout Buyer Product Details:', productDetails);
-                    const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
-                    const totalResellersReward = parseFloat(productDetails.resellers_reward ?? 0);
-                    const totalproductResellersReward = (parseFloat(totalAmountProduct) * (totalResellersReward / 100));
-                    totalPurchasedProducts += parseFloat(totalAmountProduct);
-                    totalProfitProducts += parseFloat(totalproductResellersReward);
-                    //totalResellersProductRewardPercentage += totalResellersReward;
-                    console.log(`approvalCheckoutBuyerRR : ${totalResellersReward}`);
-                    console.log(`approvalCheckoutBuyerRRPlused : ${totalResellersProductRewardPercentage}`);
-                  });
-                });
-              }
-
-              if (resellerUser.salesHistoryBuyer) {
-                Object.keys(resellerUser.salesHistoryBuyer).forEach(storeId => {
-                  resellerUser.salesHistoryBuyer[storeId].forEach(productDetails => {
-                    //console.log('Sales History Buyer Product Details:', productDetails);
-                    const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
-                    const totalResellersReward = parseFloat(productDetails.resellers_reward ?? 0);
-                    const totalproductResellersReward = (parseFloat(totalAmountProduct) * (totalResellersReward / 100));
-                    totalPurchasedProducts += parseFloat(totalAmountProduct);
-                    totalProfitProducts += parseFloat(totalproductResellersReward);
-                    //totalResellersProductRewardPercentage += totalResellersReward;
-                    console.log(`salesHistoryBuyerRRPlused : ${totalResellersProductRewardPercentage}`);
-                  });
-                });
-              }
-
-              for (const user of usersWithApprovalsCheckoutSeller) {
+              // Handling usersWithApprovalsCheckoutSeller in parallel
+              await Promise.all(usersWithApprovalsCheckoutSeller.map(async (user) => {
                 if (user.approvalcheckout && user.approvalcheckout[resellerId]) {
-                  const approvalCheckouts = user.approvalcheckout[resellerId]
+                  const approvalCheckouts = user.approvalcheckout[resellerId];
                   for (const approvals of approvalCheckouts) {
-                    const { storeId, productId, quantity, totalPrice, productName,
-                      storeIdBuyer, walletAddressBuyer, dateAndTime, dateOfApprovalCheckout,
-                      resellers_reward } = approvals;
-                    const sellerAccount = await collection.findOne({ storeId: storeId });
-                    const totalAmount = totalPrice.replace(/[^\d.-]/g, '')
-                    const totalAmountProduct = parseFloat(totalAmount);
-                    const resellersReward = parseFloat(resellers_reward ?? 0)
-                    const totalproductResellersReward = (parseFloat(totalAmountProduct) * (resellersReward / 100));
-                    totalPurchased += parseFloat(totalAmountProduct);
-                    totalResellersReward += parseFloat(totalproductResellersReward);
+                    const totalAmountProduct = parseFloat(approvals.totalPrice.replace(/[^\d.-]/g, ''));
+                    const resellersReward = parseFloat(approvals.resellers_reward ?? 0);
+                    const totalproductResellersReward = (totalAmountProduct * (resellersReward / 100));
+                    totalPurchased += totalAmountProduct;
+                    totalResellersReward += totalproductResellersReward;
                     totalResellersProductRewardPercentage += resellersReward;
-                    console.log(`checkoutApprovalRR : ${totalproductResellersReward}`);
-                    const sellerWalletAddress = sellerAccount.walletAddress;
-                    const sellerCountry = sellerAccount.country;
-                    const sellerCity = sellerAccount.cityAddress;
-                    const sellerId = storeId;
-                    const productDetailsEach = {
-                      sponsorId: sellerId,
-                      userId: storeIdBuyer,
-                      userName: sellerAccount.fullName,
-                      level: 0,
-                      totalPurchased: totalAmountProduct.toFixed(2),
-                      totalResellersReward: totalproductResellersReward.toFixed(2),
-                      sellersWalletAddress: sellerWalletAddress,
-                      currencySymbol: sellerAccount.currencySymbol,
-                      usdRate: sellerAccount.usdtRate,
-                      cityReseller: sellerAccount.cityAddress,
-                      totalPurchasedProducts: '0',
-                      totalProfitProducts: '0',
-                      totalWithdrawalAmountUser,
-                      totalF3WithdrawalUser,
-                      totalResellersProductRewardPercentage: resellersReward,
-                      totalResellers: resellerUser.resellersMember ? resellerUser.resellersMember.length : 0
-                    };
-                    withdrawaScreenProducts.push(productDetailsEach);
-                  }
-                }
-              }
 
-              for (const user of userWithSalesHistorySeller) {
-                if (user.salesHistorySeller && user.salesHistorySeller[resellerId]) {
-                  const salesSeller = user.salesHistorySeller[resellerId]
-                  for (const sales of salesSeller) {
-                    const { storeId, productId, quantity, totalPrice, productName,
-                      storeIdBuyer, walletAddressBuyer, dateAndTime, dateOfApprovalCheckout,
-                      resellers_reward } = sales;
-                    const sellerAccount = await collection.findOne({ storeId: storeId });
-                    const totalAmount = totalPrice.replace(/[^\d.-]/g, '')
-                    const totalAmountProduct = parseFloat(totalAmount);
-                    const resellersReward = parseFloat(resellers_reward ?? 0)
-                    const totalproductResellersReward = (parseFloat(totalAmountProduct) * (resellersReward / 100));
-                    totalPurchased += parseFloat(totalAmountProduct);
-                    totalResellersReward += parseFloat(totalproductResellersReward);
-                    totalResellersProductRewardPercentage += resellersReward;
-                    console.log(`salesHistoryRR : ${resellersReward}`);
-                    const sellerWalletAddress = sellerAccount.walletAddress;
-                    const sellerCountry = sellerAccount.country;
-                    const sellerCity = sellerAccount.cityAddress;
-                    const sellerId = storeId;
                     const productDetailsEach = {
-                      sponsorId: sellerId,
-                      userId: storeIdBuyer,
-                      userName: sellerAccount.fullName,
-                      level: 0,
+                      sponsorId: approvals.storeId,
+                      userId: approvals.storeIdBuyer,
+                      userName: user.fullName,
+                      level: levels + 1,
                       totalPurchased: totalAmountProduct.toFixed(2),
                       totalResellersReward: totalproductResellersReward.toFixed(2),
-                      sellersWalletAddress: sellerWalletAddress,
-                      currencySymbol: sellerAccount.currencySymbol,
-                      usdRate: sellerAccount.usdtRate,
-                      cityReseller: sellerAccount.cityAddress,
+                      sellersWalletAddress: user.walletAddress,
+                      currencySymbol: user.currencySymbol,
+                      usdRate: user.usdtRate,
+                      cityReseller: user.cityAddress,
                       totalPurchasedProducts: '0',
                       totalProfitProducts: '0',
                       totalWithdrawalAmountUser,
@@ -4985,7 +4857,7 @@ app.get('/getResellerViewOff', async (req, res) => {
                     withdrawaScreenProducts.push(productDetailsEach);
                   }
                 }
-              }
+              }));
 
               currentLevelMembers.push({
                 sponsorId: resellerUser.storeId,
@@ -5006,83 +4878,49 @@ app.get('/getResellerViewOff', async (req, res) => {
                 totalResellers: resellerUser.resellersMember ? resellerUser.resellersMember.length : 0
               });
 
-
-
               nextLevelIds.push(resellerId);
             }
-          }
+          }));
         }
-      }
+      }));
 
       allMembers = [...allMembers, ...currentLevelMembers];
       currentLevelIds = nextLevelIds;
       levels++;
     }
+
     if (storeRequests) {
-      Object.keys(storeRequests).forEach(subRequestName => {
-        const requestsArray = storeRequests[subRequestName];
-        requestsArray.forEach(storeRequest => {
-          storeRequest.requestProducts.forEach(storeRequest => {
-            //console.log(storeRequest);
-            const withdrawal = storeRequest.receivableAmount.replace(/[^\d.-]/g, '');
-            const withdrawalF3 = storeRequest.f3ValueOfWithdraw.replace(/[^\d.-]/g, '');
-            withdrawalAmount += parseFloat(withdrawal);
-            f3ValueOfWithdrawalAmount += parseFloat(withdrawalF3);
-          });
-        });
-      });
-    };
-
-    if (user.checkoutapproval) {
-      Object.keys(user.checkoutapproval).forEach(storeId => {
-        user.checkoutapproval[storeId].forEach(productDetails => {
-          //console.log('Approval Checkout Seller Product Details:', productDetails);
-          const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
-          const totalResellersRewardd = productDetails.resellers_reward ?? 0.0
-          const totalproductResellersReward = (parseFloat(totalAmountProduct) * (totalResellersRewardd / 100));
-          totalPurchasedOfLoggedInUser += parseFloat(totalAmountProduct);
+      Object.values(storeRequests).flat().forEach(storeRequest => {
+        storeRequest.requestProducts.forEach(storeRequest => {
+          const withdrawal = storeRequest.receivableAmount.replace(/[^\d.-]/g, '');
+          const withdrawalF3 = storeRequest.f3ValueOfWithdraw.replace(/[^\d.-]/g, '');
+          withdrawalAmount += parseFloat(withdrawal);
+          f3ValueOfWithdrawalAmount += parseFloat(withdrawalF3);
         });
       });
     }
 
-    if (user.salesHistorySeller) {
-      Object.keys(user.salesHistorySeller).forEach(storeId => {
-        user.salesHistorySeller[storeId].forEach(productDetails => {
-          //console.log('Sales History Seller Product Details:', productDetails);
-          const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
-          const totalResellersRewardd = productDetails.resellers_reward ?? 0.0
-          const totalproductResellersReward = (parseFloat(totalAmountProduct) * (totalResellersRewardd / 100));
-          totalPurchasedOfLoggedInUser += parseFloat(totalAmountProduct);
-        });
-      });
-    }
-
-    if (user.approvalcheckoutBuyer) {
-      Object.keys(user.approvalcheckoutBuyer).forEach(storeId => {
-        user.approvalcheckoutBuyer[storeId].forEach(productDetails => {
-          //console.log('Approval Checkout Buyer Product Details:', productDetails);
-          const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
-          const totalResellersReward = parseFloat(productDetails.resellers_reward ?? 0);
-          const totalproductResellersReward = (parseFloat(totalAmountProduct) * (totalResellersReward / 100));
-          totalPurchasedOfLoggedInUser += parseFloat(totalAmountProduct);
-        });
-      });
-    }
-
-    if (user.salesHistoryBuyer) {
-      Object.keys(user.salesHistoryBuyer).forEach(storeId => {
-        user.salesHistoryBuyer[storeId].forEach(productDetails => {
-          //console.log('Sales History Buyer Product Details:', productDetails);
-          const totalAmountProduct = productDetails.totalPrice.replace(/[^\d.-]/g, '');
-          const totalResellersReward = parseFloat(productDetails.resellers_reward ?? 0);
-          const totalproductResellersReward = (parseFloat(totalAmountProduct) * (totalResellersReward / 100));
-          totalPurchasedOfLoggedInUser += parseFloat(totalAmountProduct);
-        });
-      });
-    }
+    await Promise.all([
+      user.checkoutapproval && Object.values(user.checkoutapproval).flat().forEach(productDetails => {
+        const totalAmountProduct = parseFloat(productDetails.totalPrice.replace(/[^\d.-]/g, ''));
+        totalPurchasedOfLoggedInUser += totalAmountProduct;
+      }),
+      user.salesHistorySeller && Object.values(user.salesHistorySeller).flat().forEach(productDetails => {
+        const totalAmountProduct = parseFloat(productDetails.totalPrice.replace(/[^\d.-]/g, ''));
+        totalPurchasedOfLoggedInUser += totalAmountProduct;
+      }),
+      user.approvalcheckoutBuyer && Object.values(user.approvalcheckoutBuyer).flat().forEach(productDetails => {
+        const totalAmountProduct = parseFloat(productDetails.totalPrice.replace(/[^\d.-]/g, ''));
+        totalPurchasedOfLoggedInUser += totalAmountProduct;
+      }),
+      user.salesHistoryBuyer && Object.values(user.salesHistoryBuyer).flat().forEach(productDetails => {
+        const totalAmountProduct = parseFloat(productDetails.totalPrice.replace(/[^\d.-]/g, ''));
+        totalPurchasedOfLoggedInUser += totalAmountProduct;
+      })
+    ]);
 
     const usdtRate = parseFloat(user.usdtRate);
-    const forecastedProfit = ((totalPurchasedOfLoggedInUser / usdtRate) * 3) ?? 0.0
+    const forecastedProfit = ((totalPurchasedOfLoggedInUser / usdtRate) * 3) ?? 0.0;
     const userDetailsWithdrawals = {
       withdrawalAmount: withdrawalAmount,
       f3ValueOfWithdrawalAmount: f3ValueOfWithdrawalAmount,
@@ -5090,12 +4928,13 @@ app.get('/getResellerViewOff', async (req, res) => {
       forecastedProfit: forecastedProfit,
       usdRate: user.usdtRate
     };
+
     return res.status(200).json({ members: allMembers, withdrawScreens: withdrawaScreenProducts, userDetails: userDetailsWithdrawals });
   } catch (error) {
     console.error('Error fetching reseller view:', error);
     return res.status(500).json({ error: 'Internal server error' });
   } finally {
-    client.close();
+    if (client) client.close();
   }
 });
 
@@ -5826,6 +5665,35 @@ app.get('/getMyDroplets', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
+    let levels = 0;
+    let currentLevelIds = [storeId];
+    let allMembers = [];
+    let multiplierQuantity = 0;
+
+    while (levels < 1 && currentLevelIds.length > 0) {
+      let nextLevelIds = [];
+      let currentLevelMembers = [];
+
+      for (let id of currentLevelIds) {
+        let member = await collection.findOne({ storeId: id });
+        if (member && member.resellersMember) {
+          for (let resellerId of member.resellersMember) {
+            let resellerUser = await collection.findOne({ storeId: resellerId });
+            if (resellerUser) {
+               if(Array.isArray(resellerUser.myDroplets)){
+                multiplierQuantity = resellerUser.myDroplets.length;
+               };
+               nextLevelIds.push(resellerId);
+            }
+          }
+        }
+      }
+
+      allMembers = [...allMembers, ...currentLevelMembers];
+      currentLevelIds = nextLevelIds;
+      levels++;
+    };
+
     // Step 2: Retrieve the myDroplets array
     const myDroplets = user.myDroplets || [];
 
@@ -5855,7 +5723,8 @@ app.get('/getMyDroplets', async (req, res) => {
     // Step 4: Send the response
     res.status(200).json({
       myDroplets: dropletsData,
-      tokenBalance: formattedBalance
+      tokenBalance: formattedBalance,
+      multiplierQuantity : multiplierQuantity
     });
   } catch (error) {
     console.error('Error Retrieving Droplets and Token Balance:', error);
