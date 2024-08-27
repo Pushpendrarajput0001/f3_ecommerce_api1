@@ -5882,11 +5882,11 @@ app.get('/getGroupDropletsHistory',async(req,res)=>{
 });
 
 app.get('boosterFeesMyDroplet', async (req, res) => {
-  const { storeId, walletAddress } = req.query;
+  const { storeId, walletAddress,f3Amount,usdValueOfF3,senderWalletAddress,dateAndTime } = req.query;
 });
 
 app.get('commissionRequestGroupDroplet', async (req, res) => {
-  const { storeId, walletAddress } = req.query;
+  const { storeId, walletAddress,f3Amount,usdValueOfF3,senderWalletAddress,dateAndTime } = req.query;
 });
 
 app.listen(PORT, '192.168.29.149', () => {
