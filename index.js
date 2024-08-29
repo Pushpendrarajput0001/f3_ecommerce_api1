@@ -5702,6 +5702,7 @@ app.get('/getMyDroplets', async (req, res) => {
 
     // Extract the required fields from each droplet
     const dropletsData = myDroplets.map(droplet => ({
+      storeId : storeId,
       uniqueId: droplet.uniqueId,
       amount: droplet.amount,
       f3Value: droplet.f3Value,
@@ -5710,20 +5711,23 @@ app.get('/getMyDroplets', async (req, res) => {
     }));
 
     // Step 3: Retrieve all other users' droplets except the requested user
-    const allUsersDroplet = await collection.aggregate([
-      { $match: { storeId: { $ne: storeId } } },
-      { $unwind: "$myDroplets" },
-      { $limit: 99 },
-      {
-        $project: {
-          uniqueId: "$myDroplets.uniqueId",
-          amount: "$myDroplets.amount",
-          f3Value: "$myDroplets.f3Value",
-          f3Price: "$myDroplets.f3Price",
-          dateAndTime: "$myDroplets.dateAndTime"
-        }
+   // Retrieve all other users' droplets except the requested user, including storeId
+   const allUsersDroplet = await collection.aggregate([
+    { $match: { storeId: { $ne: storeId } } },
+    { $unwind: "$myDroplets" },
+    { $limit: 99 },
+    {
+      $project: {
+        storeId: 1,
+        uniqueId: "$myDroplets.uniqueId",
+        amount: "$myDroplets.amount",
+        f3Value: "$myDroplets.f3Value",
+        f3Price: "$myDroplets.f3Price",
+        dateAndTime: "$myDroplets.dateAndTime"
       }
-    ]).toArray();
+    }
+  ]).toArray();
+  
 
     // Step 4: Get the token balance of the provided wallet address
     const contract = new web3.eth.Contract([
