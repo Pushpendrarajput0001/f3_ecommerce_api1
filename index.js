@@ -5960,7 +5960,6 @@ app.get('/getGroupDropletsHistory', async (req, res) => {
   }
 });
 
-
 app.get('/boosterFeesMyDroplet', async (req, res) => {
   const { storeId, walletAddress, f3Amount, usdValueOfF3, receiverWalletAddress, dateAndTime } = req.query;
   
