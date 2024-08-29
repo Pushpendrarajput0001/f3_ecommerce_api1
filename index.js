@@ -5901,35 +5901,65 @@ app.get('/getMyDropletsHistory', async (req, res) => {
   }
 });
 
-app.get('/getGroupDropletsHistory',async(req,res)=>{
+app.get('/getGroupDropletsHistory', async (req, res) => {
   const { storeId, walletAddress, uniqueId } = req.query;
   const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
   const db = client.db('f3_ecommerce');
   const collection = db.collection('users');
+
   try {
+    // Find the user with the provided storeId
     const user = await collection.findOne({ storeId: storeId });
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const groupDropletsHistory = user.groupDropletsHistory || [];
+    let levels = 0;
+    let currentLevelIds = [storeId];
+    let groupDropletsHistory = [];
 
-    const dropletsData = groupDropletsHistory.map(droplet => ({
-      uniqueId: droplet.uniqueId,
-      amount: droplet.amount,
-      f3Value: droplet.f3Value,
-      f3Price: droplet.f3Price,
-      dateAndTime: droplet.dateAndTime
-    }));
-    res.status(200).json({groupDropletsHistory: dropletsData});
+    // We want only the level 1 users
+    while (levels < 1 && currentLevelIds.length > 0) {
+      let nextLevelIds = [];
+
+      for (let id of currentLevelIds) {
+        let member = await collection.findOne({ storeId: id });
+        if (member && member.resellersMember) {
+          for (let resellerId of member.resellersMember) {
+            let resellerUser = await collection.findOne({ storeId: resellerId });
+            if (resellerUser && Array.isArray(resellerUser.myDroplets)) {
+              // Collect droplets' details from the resellerUser
+              resellerUser.myDroplets.forEach(droplet => {
+                groupDropletsHistory.push({
+                  idNumber : resellerId,
+                  uniqueId: droplet.uniqueId,
+                  amount: droplet.amount,
+                  f3Value: droplet.f3Value,
+                  f3Price: droplet.f3Price,
+                  dateAndTime: droplet.dateAndTime
+                });
+              });
+              nextLevelIds.push(resellerId);
+            }
+          }
+        }
+      }
+
+      currentLevelIds = nextLevelIds;
+      levels++;
+    }
+
+    // Send the collected droplets data as the response
+    res.status(200).json({ groupDropletsHistory });
   } catch (error) {
-    console.log(`Interenal Server Error : ${error}`);
+    console.log(`Internal Server Error: ${error}`);
     res.status(500).json({ error: `Internal server error: ${error}` });
   } finally {
     client.close();
   }
 });
+
 
 app.get('/boosterFeesMyDroplet', async (req, res) => {
   const { storeId, walletAddress, f3Amount, usdValueOfF3, receiverWalletAddress, dateAndTime } = req.query;
