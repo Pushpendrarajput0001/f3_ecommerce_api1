@@ -5727,7 +5727,7 @@ app.get('/getMyDroplets', async (req, res) => {
       }
     }
   ]).toArray();
-  
+
 
     // Step 4: Get the token balance of the provided wallet address
     const contract = new web3.eth.Contract([
@@ -5931,13 +5931,106 @@ app.get('/getGroupDropletsHistory',async(req,res)=>{
   }
 });
 
-app.get('boosterFeesMyDroplet', async (req, res) => {
-  const { storeId, walletAddress,f3Amount,usdValueOfF3,senderWalletAddress,dateAndTime } = req.query;
+app.get('/boosterFeesMyDroplet', async (req, res) => {
+  const { storeId, walletAddress, f3Amount, usdValueOfF3, receiverWalletAddress, dateAndTime } = req.query;
+  
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  const db = client.db('f3_ecommerce');
+  const collection = db.collection('users');
+
+  try {
+    // Step 1: Find the user with the provided storeId
+    const user = await collection.findOne({ storeId: storeId });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Step 2: Create or update the paymentRequestBoosterFeeDroplet object
+    const newRequest = {
+      walletAddress,
+      f3Amount,
+      usdValueOfF3,
+      receiverWalletAddress,
+      dateAndTime
+    };
+
+    if (!user.paymentRequestBoosterFeeDroplet) {
+      user.paymentRequestBoosterFeeDroplet = { storeId: [] };
+    }
+
+    // Step 3: Add the new request to the storeId array within paymentRequestBoosterFeeDroplet
+    user.paymentRequestBoosterFeeDroplet.storeId.push(newRequest);
+
+    // Step 4: Update the user document in the database
+    await collection.updateOne(
+      { storeId: storeId },
+      { $set: { paymentRequestBoosterFeeDroplet: user.paymentRequestBoosterFeeDroplet } }
+    );
+
+    res.status(200).json({ message: 'Payment request added successfully', paymentRequestBoosterFeeDroplet: user.paymentRequestBoosterFeeDroplet });
+  } catch (error) {
+    console.error('Error processing booster fee request:', error);
+    res.status(500).json({ error: `Internal server error: ${error}` });
+  } finally {
+    client.close();
+  }
 });
 
-app.get('commissionRequestGroupDroplet', async (req, res) => {
-  const { storeId, walletAddress,f3Amount,usdValueOfF3,senderWalletAddress,dateAndTime } = req.query;
+app.get('/commissionRequestGroupDroplet', async (req, res) => {
+  const { storeId, storeIdSeller, walletAddress, f3Amount, usdValueOfF3, senderWalletAddress, dateAndTime } = req.query;
+
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  const db = client.db('f3_ecommerce');
+  const collection = db.collection('users');
+
+  try {
+    // Step 1: Find the user with the provided storeId
+    const user = await collection.findOne({ storeId: storeId });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Step 2: Create or update the commissionRequestGroupDroplet object
+    const newRequest = {
+      walletAddress,
+      f3Amount,
+      usdValueOfF3,
+      senderWalletAddress,
+      dateAndTime
+    };
+
+    if (!user.commissionRequestGroupDroplet) {
+      user.commissionRequestGroupDroplet = {};
+    }
+
+    // If the storeIdSeller array doesn't exist, initialize it as an empty array
+    if (!user.commissionRequestGroupDroplet[storeIdSeller]) {
+      user.commissionRequestGroupDroplet[storeIdSeller] = [];
+    }
+
+    // Step 3: Add the new request to the storeIdSeller array within commissionRequestGroupDroplet
+    user.commissionRequestGroupDroplet[storeIdSeller].push(newRequest);
+
+    // Step 4: Update the user document in the database
+    await collection.updateOne(
+      { storeId: storeId },
+      { $set: { commissionRequestGroupDroplet: user.commissionRequestGroupDroplet } }
+    );
+
+    res.status(200).json({ 
+      message: 'Commission request added successfully', 
+      commissionRequestGroupDroplet: user.commissionRequestGroupDroplet 
+    });
+  } catch (error) {
+    console.error('Error processing commission request:', error);
+    res.status(500).json({ error: `Internal server error: ${error}` });
+  } finally {
+    client.close();
+  }
 });
+
 
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`)
