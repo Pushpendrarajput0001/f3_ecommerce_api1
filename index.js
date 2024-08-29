@@ -5658,6 +5658,9 @@ app.get('/getMyDroplets', async (req, res) => {
   const web3 = new Web3(new Web3.providers.HttpProvider(BSC_RPC_URL));
 
   try {
+    // const usersAll = await collection.find({}).toArray();
+    // console.log(usersAll);
+
     // Step 1: Find the user with the provided storeId
     const user = await collection.findOne({ storeId: storeId });
 
@@ -5694,7 +5697,7 @@ app.get('/getMyDroplets', async (req, res) => {
       levels++;
     };
 
-    // Step 2: Retrieve the myDroplets array
+    // Step 2: Retrieve the myDroplets array for the requested user
     const myDroplets = user.myDroplets || [];
 
     // Extract the required fields from each droplet
@@ -5706,7 +5709,23 @@ app.get('/getMyDroplets', async (req, res) => {
       dateAndTime: droplet.dateAndTime
     }));
 
-    // Step 3: Get the token balance of the provided wallet address
+    // Step 3: Retrieve all other users' droplets except the requested user
+    const allUsersDroplet = await collection.aggregate([
+      { $match: { storeId: { $ne: storeId } } },
+      { $unwind: "$myDroplets" },
+      { $limit: 99 },
+      {
+        $project: {
+          uniqueId: "$myDroplets.uniqueId",
+          amount: "$myDroplets.amount",
+          f3Value: "$myDroplets.f3Value",
+          f3Price: "$myDroplets.f3Price",
+          dateAndTime: "$myDroplets.dateAndTime"
+        }
+      }
+    ]).toArray();
+
+    // Step 4: Get the token balance of the provided wallet address
     const contract = new web3.eth.Contract([
       {
         constant: true,
@@ -5720,14 +5739,41 @@ app.get('/getMyDroplets', async (req, res) => {
     const balance = await contract.methods.balanceOf(walletAddress).call();
     const formattedBalance = web3.utils.fromWei(balance, 'ether'); // Assuming the token has 18 decimals
 
-    // Step 4: Send the response
+    // Step 5: Send the response
     res.status(200).json({
       myDroplets: dropletsData,
+      allUsersDroplet: allUsersDroplet,
       tokenBalance: formattedBalance,
       multiplierQuantity : multiplierQuantity
     });
   } catch (error) {
     console.error('Error Retrieving Droplets and Token Balance:', error);
+    res.status(500).json({ error: `Internal server error: ${error}` });
+  } finally {
+    client.close();
+  }
+});
+
+app.get('/deleteUserDroplets', async (req, res) => {
+  const { storeId } = req.query;
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  const db = client.db('f3_ecommerce');
+  const collection = db.collection('users');
+
+  try {
+    // Find and delete the user's myDroplets array
+    const result = await collection.updateOne(
+      { storeId: storeId },
+      { $unset: { myDroplets: "" } }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(404).json({ error: 'User not found or no droplets to delete' });
+    }
+
+    res.status(200).json({ message: 'Droplets deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting droplets:', error);
     res.status(500).json({ error: `Internal server error: ${error}` });
   } finally {
     client.close();
