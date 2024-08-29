@@ -5715,7 +5715,7 @@ app.get('/getMyDroplets', async (req, res) => {
    const allUsersDroplet = await collection.aggregate([
     { $match: { storeId: { $ne: storeId } } },
     { $unwind: "$myDroplets" },
-    { $limit: 99 },
+    { $limit: 129 },
     {
       $project: {
         storeId: 1,
