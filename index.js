@@ -2650,7 +2650,7 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
                 providerWalletAddress,
                 f3Amount,
                 usdValueOfF3,
-                txHashBoosterFee,
+                gcTxHashManiaBooter :txHashBoosterFee,
                 dateAndTimeOfApproved,
                 ...storeRequest
               };
@@ -2819,7 +2819,7 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
                 providerWalletAddress,
                 f3Amount,
                 usdValueOfF3,
-                txHashDropletCommission,
+                gcTxHashManiaBooter : txHashDropletCommission,
                 dateAndTimeOfApproved,
                 ...storeRequest
               };
@@ -6290,22 +6290,22 @@ app.get('/getGroupDropletsHistory', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const myDropletsHistory = user.myDropletsHistory || [];
+    // const myDropletsHistory = user.myDropletsHistory || [];
 
-    myDropletsHistory.map(droplet => {
-      if(droplet.txhash){
-        groupDropletsHistory.push({
-          idNumber : resellerId,
-          uniqueId: droplet.uniqueId,
-          amount: droplet.amount,
-          f3Value: droplet.f3Value,
-          f3Price: droplet.f3Price,
-          dateAndTime: droplet.dateAndTime
-        });
-      };
-    }
-    );
-    
+    // myDropletsHistory.map(droplet => {
+    //   if(droplet.txhash){
+    //     groupDropletsHistory.push({
+    //       idNumber : resellerId,
+    //       uniqueId: droplet.uniqueId,
+    //       amount: droplet.amount,
+    //       f3Value: droplet.f3Value,
+    //       f3Price: droplet.f3Price,
+    //       dateAndTime: droplet.dateAndTime
+    //     });
+    //   };
+    // }
+    // );
+
     let levels = 0;
     let currentLevelIds = [storeId];
     let groupDropletsHistory = [];
