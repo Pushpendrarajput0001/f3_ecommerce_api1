@@ -6008,6 +6008,7 @@ app.get('/getMyDroplets', async (req, res) => {
     let currentLevelIds = [storeId];
     let allMembers = [];
     let multiplierQuantity = 1;
+    let isRequestPending = 'No';
 
     while (levels < 1 && currentLevelIds.length > 0) {
       let nextLevelIds = [];
@@ -6045,7 +6046,18 @@ app.get('/getMyDroplets', async (req, res) => {
       f3Price: droplet.f3Price,
       dateAndTime: droplet.dateAndTime
     }));
+    const otherUsersWithCommissionRequest = await collection.find({
+      'commissionRequestGroupDroplet': {
+        $exists: true,
+      }
+    }).toArray();
 
+    for (const otherUser of otherUsersWithCommissionRequest) {
+      if (otherUser.commissionRequestGroupDroplet && otherUser.commissionRequestGroupDroplet[storeId]) {
+        const storeIdRequests = otherUser.commissionRequestGroupDroplet[storeId];
+        isRequestPending === 'Yes';
+      }
+    }
     // Step 3: Retrieve all other users' droplets except the requested user
    // Retrieve all other users' droplets except the requested user, including storeId
    const allUsersDroplet = await collection.aggregate([
@@ -6084,7 +6096,8 @@ app.get('/getMyDroplets', async (req, res) => {
       myDroplets: dropletsData,
       allUsersDroplet: allUsersDroplet,
       tokenBalance: formattedBalance,
-      multiplierQuantity : multiplierQuantity
+      multiplierQuantity : multiplierQuantity,
+      isRequestPending
     });
   } catch (error) {
     console.error('Error Retrieving Droplets and Token Balance:', error);
@@ -6228,7 +6241,33 @@ app.get('/getMyDropletsHistory', async (req, res) => {
       f3Price: droplet.f3Price,
       dateAndTime: droplet.dateAndTime
     }));
-    res.status(200).json({myDropletsHistory: dropletsData});
+    let totalUSDValueOfBoosterFee = 0;
+    const usersWithBoosterFeeApprovedRequest = await collection.find({
+      'storeId': storeId, // Replace 'userType' with the actual field name distinguishing sellerUser
+      'approvedPaymentRequestBoosterFee': {
+        $exists: true,
+      }
+    }).toArray();
+    usersWithBoosterFeeApprovedRequest.reduce((acc, user) => {
+      const buyerWalletAddress = user.walletAddress;
+      const storeRequests = user.approvedPaymentRequestBoosterFee;
+
+      // Iterate over the keys of storeRequests object
+      Object.keys(storeRequests).forEach(subRequestName => {
+        const requestsArray = storeRequests[subRequestName];
+
+        // Iterate over the array of requests for each subRequestName
+        requestsArray.forEach(storeRequest => {
+          if (storeRequest.requestProducts && Array.isArray(storeRequest.requestProducts)) {
+            storeRequest.requestProducts.forEach(product => {
+              const usdValueOfF3 = product.usdValueOfF3;
+              totalUSDValueOfBoosterFee += parseFloat(usdValueOfF3);
+            });
+          }
+        });
+      });
+    }),
+    res.status(200).json({myDropletsHistory: dropletsData,totalUSDValueOfBoosterFee : totalUSDValueOfBoosterFee});
   } catch (error) {
     console.log(`Interenal Server Error : ${error}`);
     res.status(500).json({ error: `Internal server error: ${error}` });
