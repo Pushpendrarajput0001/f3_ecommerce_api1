@@ -1845,7 +1845,7 @@ app.get('/getRequestsOfPayments', async (req, res) => {
           }
         }
       }
-      
+
     } else {
       const storeId = user.storeId;
 
@@ -2540,6 +2540,13 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
       }
     }).toArray();
 
+    const usersWithBoosterFeeApprovedRequest = await collection.find({
+      'storeId': sellerStoreId, // Replace 'userType' with the actual field name distinguishing sellerUser
+      'approvedPaymentRequestBoosterFee': {
+        $exists: true,
+      }
+    }).toArray();
+
     const usersWithCreditApprovedRequest = await collection.find({
       'storeId': sellerStoreId, // Replace 'userType' with the actual field name distinguishing sellerUser
       'approvedpaymentRequestForCredit': {
@@ -2568,6 +2575,13 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
     const usersWithProfitShareApprovedRequest = await collection.find({
       'storeId': sellerStoreId, // Replace 'userType' with the actual field name distinguishing sellerUser
       'approvedProfitSharePayments': {
+        $exists: true,
+      }
+    }).toArray();
+
+    const userdsWithCommissionDropletApprovedRequest = await collection.find({
+      'storeId': sellerStoreId, // Replace 'userType' with the actual field name distinguishing sellerUser
+      'approvedDropletCommissionPayments': {
         $exists: true,
       }
     }).toArray();
@@ -2609,9 +2623,47 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
       return acc;
     }, []);
 
-
-
     response.requests.push(...approvedRequestsBuyers);
+
+    const approvedRequestsBoosterFee = usersWithBoosterFeeApprovedRequest.reduce((acc, user) => {
+      const buyerWalletAddress = user.walletAddress;
+      const storeRequests = user.approvedPaymentRequestBoosterFee;
+
+      // Iterate over the keys of storeRequests object
+      Object.keys(storeRequests).forEach(subRequestName => {
+        const requestsArray = storeRequests[subRequestName];
+
+        // Iterate over the array of requests for each subRequestName
+        requestsArray.forEach(storeRequest => {
+          if (storeRequest.requestProducts && Array.isArray(storeRequest.requestProducts)) {
+            storeRequest.requestProducts.forEach(product => {
+              const providerWalletAddress = product.senderWalletAddress;
+              const f3Amount = product.f3Amount;
+              const usdValueOfF3 = product.usdValueOfF3;
+              const txHashBoosterFee = product.txhash;
+              const dateAndTimeOfApproved = product.dateAndTimeOfApproved;
+              console.log(product);
+              const requestWithRequestType = {
+                buyerWalletAddress,
+                sellerWalletAddress: providerWalletAddress,
+                requestType: 'Booster Fee',
+                providerWalletAddress,
+                f3Amount,
+                usdValueOfF3,
+                txHashBoosterFee,
+                dateAndTimeOfApproved,
+                ...storeRequest
+              };
+              acc.push(requestWithRequestType);
+            });
+          }
+        });
+      });
+
+      return acc;
+    }, []);
+
+    response.requests.push(...approvedRequestsBoosterFee);
 
     const approvedRequestsMania = usersWithManiaApprovedRequest.reduce((acc, user) => {
       const buyerWalletAddress = user.walletAddress;
@@ -2630,7 +2682,6 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
 
       return acc;
     }, []);
-
 
 
     response.requests.push(...approvedRequestsMania);
@@ -2741,6 +2792,48 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
     }, []);
 
     response.requests.push(...approvedRequestsProfitShare);
+
+    const approvedRequestsDropletCommission = userdsWithCommissionDropletApprovedRequest.reduce((acc, user) => {
+      const buyerWalletAddress = user.walletAddress;
+      const storeRequests = user.approvedProfitSharePayments;
+
+      // Iterate over the keys of storeRequests object
+      Object.keys(storeRequests).forEach(subRequestName => {
+        const requestsArray = storeRequests[subRequestName];
+
+        // Iterate over the array of requests for each subRequestName
+        requestsArray.forEach(storeRequest => {
+          if (storeRequest.requestProducts && Array.isArray(storeRequest.requestProducts)) {
+            storeRequest.requestProducts.forEach(product => {
+              const providerWalletAddress = product.senderWalletAddress;
+              const f3Amount = product.f3Amount;
+              const usdValueOfF3 = product.usdValueOfF3;
+              const txHashDropletCommission = product.txhash;
+              const dateAndTimeOfApproved = product.dateAndTimeOfApproved;
+              console.log(product);
+
+              const requestWithRequestType = {
+                buyerWalletAddress,
+                sellerWalletAddress: providerWalletAddress,
+                requestType: 'Droplet Commission',
+                providerWalletAddress,
+                f3Amount,
+                usdValueOfF3,
+                txHashDropletCommission,
+                dateAndTimeOfApproved,
+                ...storeRequest
+              };
+              acc.push(requestWithRequestType);
+            });
+          }
+        });
+
+      });
+
+      return acc;
+    }, []);
+
+    response.requests.push(...approvedRequestsDropletCommission);
 
     console.log('buyersOne', usersWithBuyerApprovedRequest);
 
@@ -6300,6 +6393,141 @@ app.get('/commissionRequestGroupDroplet', async (req, res) => {
     res.status(500).json({ error: `Internal server error: ${error}` });
   } finally {
     client.close();
+  }
+});
+
+app.get('/approveDropletCommissionRequest', async (req, res) => {
+  const { buyerWalletAddress, sellerStoreId, txhash, dateAndTime } = req.query;
+
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  const db = client.db('f3_ecommerce');
+  const collection = db.collection('users');
+
+  try {
+    // Find the user with the buyerWalletAddress
+    const user = await collection.findOne({ walletAddress: buyerWalletAddress });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Find the paymentRequestProfitShare object map
+    const paymentRequestDC = user.commissionRequestGroupDroplet || {};
+    const paymentRequests = paymentRequestDC[sellerStoreId];
+
+    if (!paymentRequests) {
+      return res.status(404).json({ error: 'Request not found for the given sellerStoreID' });
+    }
+
+    // Copy the array and add the new values
+    const newRequestArray = paymentRequests.map(request => ({
+      ...request,
+      txhash,
+      dateAndTimeOfApproved: dateAndTime
+    }));
+
+    const newRequestObject = {
+      'requestProducts': [...newRequestArray]
+    };
+
+    console.log(newRequestObject);
+    console.log(dateAndTime);
+
+    // Initialize ApprovedPaymentRequestResellersReward if it doesn't exist
+    user.approvedDropletCommissionPayments = user.approvedDropletCommissionPayments || {};
+
+    if (!Array.isArray(user.approvedDropletCommissionPayments[sellerStoreId])) {
+      console.log(`Creating new ApprovedPaymentRequestResellersReward array for sellerStoreId ${sellerStoreId}`);
+      user.approvedDropletCommissionPayments[sellerStoreId] = [newRequestObject];
+    } else {
+      console.log(`Adding new request to existing ApprovedPaymentRequestResellersReward array for sellerStoreId ${sellerStoreId}`);
+      user.approvedDropletCommissionPayments[sellerStoreId].push(newRequestObject);
+    }
+
+    // Update the user document in the database
+    await collection.updateOne({ walletAddress: buyerWalletAddress }, { $set: user });
+
+    // Remove the request from paymentRequestResellersReward
+    delete paymentRequestDC[sellerStoreId];
+
+    await collection.updateOne(
+      { walletAddress: buyerWalletAddress },
+      {
+        $set: {
+          commissionRequestGroupDroplet: paymentRequestDC
+        }
+      }
+    );
+
+    res.json({ message: 'Request approved and moved to ApprovedPaymentRequestProfitShare' });
+  } catch (error) {
+    console.error('Error approving resellers request:', error);
+    return res.status(500).json({ error: `Internal server error: ${error}` });
+  } finally {
+    client.close();
+  }
+});
+
+app.get('/approveBoosterFeeRequest', async (req, res) => {
+  try {
+    const { buyerwalletAddress, dateAndTime, txhashGc, sellerStoreId } = req.query;
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by walletAddress
+    const user = await collection.findOne({ walletAddress: buyerwalletAddress });
+
+    if (!user) {
+      console.log(`User with walletAddress ${buyerwalletAddress} not found`);
+      return res.status(404).json({ error: `User with walletAddress ${buyerwalletAddress} not found` });
+    }
+
+    // Check if paymentRequestSeller object exists
+    if (user.paymentRequestBoosterFeeDroplet && user.paymentRequestBoosterFeeDroplet[sellerStoreId]) {
+      const storeIdRequests = user.paymentRequestBoosterFeeDroplet[sellerStoreId];
+
+      // Update each request object with dateAndTime, txhashBuyer, and txhashGc
+      storeIdRequests.forEach(request => {
+        request.dateAndTime = dateAndTime;
+        request.txhashGc = txhashGc;
+      });
+
+      // Create a copy of storeIdRequests for approvedRequestsSellers
+      const newRequestObject = {
+        'requestProducts': [...storeIdRequests]
+      };
+
+      // Ensure approvedPaymentRequestsSeller object exists and is an array
+      user.approvedPaymentRequestBoosterFee = user.approvedPaymentRequestBoosterFee || {};
+
+      // Add or update the approved requests under sellerStoreId in approvedPaymentRequestsSeller
+      if (!Array.isArray(user.approvedPaymentRequestBoosterFee[sellerStoreId])) {
+        console.log(`Creating new approvedPaymentRequestsSeller array for sellerStoreId ${sellerStoreId}`);
+        user.approvedPaymentRequestBoosterFee[sellerStoreId] = [newRequestObject];
+      } else {
+        console.log(`Adding new request to existing approvedPaymentRequestsSeller array for sellerStoreId ${sellerStoreId}`);
+        user.approvedPaymentRequestBoosterFee[sellerStoreId].push(newRequestObject);
+      }
+
+      // Save the updated user data
+      await collection.updateOne({ walletAddress: buyerwalletAddress }, { $set: user });
+
+      // Close MongoDB connection
+      await client.close();
+
+      console.log(`Payment requests updated and approved successfully for walletAddress ${buyerwalletAddress}`);
+
+      // Send response
+      res.status(200).json({ message: 'Payment requests updated and approved successfully', newRequestObject });
+    } else {
+      console.log(`Payment requests not found for sellerStoreId ${sellerStoreId}`);
+      res.status(404).json({ error: `Payment requests not found for sellerStoreId ${sellerStoreId}` });
+    }
+  } catch (error) {
+    console.error('Error updating and approving payment requests:', error);
+    res.status(500).json({ error: 'An error occurred while updating and approving payment requests' });
   }
 });
 
