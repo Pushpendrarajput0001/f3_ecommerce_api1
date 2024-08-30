@@ -1833,6 +1833,7 @@ app.get('/getRequestsOfPayments', async (req, res) => {
             ];
             const resellerRequest = {
               totalF3: storeIdRequests[0].f3Amount,
+              loggedUserWallet : user.walletAddress,
               senderWalletAddress : storeId[0].senderWalletAddress,
               usdValueOfF3: storeIdRequests[0].usdValueOfF3,
               dateAndTime: storeIdRequests[0].dateAndTime,
@@ -2326,6 +2327,7 @@ app.get('/getRequestsOfPayments', async (req, res) => {
           }
         ];
         const boosterFeeRequest = {
+          loggedUserWallet : user.walletAddress,
           totalF3: user.paymentRequestBoosterFeeDroplet[storeId][0].f3Amount,
           usdValueOfF3: user.paymentRequestBoosterFeeDroplet[storeId][0].usdValueOfF3,
           dateAndTime : user.paymentRequestBoosterFeeDroplet[storeId][0].dateAndTime,
@@ -2644,6 +2646,9 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
               const dateAndTimeOfApproved = product.dateAndTimeOfApproved;
               console.log(product);
               const requestWithRequestType = {
+                storeId : userSeller.storeId,
+                storeIdNumberSeller : user.storeId,
+                loggedUserWallet : userSeller.walletAddress,
                 buyerWalletAddress,
                 sellerWalletAddress: providerWalletAddress,
                 requestType: 'Booster Fee',
@@ -2815,6 +2820,9 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
               const requestWithRequestType = {
                 buyerWalletAddress,
                 sellerWalletAddress: providerWalletAddress,
+                storeId : userSeller.storeId,
+                storeIdNumberSeller : user.storeId,
+                loggedUserWallet : userSeller.walletAddress,
                 requestType: 'Droplet Commission',
                 providerWalletAddress,
                 f3Amount,
@@ -6321,6 +6329,7 @@ app.get('/getGroupDropletsHistory', async (req, res) => {
             let resellerUser = await collection.findOne({ storeId: resellerId });
             if (resellerUser && Array.isArray(resellerUser.myDroplets)) {
               // Collect droplets' details from the resellerUser
+              
               resellerUser.myDroplets.forEach(droplet => {
                 groupDropletsHistory.push({
                   idNumber : resellerId,
@@ -6336,7 +6345,6 @@ app.get('/getGroupDropletsHistory', async (req, res) => {
           }
         }
       }
-
       currentLevelIds = nextLevelIds;
       levels++;
     }
