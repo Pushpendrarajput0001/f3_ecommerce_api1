@@ -1537,6 +1537,11 @@ app.get('/getRequestsOfPayments', async (req, res) => {
         }
       }).toArray();
 
+      const otherUsersWithCommissionRequest = await collection.find({
+        'commissionRequestGroupDroplet': {
+          $exists: true,
+        }
+      }).toArray();
 
       const requestedStoreId = user.storeId; // Assuming user is the current user
 
@@ -1765,6 +1770,82 @@ app.get('/getRequestsOfPayments', async (req, res) => {
           }
         }
       }
+
+      for (const otherUser of otherUsersWithCommissionRequest) {
+        if (otherUser.commissionRequestGroupDroplet && otherUser.commissionRequestGroupDroplet[requestedStoreId]) {
+          const storeIdRequests = otherUser.commissionRequestGroupDroplet[requestedStoreId];
+          const buyerUser = await collection.findOne({ walletAddress: otherUser.walletAddress });
+          if (buyerUser) {
+            const buyerWalletAddress = buyerUser.walletAddress;
+            const sellerProducts = storeIdRequests.map(product => ({
+              productId: product.productId,
+              quantity: product.quantity,
+              totalPrice: product.totalPrice,
+              totalF3: product.totalF3Amount,
+              totalGc: product.totalGc,
+              sellerWalletAddress: user.walletAddress,
+              dateAndTime: product.dateAndTime,
+              lccAmount: product.lccAmount,
+              startedDateAndTime: product.startedDateAndTime,
+              paymentRequestedTimestampForCredit: product.paymentRequestedTimestampForCredit,
+              f3LiveOfThisTimeCredit: product.f3LiveOfThisTimeCredit
+            }));
+            const creditRequestRequest = {
+              totalF3: storeIdRequests[0].totalF3Amount,
+              totalGc: storeIdRequests[0].totalGc,
+              storeId: requestedStoreId,
+              buyerWalletAddress: buyerWalletAddress,
+              sellerWalletAddress: user.walletAddress,
+              requestType: 'Credit',
+              products: sellerProducts
+            };
+            const simpleJson = [
+              {
+                "id": 1,
+                "name": "John Doe",
+                "email": "john.doe@example.com",
+                "age": 25
+              },
+              {
+                "id": 2,
+                "name": "Jane Smith",
+                "email": "jane.smith@example.com",
+                "age": 30
+              },
+              {
+                "id": 3,
+                "name": "Emily Johnson",
+                "email": "emily.johnson@example.com",
+                "age": 22
+              },
+              {
+                "id": 4,
+                "name": "Michael Brown",
+                "email": "michael.brown@example.com",
+                "age": 35
+              },
+              {
+                "id": 5,
+                "name": "Sarah Davis",
+                "email": "sarah.davis@example.com",
+                "age": 28
+              }
+            ];
+            const resellerRequest = {
+              totalF3: storeIdRequests[0].f3Amount,
+              senderWalletAddress : storeId[0].senderWalletAddress,
+              usdValueOfF3: storeIdRequests[0].usdValueOfF3,
+              dateAndTime: storeIdRequests[0].dateAndTime,
+              storeId: buyerUser.storeId,
+              providerStoreId: requestedStoreId,
+              products: simpleJson,
+              requestType: 'Droplet Commission'
+            }
+            response.requests.push(resellerRequest);
+          }
+        }
+      }
+      
     } else {
       const storeId = user.storeId;
 
@@ -1794,6 +1875,12 @@ app.get('/getRequestsOfPayments', async (req, res) => {
         }
       }).toArray();
 
+      const otherUsersWithCommissionRequest = await collection.find({
+        'commissionRequestGroupDroplet': {
+          $exists: true,
+        }
+      }).toArray();
+
       const requestedStoreId = user.storeId; // Assuming user is the current user
 
       console.log('Requested StoreId:', requestedStoreId);
@@ -2020,6 +2107,82 @@ app.get('/getRequestsOfPayments', async (req, res) => {
           }
         }
       }
+
+      for (const otherUser of otherUsersWithCommissionRequest) {
+        if (otherUser.commissionRequestGroupDroplet && otherUser.commissionRequestGroupDroplet[requestedStoreId]) {
+          const storeIdRequests = otherUser.commissionRequestGroupDroplet[requestedStoreId];
+          const buyerUser = await collection.findOne({ walletAddress: otherUser.walletAddress });
+          if (buyerUser) {
+            const buyerWalletAddress = buyerUser.walletAddress;
+            const sellerProducts = storeIdRequests.map(product => ({
+              productId: product.productId,
+              quantity: product.quantity,
+              totalPrice: product.totalPrice,
+              totalF3: product.totalF3Amount,
+              totalGc: product.totalGc,
+              sellerWalletAddress: user.walletAddress,
+              dateAndTime: product.dateAndTime,
+              lccAmount: product.lccAmount,
+              startedDateAndTime: product.startedDateAndTime,
+              paymentRequestedTimestampForCredit: product.paymentRequestedTimestampForCredit,
+              f3LiveOfThisTimeCredit: product.f3LiveOfThisTimeCredit
+            }));
+            const creditRequestRequest = {
+              totalF3: storeIdRequests[0].totalF3Amount,
+              totalGc: storeIdRequests[0].totalGc,
+              storeId: requestedStoreId,
+              buyerWalletAddress: buyerWalletAddress,
+              sellerWalletAddress: user.walletAddress,
+              requestType: 'Credit',
+              products: sellerProducts
+            };
+            const simpleJson = [
+              {
+                "id": 1,
+                "name": "John Doe",
+                "email": "john.doe@example.com",
+                "age": 25
+              },
+              {
+                "id": 2,
+                "name": "Jane Smith",
+                "email": "jane.smith@example.com",
+                "age": 30
+              },
+              {
+                "id": 3,
+                "name": "Emily Johnson",
+                "email": "emily.johnson@example.com",
+                "age": 22
+              },
+              {
+                "id": 4,
+                "name": "Michael Brown",
+                "email": "michael.brown@example.com",
+                "age": 35
+              },
+              {
+                "id": 5,
+                "name": "Sarah Davis",
+                "email": "sarah.davis@example.com",
+                "age": 28
+              }
+            ];
+            const resellerRequest = {
+              totalF3: storeIdRequests[0].f3Amount,
+              senderWalletAddress : storeId[0].senderWalletAddress,
+              usdValueOfF3: storeIdRequests[0].usdValueOfF3,
+              dateAndTime: storeIdRequests[0].dateAndTime,
+              storeId: buyerUser.storeId,
+              providerStoreId: requestedStoreId,
+              products: simpleJson,
+              requestType: 'Droplet Commission'
+            }
+            response.requests.push(resellerRequest);
+          }
+        }
+      }
+
     };
 
 
@@ -2094,6 +2257,86 @@ app.get('/getRequestsOfPayments', async (req, res) => {
         };
 
         response.requests.push(buyerRequest);
+      }
+    }
+
+    let sellerUsersBoosterFee = {};
+    if (user.paymentRequestBoosterFeeDroplet) {
+      const storeIds = Object.keys(user.paymentRequestBoosterFeeDroplet);
+      for (const storeId of storeIds) {
+        const sellerStore = user.paymentRequestBoosterFeeDroplet[storeId][0].sellerId;
+        const SellerUser = await collection.findOne({ storeId: sellerStore });
+        sellerUsers[storeId] = SellerUser;
+      }
+
+      // Process buyer requests
+      for (const storeId of storeIds) {
+        const SellerUser = sellerUsers[storeId];
+        // const buyerProducts = user.paymentRequestBoosterFeeDroplet[storeId].map(product => ({
+        //   productId: 'product.productId',
+        //   quantity: 'product.quantity',
+        //   totalPrice: product.totalPrice,
+        //   totalF3: product.totalF3Amount,
+        //   totalGc: product.totalGc,
+        //   sellerWalletAddress: product.sellerId,
+        //   dateAndTime: product.dateAndTime,
+        //   startedDateAndTime: product.startedDateAndTime
+        // }));
+
+        // const buyerRequest = {
+        //   totalF3: user.paymentRequestBoosterFeeDroplet[storeId][0].totalF3Amount,
+        //   totalGc: user.paymentRequestBoosterFeeDroplet[storeId][0].totalGc,
+        //   storeId: user.paymentRequestBoosterFeeDroplet[storeId][0].sellerId,
+        //   sellerWalletAddress: SellerUser.walletAddress,
+        //   buyerWalletAddress: user.walletAddress,
+        //   requestType: 'Booster Fee',
+        //   products: buyerProducts
+        // };
+
+        const simpleJson = [
+          {
+            "id": 1,
+            "name": "John Doe",
+            "email": "john.doe@example.com",
+            "age": 25
+          },
+          {
+            "id": 2,
+            "name": "Jane Smith",
+            "email": "jane.smith@example.com",
+            "age": 30
+          },
+          {
+            "id": 3,
+            "name": "Emily Johnson",
+            "email": "emily.johnson@example.com",
+            "age": 22
+          },
+          {
+            "id": 4,
+            "name": "Michael Brown",
+            "email": "michael.brown@example.com",
+            "age": 35
+          },
+          {
+            "id": 5,
+            "name": "Sarah Davis",
+            "email": "sarah.davis@example.com",
+            "age": 28
+          }
+        ];
+        const boosterFeeRequest = {
+          totalF3: user.paymentRequestBoosterFeeDroplet[storeId][0].f3Amount,
+          usdValueOfF3: user.paymentRequestBoosterFeeDroplet[storeId][0].usdValueOfF3,
+          dateAndTime : user.paymentRequestBoosterFeeDroplet[storeId][0].dateAndTime,
+          storeId: user.storeId,
+          sellerWalletAddress: SellerUser.walletAddress,
+          buyerWalletAddress: user.walletAddress,
+          receiverWalletAddress : user.paymentRequestBoosterFeeDroplet[storeId][0].receiverWalletAddress,
+          requestType: 'Booster Fee',
+          products: simpleJson
+        };
+        response.requests.push(boosterFeeRequest);
       }
     }
 
