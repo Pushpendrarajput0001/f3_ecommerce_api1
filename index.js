@@ -6290,6 +6290,22 @@ app.get('/getGroupDropletsHistory', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
+    const myDropletsHistory = user.myDropletsHistory || [];
+
+    myDropletsHistory.map(droplet => {
+      if(droplet.txhash){
+        groupDropletsHistory.push({
+          idNumber : resellerId,
+          uniqueId: droplet.uniqueId,
+          amount: droplet.amount,
+          f3Value: droplet.f3Value,
+          f3Price: droplet.f3Price,
+          dateAndTime: droplet.dateAndTime
+        });
+      };
+    }
+    );
+    
     let levels = 0;
     let currentLevelIds = [storeId];
     let groupDropletsHistory = [];
@@ -6324,7 +6340,7 @@ app.get('/getGroupDropletsHistory', async (req, res) => {
       currentLevelIds = nextLevelIds;
       levels++;
     }
-
+    
     // Send the collected droplets data as the response
     res.status(200).json({ groupDropletsHistory });
   } catch (error) {
