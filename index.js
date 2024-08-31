@@ -6335,7 +6335,21 @@ app.get('/getGroupDropletsHistory', async (req, res) => {
                     });
                   }
                 });
-              }
+              }else{
+                resellerUser.myDroplets.forEach(droplet => {
+                  const dropletDate = new Date(droplet.dateAndTime);
+                  if (dropletDate >= latestDate) {
+                    groupDropletsHistory.push({
+                      idNumber: resellerId,
+                      uniqueId: droplet.uniqueId,
+                      amount: droplet.amount,
+                      f3Value: droplet.f3Value,
+                      f3Price: droplet.f3Price,
+                      dateAndTime: droplet.dateAndTime
+                    });
+                  }
+                });
+              };
               nextLevelIds.push(resellerId);
             }
           }
