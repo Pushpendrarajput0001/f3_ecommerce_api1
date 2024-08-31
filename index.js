@@ -6298,22 +6298,6 @@ app.get('/getGroupDropletsHistory', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // const myDropletsHistory = user.myDropletsHistory || [];
-
-    // myDropletsHistory.map(droplet => {
-    //   if(droplet.txhash){
-    //     groupDropletsHistory.push({
-    //       idNumber : resellerId,
-    //       uniqueId: droplet.uniqueId,
-    //       amount: droplet.amount,
-    //       f3Value: droplet.f3Value,
-    //       f3Price: droplet.f3Price,
-    //       dateAndTime: droplet.dateAndTime
-    //     });
-    //   };
-    // }
-    // );
-
     let levels = 0;
     let currentLevelIds = [storeId];
     let groupDropletsHistory = [];
@@ -6328,18 +6312,30 @@ app.get('/getGroupDropletsHistory', async (req, res) => {
           for (let resellerId of member.resellersMember) {
             let resellerUser = await collection.findOne({ storeId: resellerId });
             if (resellerUser && Array.isArray(resellerUser.myDroplets)) {
-              // Collect droplets' details from the resellerUser
-              
-              resellerUser.myDroplets.forEach(droplet => {
-                groupDropletsHistory.push({
-                  idNumber : resellerId,
-                  uniqueId: droplet.uniqueId,
-                  amount: droplet.amount,
-                  f3Value: droplet.f3Value,
-                  f3Price: droplet.f3Price,
-                  dateAndTime: droplet.dateAndTime
+              // Find the latest transaction in approvedDropletCommissionPayments
+              const latestTransaction = resellerUser.approvedDropletCommissionPayments?.reduce((latest, current) => {
+                const currentDate = new Date(current.dateAndTime);
+                return !latest || currentDate > new Date(latest.dateAndTime) ? current : latest;
+              }, null);
+
+              if (latestTransaction) {
+                const latestDate = new Date(latestTransaction.dateAndTime);
+
+                // Filter droplets based on the latest transaction date
+                resellerUser.myDroplets.forEach(droplet => {
+                  const dropletDate = new Date(droplet.dateAndTime);
+                  if (dropletDate >= latestDate) {
+                    groupDropletsHistory.push({
+                      idNumber: resellerId,
+                      uniqueId: droplet.uniqueId,
+                      amount: droplet.amount,
+                      f3Value: droplet.f3Value,
+                      f3Price: droplet.f3Price,
+                      dateAndTime: droplet.dateAndTime
+                    });
+                  }
                 });
-              });
+              }
               nextLevelIds.push(resellerId);
             }
           }
@@ -6348,7 +6344,7 @@ app.get('/getGroupDropletsHistory', async (req, res) => {
       currentLevelIds = nextLevelIds;
       levels++;
     }
-    
+
     // Send the collected droplets data as the response
     res.status(200).json({ groupDropletsHistory });
   } catch (error) {
@@ -6374,7 +6370,19 @@ app.get('/boosterFeesMyDroplet', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Step 2: Create or update the paymentRequestBoosterFeeDroplet object
+    // Step 2: Check if there's already a valid request for this storeId
+    if (user.paymentRequestBoosterFeeDroplet && user.paymentRequestBoosterFeeDroplet.storeId) {
+      const existingRequest = user.paymentRequestBoosterFeeDroplet.storeId.find(request => 
+        request.walletAddress === walletAddress &&
+        request.receiverWalletAddress === receiverWalletAddress
+      );
+      
+      if (existingRequest) {
+        return res.status(403).json({ error: 'Already requested for payment' });
+      }
+    }
+
+    // Step 3: Create a new payment request
     const newRequest = {
       walletAddress,
       f3Amount,
@@ -6387,10 +6395,10 @@ app.get('/boosterFeesMyDroplet', async (req, res) => {
       user.paymentRequestBoosterFeeDroplet = { storeId: [] };
     }
 
-    // Step 3: Add the new request to the storeId array within paymentRequestBoosterFeeDroplet
+    // Step 4: Add the new request to the storeId array within paymentRequestBoosterFeeDroplet
     user.paymentRequestBoosterFeeDroplet.storeId.push(newRequest);
 
-    // Step 4: Update the user document in the database
+    // Step 5: Update the user document in the database
     await collection.updateOne(
       { storeId: storeId },
       { $set: { paymentRequestBoosterFeeDroplet: user.paymentRequestBoosterFeeDroplet } }
@@ -6420,7 +6428,19 @@ app.get('/commissionRequestGroupDroplet', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Step 2: Create or update the commissionRequestGroupDroplet object
+    // Step 2: Check if there's already a valid commission request for this storeIdSeller
+    if (user.commissionRequestGroupDroplet && user.commissionRequestGroupDroplet[storeIdSeller]) {
+      const existingRequest = user.commissionRequestGroupDroplet[storeIdSeller].find(request => 
+        request.walletAddress === walletAddress &&
+        request.senderWalletAddress === senderWalletAddress
+      );
+      
+      if (existingRequest) {
+        return res.status(403).json({ error: 'Already requested for commission payment' });
+      }
+    }
+
+    // Step 3: Create a new commission request
     const newRequest = {
       walletAddress,
       f3Amount,
@@ -6438,10 +6458,10 @@ app.get('/commissionRequestGroupDroplet', async (req, res) => {
       user.commissionRequestGroupDroplet[storeIdSeller] = [];
     }
 
-    // Step 3: Add the new request to the storeIdSeller array within commissionRequestGroupDroplet
+    // Step 4: Add the new request to the storeIdSeller array within commissionRequestGroupDroplet
     user.commissionRequestGroupDroplet[storeIdSeller].push(newRequest);
 
-    // Step 4: Update the user document in the database
+    // Step 5: Update the user document in the database
     await collection.updateOne(
       { storeId: storeId },
       { $set: { commissionRequestGroupDroplet: user.commissionRequestGroupDroplet } }
