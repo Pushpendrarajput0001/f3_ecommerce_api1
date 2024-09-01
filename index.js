@@ -6029,7 +6029,7 @@ app.get('/getMyDroplets', async (req, res) => {
             let resellerUser = await collection.findOne({ storeId: resellerId });
             if (resellerUser) {
                if(Array.isArray(resellerUser.myDroplets)){
-                multiplierQuantity = resellerUser.myDroplets.length;
+                multiplierQuantity += resellerUser.myDroplets.length;
                };
                nextLevelIds.push(resellerId);
             }
