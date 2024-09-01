@@ -6030,8 +6030,10 @@ app.get('/getMyDroplets', async (req, res) => {
             if (resellerUser) {
                if(Array.isArray(resellerUser.myDroplets)){
                 multiplierQuantity += resellerUser.myDroplets.length;
+                console.log(resellerUser.myDroplets);
                };
                nextLevelIds.push(resellerId);
+               console.log(resellerUser);
             }
           }
         }
