@@ -6630,6 +6630,75 @@ app.get('/approveBoosterFeeRequest', async (req, res) => {
   }
 });
 
+app.get('/getDropletsRestrictionsStatus', async (req, res) => {
+  const { storeId, walletAddress } = req.query;
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  const db = client.db('f3_ecommerce');
+  const collection = db.collection('users');
+  try {
+    // const usersAll = await collection.find({}).toArray();
+    // console.log(usersAll);
+
+    // Step 1: Find the user with the provided storeId
+    const user = await collection.findOne({ storeId: storeId });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    let levels = 0;
+    let currentLevelIds = [storeId];
+    let allMembers = [];
+    let multiplierQuantity = 1;
+    let isRequestPending = 'No';
+
+  
+    let disablingLet = 'No';
+    let totalUSDValueNow = 0.0;
+    const myDroplets = user.myDroplets || [];
+
+    // Step 3: If myDroplets is not empty, calculate the total USD value
+    if (myDroplets.length > 0) {
+      // Calculate total USD value based on f3Price and amount for each droplet
+      myDroplets.forEach(droplet => {
+        totalUSDValueNow += droplet.amount * droplet.f3Price;
+      });
+
+      // If total USD value is greater than or equal to 13.00, set disablingLet to 'Yes'
+      if (totalUSDValueNow >= 13.00) {
+        disablingLet = 'Yes';
+      }
+    }
+    
+  //  const allUsersDroplet = await collection.aggregate([
+  //   { $match: { storeId: { $ne: storeId } } },
+  //   { $unwind: "$myDroplets" },
+  //   { $limit: 129 },
+  //   {
+  //     $project: {
+  //       storeId: 1,
+  //       uniqueId: "$myDroplets.uniqueId",
+  //       amount: "$myDroplets.amount",
+  //       f3Value: "$myDroplets.f3Value",
+  //       f3Price: "$myDroplets.f3Price",
+  //       dateAndTime: "$myDroplets.dateAndTime"
+  //     }
+  //   }
+  // ]).toArray();
+
+
+    // Step 5: Send the response
+    res.status(200).json({
+      disablingLet : disablingLet
+    });
+  } catch (error) {
+    console.error('Error Retrieving Droplets and Token Balance:', error);
+    res.status(500).json({ error: `Internal server error: ${error}` });
+  } finally {
+    client.close();
+  }
+});
+
 
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`)
