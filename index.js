@@ -6668,6 +6668,8 @@ app.get('/getDropletsRestrictionsStatus', async (req, res) => {
       if (totalUSDValueNow >= 13.00) {
         disablingLet = 'Yes';
       }
+    }else{
+      disablingLet = 'Yes'
     }
     
   //  const allUsersDroplet = await collection.aggregate([
