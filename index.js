@@ -1833,8 +1833,8 @@ app.get('/getRequestsOfPayments', async (req, res) => {
             ];
             const resellerRequest = {
               totalF3: storeIdRequests[0].f3Amount,
-              loggedUserWallet : user.walletAddress,
-              senderWalletAddress : storeId[0].senderWalletAddress,
+              loggedUserWallet: user.walletAddress,
+              senderWalletAddress: storeId[0].senderWalletAddress,
               usdValueOfF3: storeIdRequests[0].usdValueOfF3,
               dateAndTime: storeIdRequests[0].dateAndTime,
               storeId: buyerUser.storeId,
@@ -2171,7 +2171,7 @@ app.get('/getRequestsOfPayments', async (req, res) => {
             ];
             const resellerRequest = {
               totalF3: storeIdRequests[0].f3Amount,
-              senderWalletAddress : storeId[0].senderWalletAddress,
+              senderWalletAddress: storeId[0].senderWalletAddress,
               usdValueOfF3: storeIdRequests[0].usdValueOfF3,
               dateAndTime: storeIdRequests[0].dateAndTime,
               storeId: buyerUser.storeId,
@@ -2327,14 +2327,14 @@ app.get('/getRequestsOfPayments', async (req, res) => {
           }
         ];
         const boosterFeeRequest = {
-          loggedUserWallet : user.walletAddress,
+          loggedUserWallet: user.walletAddress,
           totalF3: user.paymentRequestBoosterFeeDroplet[storeId][0].f3Amount,
           usdValueOfF3: user.paymentRequestBoosterFeeDroplet[storeId][0].usdValueOfF3,
-          dateAndTime : user.paymentRequestBoosterFeeDroplet[storeId][0].dateAndTime,
+          dateAndTime: user.paymentRequestBoosterFeeDroplet[storeId][0].dateAndTime,
           storeId: user.storeId,
           sellerWalletAddress: SellerUser.walletAddress,
           buyerWalletAddress: user.walletAddress,
-          receiverWalletAddress : user.paymentRequestBoosterFeeDroplet[storeId][0].receiverWalletAddress,
+          receiverWalletAddress: user.paymentRequestBoosterFeeDroplet[storeId][0].receiverWalletAddress,
           requestType: 'Booster Fee',
           products: simpleJson
         };
@@ -2646,16 +2646,16 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
               const dateAndTimeOfApproved = product.dateAndTimeOfApproved;
               console.log(product);
               const requestWithRequestType = {
-                storeId : userSeller.storeId,
-                storeIdNumberSeller : user.storeId,
-                loggedUserWallet : userSeller.walletAddress,
+                storeId: userSeller.storeId,
+                storeIdNumberSeller: user.storeId,
+                loggedUserWallet: userSeller.walletAddress,
                 buyerWalletAddress,
                 sellerWalletAddress: providerWalletAddress,
                 requestType: 'Booster Fee',
                 providerWalletAddress,
                 f3Amount,
                 usdValueOfF3,
-                gcTxHashManiaBooter :txHashBoosterFee,
+                gcTxHashManiaBooter: txHashBoosterFee,
                 dateAndTimeOfApproved,
                 ...storeRequest
               };
@@ -2820,14 +2820,14 @@ app.get('/getApprovedSellerBuyerPaymentRequests', async (req, res) => {
               const requestWithRequestType = {
                 buyerWalletAddress,
                 sellerWalletAddress: providerWalletAddress,
-                storeId : userSeller.storeId,
-                storeIdNumberSeller : user.storeId,
-                loggedUserWallet : userSeller.walletAddress,
+                storeId: userSeller.storeId,
+                storeIdNumberSeller: user.storeId,
+                loggedUserWallet: userSeller.walletAddress,
                 requestType: 'Droplet Commission',
                 providerWalletAddress,
                 f3Amount,
                 usdValueOfF3,
-                gcTxHashManiaBooter : txHashDropletCommission,
+                gcTxHashManiaBooter: txHashDropletCommission,
                 dateAndTimeOfApproved,
                 ...storeRequest
               };
@@ -5502,7 +5502,7 @@ app.get('/getItemsProfitShares', async (req, res) => {
       console.log(`error : No account exists with user ${storeId}`);
       return res.status(404).json({ error: `No account exists with user ${storeId}` });
     }
-   const storeRequest = loggedInUser.approvedProfitSharePayments
+    const storeRequest = loggedInUser.approvedProfitSharePayments
 
 
     const usdRate = parseFloat(loggedInUser.usdtRate ?? 0);
@@ -5522,7 +5522,109 @@ app.get('/getItemsProfitShares', async (req, res) => {
     // Process all users and their product details
     for (const user of users) {
       const productMaps = [user.salesHistoryBuyer, user.approvalcheckoutBuyer];
-
+      const storeIdUser = user.storeId;
+      for (const user of usersWithApprovalsCheckoutSeller) {
+        if (user.approvalcheckout && user.approvalcheckout[storeIdUser]) {
+          const approvals = user.approvalcheckout[storeIdUser];
+          for (const approvalcheckout of approvals) {
+            let totalWithdrawalAmountUser = 0;
+            const { storeId, productId, quantity, totalPrice, productName, storeIdBuyer, walletAddressBuyer, dateAndTime, dateOfApprovalCheckout, resellers_reward } = approvalcheckout;
+            const user = await collection.findOne({ storeId: storeId });
+            const usdtRate = parseFloat(user.usdtRate);
+            const resellerRewardValue = parseFloat(resellers_reward ?? 0.0)
+            const sellerWalletAddress = user.walletAddress;
+            const totalSoldedPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
+            const totalSoldAmount = (totalSoldedPrice / usdtRate);
+            totalSoldGlobalUsers += totalSoldAmount;
+            const shareStocks = ((resellerRewardValue / 100) * 3 * totalSoldAmount) ?? 0.0
+            //StoreRequests
+            const StoreRequests = user.ApprovedPaymentRequestResellersReward;
+            if (StoreRequests) {
+              Object.keys(StoreRequests).forEach(subRequesName => {
+                const requestArray = StoreRequests[subRequesName];
+                requestArray.forEach(storeRequest => {
+                  storeRequest.requestProducts.forEach(storeRequest => {
+                    //console.log(storeRequest);
+                    const withdrawal = storeRequest.receivableAmount.replace(/[^\d.-]/g, '');
+                    totalWithdrawalAmountUser += parseFloat(withdrawal)
+                  });
+                });
+              });
+            }
+            const productDetails = {
+              sellerStoreId: storeId,
+              buyerStoreId: storeIdBuyer,
+              walletAddressBuyer: walletAddressBuyer,
+              sellerWalletAddress: sellerWalletAddress,
+              totalQuantity: quantity,
+              totalPrice: totalPrice,
+              usdValue: totalSoldAmount,
+              shareStocks: shareStocks,
+              productName: productName,
+              productId: productId,
+              resellers_reward: resellerRewardValue,
+              currencySymbol: user.currencySymbol,
+              country: user.country,
+              city: user.cityAddress,
+              usdtRate: user.usdtRate,
+              totalWithdrawalAmountUser,
+              dateAndTime: dateOfApprovalCheckout
+            };
+            allProductDetails.push(productDetails);
+          }
+        }
+      }
+      for (const user of userWithSalesHistorySeller) {
+        if (user.salesHistorySeller && user.salesHistorySeller[storeIdUser]) {
+          const approvals = user.salesHistorySeller[storeIdUser];
+          for (const approvalcheckout of approvals) {
+            let totalWithdrawalAmountUser = 0;
+            const { storeId, productId, quantity, totalPrice, productName, storeIdBuyer, walletAddressBuyer, dateOfApprovalCheckout, dateAndTime, resellers_reward } = approvalcheckout;
+            const user = await collection.findOne({ storeId: storeId });
+            const usdtRate = parseFloat(user.usdtRate);
+            const sellerWalletAddress = user.walletAddress;
+            const resellerRewardValue = parseFloat(resellers_reward ?? 0.0)
+            const totalSoldedPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
+            const totalSoldAmount = (totalSoldedPrice / usdtRate);
+            totalSoldGlobalUsers += totalSoldAmount;
+            const shareStocks = ((resellerRewardValue / 100) * 3 * totalSoldAmount) ?? 0.0
+            //StoreRequests
+            const StoreRequests = user.ApprovedPaymentRequestResellersReward;
+            if (StoreRequests) {
+              Object.keys(StoreRequests).forEach(subRequesName => {
+                const requestArray = StoreRequests[subRequesName];
+                requestArray.forEach(storeRequest => {
+                  storeRequest.requestProducts.forEach(storeRequest => {
+                    //console.log(storeRequest);
+                    const withdrawal = storeRequest.receivableAmount.replace(/[^\d.-]/g, '');
+                    totalWithdrawalAmountUser += parseFloat(withdrawal)
+                  });
+                });
+              });
+            }
+            const productDetails = {
+              sellerStoreId: storeId,
+              buyerStoreId: storeIdBuyer,
+              walletAddressBuyer: walletAddressBuyer,
+              sellerWalletAddress: sellerWalletAddress,
+              totalQuantity: quantity,
+              totalPrice: totalPrice,
+              usdValue: totalSoldAmount,
+              shareStocks: shareStocks,
+              productName: productName,
+              productId: productId,
+              resellers_reward: resellerRewardValue,
+              currencySymbol: user.currencySymbol,
+              country: user.country,
+              city: user.cityAddress,
+              usdtRate: user.usdtRate,
+              totalWithdrawalAmountUser,
+              dateAndTime: dateAndTime
+            };
+            allProductDetails.push(productDetails);
+          }
+        }
+      }
       for (const productMap of productMaps) {
         if (productMap) {
           for (const productArray of Object.values(productMap)) {
@@ -5919,12 +6021,12 @@ app.get('/getMyDroplets', async (req, res) => {
           for (let resellerId of member.resellersMember) {
             let resellerUser = await collection.findOne({ storeId: resellerId });
             if (resellerUser) {
-               if(Array.isArray(resellerUser.myDroplets)){
+              if (Array.isArray(resellerUser.myDroplets)) {
                 multiplierQuantity += resellerUser.myDroplets.length;
                 console.log(resellerUser.myDroplets);
-               };
-               nextLevelIds.push(resellerId);
-               console.log(resellerUser);
+              };
+              nextLevelIds.push(resellerId);
+              console.log(resellerUser);
             }
           }
         }
@@ -5940,7 +6042,7 @@ app.get('/getMyDroplets', async (req, res) => {
 
     // Extract the required fields from each droplet
     const dropletsData = myDroplets.map(droplet => ({
-      storeId : storeId,
+      storeId: storeId,
       uniqueId: droplet.uniqueId,
       amount: droplet.amount,
       f3Value: droplet.f3Value,
@@ -5960,22 +6062,22 @@ app.get('/getMyDroplets', async (req, res) => {
       }
     }
     // Step 3: Retrieve all other users' droplets except the requested user
-   // Retrieve all other users' droplets except the requested user, including storeId
-   const allUsersDroplet = await collection.aggregate([
-    { $match: { storeId: { $ne: storeId } } },
-    { $unwind: "$myDroplets" },
-    { $limit: 129 },
-    {
-      $project: {
-        storeId: 1,
-        uniqueId: "$myDroplets.uniqueId",
-        amount: "$myDroplets.amount",
-        f3Value: "$myDroplets.f3Value",
-        f3Price: "$myDroplets.f3Price",
-        dateAndTime: "$myDroplets.dateAndTime"
+    // Retrieve all other users' droplets except the requested user, including storeId
+    const allUsersDroplet = await collection.aggregate([
+      { $match: { storeId: { $ne: storeId } } },
+      { $unwind: "$myDroplets" },
+      { $limit: 129 },
+      {
+        $project: {
+          storeId: 1,
+          uniqueId: "$myDroplets.uniqueId",
+          amount: "$myDroplets.amount",
+          f3Value: "$myDroplets.f3Value",
+          f3Price: "$myDroplets.f3Price",
+          dateAndTime: "$myDroplets.dateAndTime"
+        }
       }
-    }
-  ]).toArray();
+    ]).toArray();
 
 
     // Step 4: Get the token balance of the provided wallet address
@@ -5997,7 +6099,7 @@ app.get('/getMyDroplets', async (req, res) => {
       myDroplets: dropletsData,
       allUsersDroplet: allUsersDroplet,
       tokenBalance: formattedBalance,
-      multiplierQuantity : multiplierQuantity,
+      multiplierQuantity: multiplierQuantity,
       isRequestPending
     });
   } catch (error) {
@@ -6168,7 +6270,7 @@ app.get('/getMyDropletsHistory', async (req, res) => {
         });
       });
     }),
-    res.status(200).json({myDropletsHistory: dropletsData,totalUSDValueOfBoosterFee : totalUSDValueOfBoosterFee});
+      res.status(200).json({ myDropletsHistory: dropletsData, totalUSDValueOfBoosterFee: totalUSDValueOfBoosterFee });
   } catch (error) {
     console.log(`Interenal Server Error : ${error}`);
     res.status(500).json({ error: `Internal server error: ${error}` });
@@ -6228,7 +6330,7 @@ app.get('/getGroupDropletsHistory', async (req, res) => {
                     });
                   }
                 });
-              }else{
+              } else {
                 resellerUser.myDroplets.forEach(droplet => {
                   const dropletDate = new Date(droplet.dateAndTime);
                   if (dropletDate >= latestDate) {
@@ -6264,7 +6366,7 @@ app.get('/getGroupDropletsHistory', async (req, res) => {
 
 app.get('/boosterFeesMyDroplet', async (req, res) => {
   const { storeId, walletAddress, f3Amount, usdValueOfF3, receiverWalletAddress, dateAndTime } = req.query;
-  
+
   const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
   const db = client.db('f3_ecommerce');
   const collection = db.collection('users');
@@ -6279,11 +6381,11 @@ app.get('/boosterFeesMyDroplet', async (req, res) => {
 
     // Step 2: Check if there's already a valid request for this storeId
     if (user.paymentRequestBoosterFeeDroplet && user.paymentRequestBoosterFeeDroplet.storeId) {
-      const existingRequest = user.paymentRequestBoosterFeeDroplet.storeId.find(request => 
+      const existingRequest = user.paymentRequestBoosterFeeDroplet.storeId.find(request =>
         request.walletAddress === walletAddress &&
         request.receiverWalletAddress === receiverWalletAddress
       );
-      
+
       if (existingRequest) {
         return res.status(403).json({ error: 'Already requested for payment' });
       }
@@ -6337,11 +6439,11 @@ app.get('/commissionRequestGroupDroplet', async (req, res) => {
 
     // Step 2: Check if there's already a valid commission request for this storeIdSeller
     if (user.commissionRequestGroupDroplet && user.commissionRequestGroupDroplet[storeIdSeller]) {
-      const existingRequest = user.commissionRequestGroupDroplet[storeIdSeller].find(request => 
+      const existingRequest = user.commissionRequestGroupDroplet[storeIdSeller].find(request =>
         request.walletAddress === walletAddress &&
         request.senderWalletAddress === senderWalletAddress
       );
-      
+
       if (existingRequest) {
         return res.status(403).json({ error: 'Already requested for commission payment' });
       }
@@ -6374,9 +6476,9 @@ app.get('/commissionRequestGroupDroplet', async (req, res) => {
       { $set: { commissionRequestGroupDroplet: user.commissionRequestGroupDroplet } }
     );
 
-    res.status(200).json({ 
-      message: 'Commission request added successfully', 
-      commissionRequestGroupDroplet: user.commissionRequestGroupDroplet 
+    res.status(200).json({
+      message: 'Commission request added successfully',
+      commissionRequestGroupDroplet: user.commissionRequestGroupDroplet
     });
   } catch (error) {
     console.error('Error processing commission request:', error);
@@ -6543,7 +6645,7 @@ app.get('/getDropletsRestrictionsStatus', async (req, res) => {
     let multiplierQuantity = 1;
     let isRequestPending = 'No';
 
-  
+
     let disablingLet = 'No';
     let totalUSDValueNow = 0.0;
     const myDroplets = user.myDroplets || [];
@@ -6559,30 +6661,30 @@ app.get('/getDropletsRestrictionsStatus', async (req, res) => {
       if (totalUSDValueNow >= 13.00) {
         disablingLet = 'Yes';
       }
-    }else{
+    } else {
       disablingLet = 'Yes'
     }
-    
-  //  const allUsersDroplet = await collection.aggregate([
-  //   { $match: { storeId: { $ne: storeId } } },
-  //   { $unwind: "$myDroplets" },
-  //   { $limit: 129 },
-  //   {
-  //     $project: {
-  //       storeId: 1,
-  //       uniqueId: "$myDroplets.uniqueId",
-  //       amount: "$myDroplets.amount",
-  //       f3Value: "$myDroplets.f3Value",
-  //       f3Price: "$myDroplets.f3Price",
-  //       dateAndTime: "$myDroplets.dateAndTime"
-  //     }
-  //   }
-  // ]).toArray();
+
+    //  const allUsersDroplet = await collection.aggregate([
+    //   { $match: { storeId: { $ne: storeId } } },
+    //   { $unwind: "$myDroplets" },
+    //   { $limit: 129 },
+    //   {
+    //     $project: {
+    //       storeId: 1,
+    //       uniqueId: "$myDroplets.uniqueId",
+    //       amount: "$myDroplets.amount",
+    //       f3Value: "$myDroplets.f3Value",
+    //       f3Price: "$myDroplets.f3Price",
+    //       dateAndTime: "$myDroplets.dateAndTime"
+    //     }
+    //   }
+    // ]).toArray();
 
 
     // Step 5: Send the response
     res.status(200).json({
-      disablingLet : disablingLet
+      disablingLet: disablingLet
     });
   } catch (error) {
     console.error('Error Retrieving Droplets and Token Balance:', error);
