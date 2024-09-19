@@ -1143,7 +1143,7 @@ app.get('/getSellerSectionApprovedCheckout', async (req, res) => {
             productName, startedPrice,
             f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected,
             description, totalsolds, storeId, offer, storeIdBuyer, walletAddressBuyer,
-            flagWord, storeName, images, dateOfApprovalCheckout } = approvalcheckout;
+            flagWord, storeName, dateOfApprovalCheckout } = approvalcheckout;
 
           // Fetch product details from MongoDB
           const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
@@ -1168,7 +1168,7 @@ app.get('/getSellerSectionApprovedCheckout', async (req, res) => {
             walletAddressBuyer: user.walletAddress,
             flagWord,
             storeName,
-            images,
+            images : 'images',
             dateOfApprovalCheckout
           });
         }
@@ -1226,7 +1226,7 @@ app.get('/getBuyersSectionApprovedCheckout', async (req, res) => {
           productName, startedPrice,
           f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected,
           description, totalsolds, storeId, offer, storeIdBuyer, walletAddressBuyer,
-          flagWord, storeName, images, dateOfApprovalCheckout } = approvalcheckout;
+          flagWord, storeName, dateOfApprovalCheckout } = approvalcheckout;
 
         // Fetch product details from MongoDB
         const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
@@ -1249,7 +1249,7 @@ app.get('/getBuyersSectionApprovedCheckout', async (req, res) => {
           flagWord,
           offer,
           storeName,
-          images,
+          images : 'images',
           dateOfApprovalCheckout
         });
       }
