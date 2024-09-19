@@ -11,6 +11,7 @@ const { ethers, JsonRpcProvider, formatEther, parseUnits, isAddress, ContractTra
 const { error } = require('console');
 const { parse } = require('path');
 //const moment = require('moment'); // Use moment.js to format the date
+const readline = require('readline');
 const app = express();
 const PORT = 5000;
 //const MONGO_URI = 'mongodb+srv://f3bazaar:f3bazaarapppass@atlascluster.ggzbtom.mongodb.net/?retryWrites=true&w=majority&appName=AtlasCluster';
@@ -1131,18 +1132,18 @@ app.get('/getSellerSectionApprovedCheckout', async (req, res) => {
       return;
     }
 
-    console.log('Users with Checkout Approvals:', usersWithApprovalsCheckout);
+    //console.log('Users with Checkout Approvals:', usersWithApprovalsCheckout);
 
     // Prepare an array to store product details
     const products = [];
 
     // Iterate over each user with checkout approvals
     for (const user of usersWithApprovalsCheckout) {
-      console.log('User:', user);
+      //console.log('User:', user);
 
       if (user.approvalcheckout[sellerId]) {
         const sellerApprovalsCheckoutArray = user.approvalcheckout[sellerId];
-        console.log('Approvals Checkout for Seller:', sellerApprovalsCheckoutArray);
+        //console.log('Approvals Checkout for Seller:', sellerApprovalsCheckoutArray);
 
         // Iterate over each checkout approval in the seller's array
         for (const approvalcheckout of sellerApprovalsCheckoutArray) {
@@ -1153,7 +1154,7 @@ app.get('/getSellerSectionApprovedCheckout', async (req, res) => {
             flagWord, storeName, dateOfApprovalCheckout } = approvalcheckout;
 
           // Fetch product details from MongoDB
-          const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
+          //const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
 
           // Add product details along with quantity, totalPrice, and storeId
           products.push({
