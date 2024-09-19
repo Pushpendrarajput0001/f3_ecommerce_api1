@@ -10,6 +10,7 @@ const axios = require('axios');
 const { ethers, JsonRpcProvider, formatEther, parseUnits, isAddress, ContractTransactionResponse, InfuraProvider } = require("ethers");
 const { error } = require('console');
 const { parse } = require('path');
+//const moment = require('moment'); // Use moment.js to format the date
 const app = express();
 const PORT = 5000;
 //const MONGO_URI = 'mongodb+srv://f3bazaar:f3bazaarapppass@atlascluster.ggzbtom.mongodb.net/?retryWrites=true&w=majority&appName=AtlasCluster';
@@ -960,6 +961,12 @@ app.get('/deleteAndapprovalcheckoutsStore', async (req, res) => {
   try {
     const { storeId, buyerId, dateOfApprovalCheckout } = req.query;
 
+    const date = new Date().toISOString().replace('T', ' ').slice(0, 19);
+    console.log(date)
+    const formattedDateOfApprovalCheckout = dateOfApprovalCheckout
+    ? dateOfApprovalCheckout
+    : date;
+
     const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
     const db = client.db('f3_ecommerce');
     const collection = db.collection('users');
@@ -979,7 +986,7 @@ app.get('/deleteAndapprovalcheckoutsStore', async (req, res) => {
     // Copy the full array of store products
     const store_products = user.checkoutapproval[storeId].map(product => ({
       ...product,
-      dateOfApprovalCheckout: dateOfApprovalCheckout
+      dateOfApprovalCheckout: formattedDateOfApprovalCheckout
     }));
 
     // If approvalcheckout does not exist, create an empty object
