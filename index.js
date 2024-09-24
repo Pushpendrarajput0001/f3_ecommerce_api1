@@ -4893,7 +4893,7 @@ app.get('/addResellerMember', async (req, res) => {
     }
   }
 
-  sponsorUser.products.forEach(product => {
+  sponsorUser.products && sponsorUser.products.forEach(product => {
     if (product.totalsolds >= 1) {
       const totalSold = Number(product.totalsolds);
       const priceString = product.startedPrice.replace(/[^\d.-]/g, '');
@@ -4908,6 +4908,7 @@ app.get('/addResellerMember', async (req, res) => {
       console.log(`Parsed Price Product: ${priceProduct}`);
     }
   });
+  
 
   const sponsorFullName = sponsorUser.fullName;
   const usdtRateSponsor = sponsorUser.usdtRate;
