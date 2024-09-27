@@ -145,6 +145,7 @@ app.post('/login', async (req, res) => {
       usdRate: user.usdtRate,
       flagWord: user.flagWord,
       currencySymbol: user.currencySymbol,
+      currencyCode : user.currencyCode,
       country: user.country,
       alpha3Code: user.alpha3Code,
       applicantId: user.applicantId,
