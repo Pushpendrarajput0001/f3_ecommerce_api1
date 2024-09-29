@@ -9,7 +9,7 @@ const sharp = require('sharp');
 const axios = require('axios');
 const { ethers, JsonRpcProvider, formatEther, parseUnits, isAddress, ContractTransactionResponse, InfuraProvider } = require("ethers");
 const { error } = require('console');
-const { parse } = require('path');
+const { parse, format } = require('path');
 //const moment = require('moment'); // Use moment.js to format the date
 const readline = require('readline');
 const app = express();
@@ -590,12 +590,36 @@ app.get('/userCartProducts', async (req, res) => {
 
     // Extract product IDs from user's cart
     const productIds = Object.keys(user.userCarts);
+    console.log(productIds);
+    console.log(user.userCarts);
 
     // Retrieve product details from userCartsProductsDetails map
     const cartProducts = [];
-    Object.keys(user.userCartsProductsDetails).forEach((key) => {
-      cartProducts.push(user.userCartsProductsDetails[key]);
-    });
+    for (let key of Object.keys(user.userCartsProductsDetails)) {
+      const productDetail = user.userCartsProductsDetails[key];
+      const productDetails = await db.collection('users').findOne({ 'products._id': productDetail._id }, { projection: { 'products.$': 1 } });
+      console.log(productDetails);
+      const formattedProductDetails = {
+        _id: productDetail._id.toString(),
+        productName: productDetail.productName,
+        startedPrice: productDetail.startedPrice,
+        f3MarketPrice: productDetail.f3MarketPrice,
+        growthContribution: productDetail.growthContribution,
+        unitItemSelected: productDetail.unitItemSelected,
+        description: productDetail.description,
+        storeId: productDetail.storeId,
+        storeName: productDetail.storeName,
+        offer: productDetail.offer,
+        flagWord: productDetail.flagWord,
+        sellerWalletAddress: productDetail.sellerWalletAddress,
+        resellers_reward: productDetail.resellers_reward,
+        numberOfStocks : productDetails.numberOfStocks,
+        totalsolds : productDetails.totalsolds,
+        images: productDetail.images,
+      };
+      cartProducts.push(formattedProductDetails);
+      console.log(key);
+    };
 
 
     // Close MongoDB connection
@@ -852,10 +876,10 @@ app.get('/getSellerProductsCheckoutById', async (req, res) => {
             startedPrice,
             f3MarketPrice,
             growthContribution,
-            numberOfStocks,
+            numberOfStocks : productDetails.numberOfStocks,
             unitItemSelected,
             description,
-            totalsolds,
+            totalsolds : productDetails.totalsolds,
             storeId,
             offer,
             resellers_reward,
@@ -6329,7 +6353,7 @@ app.get('/getGroupDropletsHistory', async (req, res) => {
               } else {
                 resellerUser.myDroplets.forEach(droplet => {
                   const dropletDate = new Date(droplet.dateAndTime);
-                  if (dropletDate >= latestDate) {
+                  if (dropletDate) {
                     groupDropletsHistory.push({
                       idNumber: resellerId,
                       uniqueId: droplet.uniqueId,
