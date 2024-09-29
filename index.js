@@ -569,7 +569,6 @@ app.get('/userCartProducts', async (req, res) => {
   try {
     const { email } = req.query;
 
-    // Connect to MongoDB
     const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
     const db = client.db('f3_ecommerce');
     const collection = db.collection('users');
@@ -588,17 +587,17 @@ app.get('/userCartProducts', async (req, res) => {
       return;
     }
 
-    // Extract product IDs from user's cart
     const productIds = Object.keys(user.userCarts);
     console.log(productIds);
     console.log(user.userCarts);
 
-    // Retrieve product details from userCartsProductsDetails map
     const cartProducts = [];
     for (let key of Object.keys(user.userCartsProductsDetails)) {
       const productDetail = user.userCartsProductsDetails[key];
       const productDetails = await db.collection('users').findOne({ 'products._id': productDetail._id }, { projection: { 'products.$': 1 } });
-      console.log(productDetails);
+      const product = productDetails?.products?.[0] ?? {}; 
+      console.log(`product Details : ${productDetails._id}`);
+      console.log(productDetails)
       const formattedProductDetails = {
         _id: productDetail._id.toString(),
         productName: productDetail.productName,
@@ -613,19 +612,16 @@ app.get('/userCartProducts', async (req, res) => {
         flagWord: productDetail.flagWord,
         sellerWalletAddress: productDetail.sellerWalletAddress,
         resellers_reward: productDetail.resellers_reward,
-        numberOfStocks : productDetails.numberOfStocks,
-        totalsolds : productDetails.totalsolds,
+        numberOfStocks: product.numberOfStocks ?? productDetail.numberOfStocks, 
+        totalsolds: product.totalsolds ?? productDetail.totalsolds,
         images: productDetail.images,
       };
       cartProducts.push(formattedProductDetails);
       console.log(key);
     };
 
-
-    // Close MongoDB connection
     await client.close();
 
-    // Send response with cart products
     res.status(200).json({ products: cartProducts });
   } catch (error) {
     console.error('Error fetching user cart products:', error);
@@ -876,10 +872,10 @@ app.get('/getSellerProductsCheckoutById', async (req, res) => {
             startedPrice,
             f3MarketPrice,
             growthContribution,
-            numberOfStocks : productDetails.numberOfStocks,
+            numberOfStocks : productDetails.products[0].numberOfStocks ?? numberOfStocks,
             unitItemSelected,
             description,
-            totalsolds : productDetails.totalsolds,
+            totalsolds : productDetails.products[0].totalsolds ?? totalsolds,
             storeId,
             offer,
             resellers_reward,
