@@ -596,7 +596,7 @@ app.get('/userCartProducts', async (req, res) => {
       const productDetail = user.userCartsProductsDetails[key];
       const productDetails = await db.collection('users').findOne({ 'products._id': productDetail._id }, { projection: { 'products.$': 1 } });
       const product = productDetails?.products?.[0] ?? {}; 
-      console.log(`product Details : ${productDetails._id}`);
+      //console.log(`product Details : ${productDetails._id}`);
       console.log(productDetails)
       const formattedProductDetails = {
         _id: productDetail._id.toString(),
