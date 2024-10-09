@@ -6786,13 +6786,11 @@ app.post('/removeProductFromRedundantBinary', async (req, res) => {
       return;
     }
 
-    productIds.forEach(productId => {
-      if (!user.userRedundantBinary[productId]) {
-        res.status(404).json({ error: `Product ${productId} not found in the cart` });
+      if (!user.userRedundantBinary[productIds]) {
+        res.status(404).json({ error: `Product ${productId} not found in the Redundant` });
         return;
       }
-      delete user.userRedundantBinary[productId];
-    });
+      delete user.userRedundantBinary[productIds];
 
     await collection.updateOne(
       { email },
@@ -6803,8 +6801,8 @@ app.post('/removeProductFromRedundantBinary', async (req, res) => {
 
     res.status(200).json({ message: 'Product(s) removed from Redundant successfully' });
   } catch (error) {
-    console.error('Error removing product from cart:', error);
-    res.status(500).json({ error: 'An error occurred while removing product from cart' });
+    console.error('Error removing product from Redundant:', error);
+    res.status(500).json({ error: 'An error occurred while removing product from Redundant Binary' });
   }
 });
 
