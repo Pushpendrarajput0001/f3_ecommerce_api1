@@ -6878,6 +6878,72 @@ app.get('/userRedundantProducts', async (req, res) => {
   }
 });
 
+app.post('/addProductToCartFromRedudantBinay', async (req, res) => {
+  try {
+    const { email, productId,startedPrice } = req.body;
+
+    // Connect to MongoDB
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by email
+    const user = await collection.findOne({ email });
+    const product = await collection.findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    // Check if userCarts map exists, if not create it
+    if (!user.userCarts) {
+      user.userCarts = {};
+    }
+
+    // Check if product already exists in the user's cart
+    if (user.userCarts[productId]) {
+      // If product already exists, send error response with status code 401
+      res.status(401).json({ error: 'Product already exists in the cart' });
+      return;
+    }
+
+    // Add product to user's cart
+    user.userCarts[productId] = 1; // Default quantity is 1
+
+    // Check if userCartsProductsDetails map exists, if not create it
+    if (!user.userCartsProductsDetails) {
+      user.userCartsProductsDetails = {};
+    }
+
+    // Add product details to userCartsProductsDetails map
+    const newObjectKey = uuid.v4();
+
+    const productDetails = { ...product.products[0] };
+
+    productDetails.startedPrice = startedPrice;
+    // Add product details to userCartsProductsDetails map using the generated UUID as key
+    user.userCartsProductsDetails[newObjectKey] = productDetails;
+    // Update the user document in the database
+    await collection.updateOne(
+      { email },
+      { $set: { userCarts: user.userCarts, userCartsProductsDetails: user.userCartsProductsDetails } }
+    );
+
+    // Close MongoDB connection
+    await client.close();
+
+    // Send response
+    res.status(200).json({ message: 'Product added to cart successfully' });
+  } catch (error) {
+    console.error('Error adding product to cart:', error);
+    res.status(500).json({ error: 'An error occurred while adding product to cart' });
+  }
+});
+
+//DecentralizedBinary
+
+
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`)
 });
