@@ -6843,12 +6843,16 @@ app.get('/userRedundantProducts', async (req, res) => {
         { projection: { 'products.$': 1 } }
       );
       const product = productDetails?.products?.[0] ?? {}; 
+      const finishedStartedPrice = product.startedPrice.replace(/[^\d.-]/g, '');
+      const productPrice = parseFloat(finishedStartedPrice);
+      console.log(productPrice);
+      const doublePrice = (productPrice*2)
       console.log(productDetails);
 
       const formattedProductDetails = {
         _id: product._id.toString(),
         productName: product.productName,
-        startedPrice: (2 * parseFloat(product.startedPrice)),
+        startedPrice: doublePrice,
         f3MarketPrice: product.f3MarketPrice,
         growthContribution: product.growthContribution,
         unitItemSelected: product.unitItemSelected,
