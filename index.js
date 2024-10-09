@@ -6710,6 +6710,171 @@ app.get('/getDropletsRestrictionsStatus', async (req, res) => {
   }
 });
 
+//RedundantBinary
+app.post('/addProductToRedundantBinary', async (req, res) => {
+  try {
+    const { email, productId } = req.body;
+
+    // Connect to MongoDB
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by email
+    const user = await collection.findOne({ email });
+    const product = await collection.findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    // Check if userCarts map exists, if not create it
+    if (!user.userRedundantBinary) {
+      user.userRedundantBinary = {};
+    }
+
+    // Check if product already exists in the user's cart
+    if (user.userRedundantBinary[productId]) {
+      // If product already exists, send error response with status code 401
+      res.status(401).json({ error: 'Product already exists in the Redundant' });
+      return;
+    }
+
+    // Add product to user's cart
+    user.userRedundantBinary[productId] = 1; // Default quantity is 1
+
+    // Add product details to userCartsProductsDetails map
+    //const newObjectKey = uuid.v4();
+
+    // Add product details to userCartsProductsDetails map using the generated UUID as key
+    //user.userCartsProductsDetails[newObjectKey] = { ...product.products[0] };
+    // Update the user document in the database
+    await collection.updateOne(
+      { email },
+      { $set: { userRedundantBinary: user.userRedundantBinary} }
+    );
+
+    // Close MongoDB connection
+    await client.close();
+
+    // Send response
+    res.status(200).json({ message: 'Product added to Redundant Binary successfully' });
+  } catch (error) {
+    console.error('Error adding product to cart:', error);
+    res.status(500).json({ error: 'An error occurred while adding product to Redundant Binary' });
+  }
+});
+
+app.post('/removeProductFromRedundantBinary', async (req, res) => {
+  try {
+    const { email, productIds } = req.body;
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    const user = await collection.findOne({ email });
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    if (!user.userRedundantBinary) {
+      res.status(400).json({ error: 'User has no items in the Redundant Binary'});
+      return;
+    }
+
+    productIds.forEach(productId => {
+      if (!user.userRedundantBinary[productId]) {
+        res.status(404).json({ error: `Product ${productId} not found in the cart` });
+        return;
+      }
+      delete user.userRedundantBinary[productId];
+    });
+
+    await collection.updateOne(
+      { email },
+      { $set: { userRedundantBinary: user.userRedundantBinary} }
+    );
+
+    await client.close();
+
+    res.status(200).json({ message: 'Product(s) removed from Redundant successfully' });
+  } catch (error) {
+    console.error('Error removing product from cart:', error);
+    res.status(500).json({ error: 'An error occurred while removing product from cart' });
+  }
+});
+
+app.get('/userRedundantProducts', async (req, res) => {
+  try {
+    const { email } = req.query;
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by email
+    const user = await collection.findOne({ email });
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    // Check if user has products in their cart
+    if (!user.userRedundantBinary || Object.keys(user.userRedundantBinary).length === 0) {
+      res.status(401).json({ error: 'No products in Redundant Binary' });
+      return;
+    }
+
+    const productIds = Object.keys(user.userRedundantBinary);
+    console.log(productIds);
+    console.log(user.userRedundantBinary);
+
+    const cartProducts = [];
+
+    // Use for...of loop to handle async/await properly
+    for (const productId of productIds) {
+      const productDetails = await db.collection('users').findOne(
+        { 'products._id': productId },
+        { projection: { 'products.$': 1 } }
+      );
+      const product = productDetails?.products?.[0] ?? {}; 
+      console.log(productDetails);
+
+      const formattedProductDetails = {
+        _id: product._id.toString(),
+        productName: product.productName,
+        startedPrice: (2 * parseFloat(product.startedPrice)),
+        f3MarketPrice: product.f3MarketPrice,
+        growthContribution: product.growthContribution,
+        unitItemSelected: product.unitItemSelected,
+        description: product.description,
+        storeId: product.storeId,
+        storeName: product.storeName,
+        offer: product.offer,
+        flagWord: product.flagWord,
+        sellerWalletAddress: product.sellerWalletAddress,
+        resellers_reward: product.resellers_reward,
+        numberOfStocks: product.numberOfStocks ?? 0,
+        totalsolds: product.totalsolds ?? 0,
+        images: product.images,
+      };
+
+      cartProducts.push(formattedProductDetails);
+    }
+
+    await client.close();
+    res.status(200).json({ products: cartProducts });
+
+  } catch (error) {
+    console.error('Error fetching user Redundant products:', error);
+    res.status(500).json({ error: 'An error occurred while fetching user Redundant products' });
+  }
+});
 
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`)
