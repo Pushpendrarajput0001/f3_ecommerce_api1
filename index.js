@@ -6942,6 +6942,27 @@ app.post('/addProductToCartFromRedudantBinay', async (req, res) => {
 });
 
 //DecentralizedBinary
+app.get('/addMemberInDecentralizedBinarySlot',async(req,res)=>{
+  const {userId,sponsorId,sponsorWallet,appWallet,sponsorAmount,sponsorAmountF3,appAmount,appAmountF3} = req.query;
+
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  const db = client.db('f3_ecommerce');
+  const collection = db.collection('users');
+
+  // Find the user by email
+  const user = await collection.findOne({ storeId : userId });
+  const memberOfBinary = user.isAlreadyDecentralizedMember;
+  if (!user) {
+    res.status(404).json({ error: 'User not found' });
+    return;
+  }
+
+  if (!memberOfBinary) {
+    res.status(403).json({ error: 'User not found' });
+    return;
+  }
+
+});
 
 
 app.listen(PORT, '192.168.29.149', () => {
