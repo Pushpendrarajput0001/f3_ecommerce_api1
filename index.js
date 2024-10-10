@@ -6943,6 +6943,7 @@ app.post('/addProductToCartFromRedudantBinay', async (req, res) => {
 
 //DecentralizedBinary
 app.get('/addMemberInDecentralizedBinarySlot',async(req,res)=>{
+  try{
   const {userId,sponsorId,sponsorWallet,appWallet,sponsorAmount,sponsorAmountF3,appAmount,appAmountF3} = req.query;
 
   const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -6951,17 +6952,23 @@ app.get('/addMemberInDecentralizedBinarySlot',async(req,res)=>{
 
   // Find the user by email
   const user = await collection.findOne({ storeId : userId });
+  const walletAddressUser = user.walletAddress;
   const memberOfBinary = user.isAlreadyDecentralizedMember;
   if (!user) {
     res.status(404).json({ error: 'User not found' });
     return;
   }
 
-  if (!memberOfBinary) {
+  if (memberOfBinary) {
     res.status(403).json({ error: 'User not found' });
     return;
   }
 
+  res.status(200).json(`Request Send Successfully to wallet address ${walletAddressUser}`)
+} catch (error) {
+  console.error('Error adding member to Decentralized binary:', error);
+  res.status(500).json({ error: 'An error occurred while adding member to Decentralized binary' });
+}
 });
 
 
