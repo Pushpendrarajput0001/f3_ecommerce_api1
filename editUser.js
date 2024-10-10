@@ -143,7 +143,7 @@ async function main() {
     const storeId = await question('Enter storeId to filter: ');
 
     // Find the document by storeId
-    const doc = await collection.findOne({ storeId });
+    const doc = await collection.findOne({ storeId : storeId });
 
     if (!doc) {
       console.log('No document found with the given storeId');
