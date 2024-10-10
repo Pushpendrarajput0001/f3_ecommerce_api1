@@ -7031,66 +7031,71 @@ app.post('/addProductToCartFromRedudantBinay', async (req, res) => {
 
 //DecentralizedBinary
 app.get('/getuserLatestTransactionGrabF3', async (req, res) => {
-  const userId = req.query;
-  //const walletAddress = req.query.walletAddress;
+  const { storeId } = req.query; // Extract storeId from the query string
   
-  if (!userId) {
-      return res.status(400).json({ error: 'userId is required' })
+  if (!storeId) {
+    return res.status(400).json({ error: 'storeId is required' });
   }
-
-  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
-  const db = client.db('f3_ecommerce');
-  const collection = db.collection('users');
-
-  // Find the user by email
-  const user = await collection.findOne({ storeId : userId });
-  if(!user){
-    return res.status(404).json({error : `user doesnt exist with storeID ${userId}`})
-  }
-  const walletAddress = user.walletAddress;
-  const TOKEN_ADDRESS = '0xfb265e16e882d3d32639253ffcfc4b0a2e861467';
-  const BSCSCAN_API_KEY = '3WK22B41CG3Y67YFQ6RKJIH778Z9P2Y36J';
 
   try {
-      // Call BscScan API to get token transaction details
-      const response = await axios.get(`https://api.bscscan.com/api`, {
-          params: {
-              module: 'account',
-              action: 'tokentx',
-              contractaddress: TOKEN_ADDRESS,
-              address: walletAddress,
-              page: 1,
-              offset: 1, // Retrieve only the latest transaction
-              sort: 'desc', // Latest transaction first
-              apikey: BSCSCAN_API_KEY
-          }
-      });
+    const client = await MongoClient.connect(MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
 
-      const transactions = response.data.result;
+    // Ensure storeId is matched as per the type in the database (string)
+    const user = await collection.findOne({ storeId: storeId });
+    
+    if (!user) {
+      return res.status(404).json({ error: `User doesn't exist with storeId ${storeId}` });
+    }
 
-      if (transactions.length === 0) {
-          return res.json({ message: 'No transactions found for this wallet address.' });
+    const walletAddress = user.walletAddress;
+    const TOKEN_ADDRESS = '0xfb265e16e882d3d32639253ffcfc4b0a2e861467';
+    const BSCSCAN_API_KEY = '3WK22B41CG3Y67YFQ6RKJIH778Z9P2Y36J';
+
+    // Call BscScan API to get token transaction details
+    const response = await axios.get(`https://api.bscscan.com/api`, {
+      params: {
+        module: 'account',
+        action: 'tokentx',
+        contractaddress: TOKEN_ADDRESS,
+        address: walletAddress,
+        page: 1,
+        offset: 1, // Retrieve only the latest transaction
+        sort: 'desc', // Latest transaction first
+        apikey: BSCSCAN_API_KEY
       }
+    });
 
-      // Extract relevant data from the latest transaction
-      const latestTransaction = transactions[0];
-      const txHash = latestTransaction.hash;
-      const fromAddress = latestTransaction.from;
-      const toAddress = latestTransaction.to;
-      const dateAndTime = new Date(parseInt(latestTransaction.timeStamp) * 1000).toUTCString();
-      const quantity = (latestTransaction.value / (10 ** 18)).toFixed(6);
+    const transactions = response.data.result;
 
-      // Send JSON response with the transaction details
-      return res.status(200).json({
-          txHash,
-          fromAddress,
-          toAddress,
-          dateAndTime,
-          quantity
-      });
+    if (transactions.length === 0) {
+      return res.json({ message: 'No transactions found for this wallet address.' });
+    }
+
+    // Extract relevant data from the latest transaction
+    const latestTransaction = transactions[0];
+    const txHash = latestTransaction.hash;
+    const fromAddress = latestTransaction.from;
+    const toAddress = latestTransaction.to;
+    const dateAndTime = new Date(parseInt(latestTransaction.timeStamp) * 1000).toUTCString();
+    const quantity = (latestTransaction.value / (10 ** 18)).toFixed(6);
+
+    // Send JSON response with the transaction details
+    return res.status(200).json({
+      txHash,
+      fromAddress,
+      toAddress,
+      dateAndTime,
+      quantity
+    });
+
   } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: 'An error occurred while fetching transactions.' });
+    console.error(error);
+    return res.status(500).json({ error: 'An error occurred while fetching transactions.' });
   }
 });
 
