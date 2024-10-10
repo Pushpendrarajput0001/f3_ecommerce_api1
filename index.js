@@ -7101,7 +7101,7 @@ app.get('/getuserLatestTransactionGrabF3', async (req, res) => {
 
 app.get('/addMemberInDecentralizedBinarySlot',async(req,res)=>{
   try{
-  const {userId,sponsorId,sponsorWallet,appWallet,sponsorAmount,sponsorAmountF3,appAmount,appAmountF3,dateAndTime,grabbedF3Price} = req.query;
+  const {userId,sponsorId,sponsorWallet,appWallet,sponsorAmount,sponsorAmountF3,appAmount,appAmountF3,dateAndTime,grabbedF3Price,position,placement,slotNumber} = req.query;
 
   const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
   const db = client.db('f3_ecommerce');
@@ -7141,7 +7141,10 @@ app.get('/addMemberInDecentralizedBinarySlot',async(req,res)=>{
     sponsorAmountF3,
     appAmountF3,
     dateAndTime,
-    grabbedF3Price
+    grabbedF3Price,
+    position,
+    placement,
+    slotNumber
   };
 
   // Add the new request to the providerWalletAddress array
@@ -7226,6 +7229,10 @@ app.get('/deleteAndAddtheRequestToApprovedBinaryHistory', async (req, res) => {
     }
 
     // Copy the request and add txhash and timeOfApprove
+    const placement = requestForBinary[sponsorId][0].placement;
+    const position = requestForBinary[sponsorId][0].position;
+    const slotNumber = requestForBinary[sponsorId][0].slotNumber;
+
     const approvedRequest = {
       ...requestForBinary[sponsorId][0], // Copy the first element from the request array
       txhash,
@@ -7247,6 +7254,9 @@ app.get('/deleteAndAddtheRequestToApprovedBinaryHistory', async (req, res) => {
     user.alreadyDecentralizedBinaryMember = sponsorId;
     user.dateOfBecomeBinaryMember = timeOfApprove;
     user.grabbedF3PriceDecentralizedBinary = grabbedF3Price;
+    user.positionInDecentralizedBinary = position;
+    user.placementInDecentralizedBinary = placement;
+    user.slotNumberInDecentralizedBinary = slotNumber;
 
     // Update the user document in the database with all changes
     await collection.updateOne(
@@ -7257,6 +7267,9 @@ app.get('/deleteAndAddtheRequestToApprovedBinaryHistory', async (req, res) => {
           ApprovedDecentralizedBinaryMemberRequest: user.ApprovedDecentralizedBinaryMemberRequest,
           alreadyDecentralizedBinaryMember: sponsorId,
           dateOfBecomeBinaryMember: timeOfApprove,
+          positionInDecentralizedBinary : position,
+          placementInDecentralizedBinary : placement,
+          slotNumberInDecentralizedBinary : slotNumber,
           grabbedF3Price : grabbedF3Price
         }
       }
@@ -7268,6 +7281,48 @@ app.get('/deleteAndAddtheRequestToApprovedBinaryHistory', async (req, res) => {
     return res.status(500).json({ error: 'An error occurred while processing the request' });
   }
 });
+
+app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
+  try {
+    const { sponsorId } = req.query;
+
+    if (!sponsorId) {
+      return res.status(400).json({ error: 'sponsorId is required' });
+    }
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find all users who have alreadyDecentralizedBinaryMember equal to sponsorId
+    const users = await collection.find({ alreadyDecentralizedBinaryMember: sponsorId }).toArray();
+
+    if (!users.length) {
+      return res.status(404).json({ error: 'No members found for the specified sponsorId' });
+    }
+
+    // Map over the users and extract the required fields
+    const memberDetails = users.map(user => ({
+      storeId: user.storeId,
+      grabbedF3Price: user.grabbedF3PriceDecentralizedBinary,
+      position : positionInDecentralizedBinary,
+      placement : placementInDecentralizedBinary,
+      slotNumber : slotNumberInDecentralizedBinary,
+      email: user.email,
+      dateOfBecomeBinaryMember: user.dateOfBecomeBinaryMember
+    }));
+
+    const totalMembers = memberDetails.length;
+
+    return res.status(200).json({ totalMembers, members: memberDetails });
+  } catch (error) {
+    console.error('Error fetching decentralized binary members:', error);
+    return res.status(500).json({ error: 'An error occurred while fetching the members' });
+  }
+});
+
+
+
 
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`)
