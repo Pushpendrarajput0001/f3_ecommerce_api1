@@ -6944,7 +6944,7 @@ app.post('/addProductToCartFromRedudantBinay', async (req, res) => {
 //DecentralizedBinary
 app.get('/addMemberInDecentralizedBinarySlot',async(req,res)=>{
   try{
-  const {userId,sponsorId,sponsorWallet,appWallet,sponsorAmount,sponsorAmountF3,appAmount,appAmountF3} = req.query;
+  const {userId,sponsorId,sponsorWallet,appWallet,sponsorAmount,sponsorAmountF3,appAmount,appAmountF3,dateAndTime} = req.query;
 
   const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
   const db = client.db('f3_ecommerce');
