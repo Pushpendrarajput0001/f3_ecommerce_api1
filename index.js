@@ -2443,8 +2443,12 @@ app.get('/getRequestsOfPayments', async (req, res) => {
           sponsorAmount: user.requestForDecentralizedBinary[storeId][0].sponsorAmount,
           appAmountF3: user.requestForDecentralizedBinary[storeId][0].appAmountF3,
           dateAndTime: user.requestForDecentralizedBinary[storeId][0].dateAndTime,
+          sponsorId : user.requestForDecentralizedBinary[storeId][0].sponsorId,
+          sponsorWalletAddress : user.requestForDecentralizedBinary[storeId][0].sponsorWallet,
+          appWallet : user.requestForDecentralizedBinary[storeId][0].appWallet,
           storeId: user.storeId,
           sellerWalletAddress: sponsorUser.walletAddress,
+          grabbedF3Price : user.requestForDecentralizedBinary[storeId][0].grabbedF3Price,
           buyerWalletAddress: user.walletAddress,
           receiverWalletAddress: user.requestForDecentralizedBinary[storeId][0].sponsorWallet,
           appWallet : user.requestForDecentralizedBinary[storeId][0].appWallet,
@@ -7026,6 +7030,70 @@ app.post('/addProductToCartFromRedudantBinay', async (req, res) => {
 });
 
 //DecentralizedBinary
+app.get('/getuserLatestTransactionGrabF3', async (req, res) => {
+  const userId = req.query;
+  //const walletAddress = req.query.walletAddress;
+  
+  if (!userId) {
+      return res.status(400).json({ error: 'userId is required' })
+  }
+
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  const db = client.db('f3_ecommerce');
+  const collection = db.collection('users');
+
+  // Find the user by email
+  const user = await collection.findOne({ storeId : userId });
+  if(!user){
+    return res.status(404).json({error : `user doesnt exist with storeID ${userId}`})
+  }
+  const walletAddress = user.walletAddress;
+  const TOKEN_ADDRESS = '0xfb265e16e882d3d32639253ffcfc4b0a2e861467';
+  const BSCSCAN_API_KEY = '3WK22B41CG3Y67YFQ6RKJIH778Z9P2Y36J';
+
+  try {
+      // Call BscScan API to get token transaction details
+      const response = await axios.get(`https://api.bscscan.com/api`, {
+          params: {
+              module: 'account',
+              action: 'tokentx',
+              contractaddress: TOKEN_ADDRESS,
+              address: walletAddress,
+              page: 1,
+              offset: 1, // Retrieve only the latest transaction
+              sort: 'desc', // Latest transaction first
+              apikey: BSCSCAN_API_KEY
+          }
+      });
+
+      const transactions = response.data.result;
+
+      if (transactions.length === 0) {
+          return res.json({ message: 'No transactions found for this wallet address.' });
+      }
+
+      // Extract relevant data from the latest transaction
+      const latestTransaction = transactions[0];
+      const txHash = latestTransaction.hash;
+      const fromAddress = latestTransaction.from;
+      const toAddress = latestTransaction.to;
+      const dateAndTime = new Date(parseInt(latestTransaction.timeStamp) * 1000).toUTCString();
+      const quantity = (latestTransaction.value / (10 ** 18)).toFixed(6);
+
+      // Send JSON response with the transaction details
+      return res.status(200).json({
+          txHash,
+          fromAddress,
+          toAddress,
+          dateAndTime,
+          quantity
+      });
+  } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'An error occurred while fetching transactions.' });
+  }
+});
+
 app.get('/addMemberInDecentralizedBinarySlot',async(req,res)=>{
   try{
   const {userId,sponsorId,sponsorWallet,appWallet,sponsorAmount,sponsorAmountF3,appAmount,appAmountF3,dateAndTime,grabbedF3Price} = req.query;
@@ -7089,9 +7157,9 @@ app.get('/addMemberInDecentralizedBinarySlot',async(req,res)=>{
 
 app.get('/deleteMemberRequestDecentralizedBinary', async (req, res) => {
   try {
-    const { userId, sponsorId } = req.query;
+    const { userWallet, sponsorId } = req.query;
 
-    if (!userId || !sponsorId) {
+    if (!userWallet || !sponsorId) {
       return res.status(400).json({ error: 'userId and sponsorId are required' });
     }
 
@@ -7100,7 +7168,7 @@ app.get('/deleteMemberRequestDecentralizedBinary', async (req, res) => {
     const collection = db.collection('users');
 
     // Find the user by userId (or storeId if it's the same thing)
-    const user = await collection.findOne({ storeId: userId });
+    const user = await collection.findOne({ walletAddress: userWallet });
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -7116,7 +7184,7 @@ app.get('/deleteMemberRequestDecentralizedBinary', async (req, res) => {
 
     // Update the user document in the database
     await collection.updateOne(
-      { storeId: userId },
+      { walletAddress: userWallet },
       { $set: { requestForDecentralizedBinary: user.requestForDecentralizedBinary } }
     );
 
@@ -7129,9 +7197,9 @@ app.get('/deleteMemberRequestDecentralizedBinary', async (req, res) => {
 
 app.get('/deleteAndAddtheRequestToApprovedBinaryHistory', async (req, res) => {
   try {
-    const { userId, sponsorId, txhash, timeOfApprove,grabbedF3Price } = req.query;
+    const { walletAddress, sponsorId, txhash, timeOfApprove,grabbedF3Price } = req.query;
 
-    if (!userId || !sponsorId || !txhash || !timeOfApprove) {
+    if (!walletAddress || !sponsorId || !txhash || !timeOfApprove) {
       return res.status(400).json({ error: 'userId, sponsorId, txhash, and timeOfApprove are required' });
     }
 
@@ -7140,7 +7208,7 @@ app.get('/deleteAndAddtheRequestToApprovedBinaryHistory', async (req, res) => {
     const collection = db.collection('users');
 
     // Find the user by userId
-    const user = await collection.findOne({ storeId: userId });
+    const user = await collection.findOne({ walletAddress: walletAddress });
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -7177,7 +7245,7 @@ app.get('/deleteAndAddtheRequestToApprovedBinaryHistory', async (req, res) => {
 
     // Update the user document in the database with all changes
     await collection.updateOne(
-      { storeId: userId },
+      { walletAddress: walletAddress },
       {
         $set: {
           requestForDecentralizedBinary: user.requestForDecentralizedBinary,
