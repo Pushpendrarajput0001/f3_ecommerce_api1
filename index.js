@@ -6964,7 +6964,38 @@ app.get('/addMemberInDecentralizedBinarySlot',async(req,res)=>{
     return;
   }
 
-  res.status(200).json(`Request Send Successfully to wallet address ${walletAddressUser}`)
+  if (!user.requestForDecentralizedBinary) {
+    user.requestForDecentralizedBinary = {};
+  }
+
+  // Check if there's already a request with the same providerWalletAddress
+  if (user.requestForDecentralizedBinary[sponsorId]) {
+    return res.status(402).json({ error: 'Request with the same providerWalletAddress already exists' });
+  }
+
+  // Create the new request object
+  const newRequest = {
+    userId,
+    sponsorId,
+    sponsorWallet,
+    appWallet,
+    sponsorAmount,
+    appAmount,
+    sponsorAmountF3,
+    appAmountF3,
+    dateAndTime
+  };
+
+  // Add the new request to the providerWalletAddress array
+  user.requestForDecentralizedBinary[sponsorId] = [newRequest];
+
+  // Update the user document in the database
+  await collection.updateOne(
+    { walletAddress: walletAddressUser },
+    { $set: { requestForDecentralizedBinary: user.requestForDecentralizedBinary } }
+  );
+
+  return res.status(200).json(`Request Send Successfully to wallet address ${walletAddressUser}`)
 } catch (error) {
   console.error('Error adding member to Decentralized binary:', error);
   res.status(500).json({ error: 'An error occurred while adding member to Decentralized binary' });
