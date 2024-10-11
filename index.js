@@ -7305,9 +7305,9 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
     const memberDetails = users.map(user => ({
       storeId: user.storeId,
       grabbedF3Price: user.grabbedF3PriceDecentralizedBinary,
-      position : positionInDecentralizedBinary,
-      placement : placementInDecentralizedBinary,
-      slotNumber : slotNumberInDecentralizedBinary,
+      position : user.positionInDecentralizedBinary,
+      placement : user.placementInDecentralizedBinary,
+      slotNumber : user.slotNumberInDecentralizedBinary,
       email: user.email,
       dateOfBecomeBinaryMember: user.dateOfBecomeBinaryMember
     }));
