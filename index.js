@@ -7106,6 +7106,7 @@ app.get('/getuserLatestTransactionGrabF3', async (req, res) => {
   }
 });
 
+//AddMember
 app.get('/addMemberInDecentralizedBinarySlot',async(req,res)=>{
   try{
   const {userId,sponsorId,sponsorWallet,appWallet,sponsorAmount,sponsorAmountF3,appAmount,appAmountF3,dateAndTime,grabbedF3Price,position,placement,slotNumber} = req.query;
@@ -7289,9 +7290,193 @@ app.get('/deleteAndAddtheRequestToApprovedBinaryHistory', async (req, res) => {
   }
 });
 
+//AddSlot
+app.get('/addSlotInDecentralizedBinarySlot',async(req,res)=>{
+  try{
+  const {userId,sponsorId,sponsorWallet,appWallet,sponsorAmount,sponsorAmountF3,appAmount,appAmountF3,dateAndTime,grabbedF3Price,position,placement,slotNumber} = req.query;
+
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  const db = client.db('f3_ecommerce');
+  const collection = db.collection('users');
+
+  // Find the user by email
+  const user = await collection.findOne({ storeId : userId });
+  const walletAddressUser = user.walletAddress;
+  const memberOfBinary = user.alreadyDecentralizedBinaryMember;
+  if (!user) {
+    res.status(404).json({ error: 'User not found' });
+    return;
+  }
+
+  // if (memberOfBinary) {
+  //   res.status(403).json({ error: 'User not found' });
+  //   return;
+  // }
+
+  if (!user.requestForAddSlotDecentralizedBinary) {
+    user.requestForAddSlotDecentralizedBinary = {};
+  }
+
+  // Check if there's already a request with the same providerWalletAddress
+  if (user.requestForAddSlotDecentralizedBinary[sponsorId]) {
+    return res.status(402).json({ error: 'Request with the same providerWalletAddress already exists' });
+  }
+
+  // Create the new request object
+  const newRequest = {
+    userId,
+    sponsorId,
+    sponsorWallet,
+    appWallet,
+    sponsorAmount,
+    appAmount,
+    sponsorAmountF3,
+    appAmountF3,
+    dateAndTime,
+    grabbedF3Price,
+    position,
+    placement,
+    slotNumber
+  };
+
+  // Add the new request to the providerWalletAddress array
+  user.requestForAddSlotDecentralizedBinary[sponsorId] = [newRequest];
+
+  // Update the user document in the database
+  await collection.updateOne(
+    { walletAddress: walletAddressUser },
+    { $set: { requestForAddSlotDecentralizedBinary: user.requestForAddSlotDecentralizedBinary } }
+  );
+
+  return res.status(200).json(`Request Send Successfully to wallet address ${walletAddressUser}`)
+} catch (error) {
+  console.error('Error adding member to Decentralized binary:', error);
+  res.status(500).json({ error: 'An error occurred while adding member to Decentralized binary' });
+}
+});
+
+app.get('/deleteSlotRequestDecentralizedBinary', async (req, res) => {
+  try {
+    const { userWallet, sponsorId } = req.query;
+
+    if (!userWallet || !sponsorId) {
+      return res.status(400).json({ error: 'userId and sponsorId are required' });
+    }
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by userId (or storeId if it's the same thing)
+    const user = await collection.findOne({ walletAddress: userWallet });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if the user has decentralized binary requests
+    if (!user.requestForAddSlotDecentralizedBinary || !user.requestForAddSlotDecentralizedBinary[sponsorId]) {
+      return res.status(404).json({ error: 'Request not found for the specified sponsorId' });
+    }
+
+    // Delete the request for the specified sponsorId
+    delete user.requestForAddSlotDecentralizedBinary[sponsorId];
+
+    // Update the user document in the database
+    await collection.updateOne(
+      { walletAddress: userWallet },
+      { $set: { requestForAddSlotDecentralizedBinary: user.requestForAddSlotDecentralizedBinary } }
+    );
+
+    return res.status(200).json(`Request from sponsorId ${sponsorId} and userId : ${userId} deleted successfully`);
+  } catch (error) {
+    console.error('Error deleting decentralized binary request:', error);
+    return res.status(500).json({ error: 'An error occurred while deleting the request' });
+  }
+});
+
+app.get('/deleteAndAddtheAddSlotRequestToApprovedBinaryHistory', async (req, res) => {
+  try {
+    const { walletAddress, sponsorId, txhash, timeOfApprove,grabbedF3Price } = req.query;
+
+    if (!walletAddress || !sponsorId || !txhash || !timeOfApprove) {
+      return res.status(400).json({ error: 'userId, sponsorId, txhash, and timeOfApprove are required' });
+    }
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by userId
+    const user = await collection.findOne({ walletAddress: walletAddress });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if the user has decentralized binary requests
+    const requestForBinary = user.requestForAddSlotDecentralizedBinary;
+    if (!requestForBinary || !requestForBinary[sponsorId]) {
+      return res.status(404).json({ error: 'Request not found for the specified sponsorId' });
+    }
+
+    // Copy the request and add txhash and timeOfApprove
+    const placement = requestForBinary[sponsorId][0].placement;
+    const position = requestForBinary[sponsorId][0].position;
+    const slotNumber = requestForBinary[sponsorId][0].slotNumber;
+
+    const approvedRequest = {
+      ...requestForBinary[sponsorId][0], // Copy the first element from the request array
+      txhash,
+      timeOfApprove
+    };
+
+    // Check if the ApprovedDecentralizedBinaryMemberRequest map exists, if not create it
+    if (!user.ApprovedDecentralizedBinarySlotRequest) {
+      user.ApprovedDecentralizedBinarySlotRequest = {};
+    }
+
+    // Save the modified request to ApprovedDecentralizedBinaryMemberRequest
+    user.ApprovedDecentralizedBinarySlotRequest[sponsorId] = [approvedRequest];
+
+    // Delete the original request from requestForDecentralizedBinary
+    delete user.requestForAddSlotDecentralizedBinary[sponsorId];
+
+    // Set the new fields in the user document
+    // user.alreadyDecentralizedBinaryMember = sponsorId;
+    // user.dateOfBecomeBinaryMember = timeOfApprove;
+    // user.grabbedF3PriceDecentralizedBinary = grabbedF3Price;
+    // user.positionInDecentralizedBinary = position;
+    // user.placementInDecentralizedBinary = placement;
+    // user.slotNumberInDecentralizedBinary = slotNumber;
+
+    // Update the user document in the database with all changes
+    await collection.updateOne(
+      { walletAddress: walletAddress },
+      {
+        $set: {
+          requestForDecentralizedBinary: user.requestForDecentralizedBinary,
+          ApprovedDecentralizedBinaryMemberRequest: user.ApprovedDecentralizedBinaryMemberRequest,
+          alreadyDecentralizedBinaryMember: sponsorId,
+          dateOfBecomeBinaryMember: timeOfApprove,
+          // positionInDecentralizedBinary : position,
+          // placementInDecentralizedBinary : placement,
+          // slotNumberInDecentralizedBinary : slotNumber,
+          // grabbedF3Price : grabbedF3Price
+        }
+      }
+    );
+
+    return res.status(200).json(`Request for sponsorId ${sponsorId} and userId : ${userId} has been approved, user updated, and moved to history`);
+  } catch (error) {
+    console.error('Error processing decentralized binary request:', error);
+    return res.status(500).json({ error: 'An error occurred while processing the request' });
+  }
+});
+
 app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
   try {
-    const { sponsorId } = req.query;
+    const { sponsorId,sponsorWalletAddress } = req.query;
 
     if (!sponsorId) {
       return res.status(400).json({ error: 'sponsorId is required' });
@@ -7321,14 +7506,28 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
 
     const totalMembers = memberDetails.length;
 
-    return res.status(200).json({ totalMembers, members: memberDetails });
+    const TOKEN_CONTRACT_ADDRESS = '0xfB265e16e882d3d32639253ffcfC4b0a2E861467';
+    const BSC_RPC_URL = 'https://bsc-dataseed.binance.org/';
+    const web3 = new Web3(new Web3.providers.HttpProvider(BSC_RPC_URL));
+    const contract = new web3.eth.Contract([
+      {
+        constant: true,
+        inputs: [{ name: "_owner", type: "address" }],
+        name: "balanceOf",
+        outputs: [{ name: "balance", type: "uint256" }],
+        type: "function"
+      }
+    ], TOKEN_CONTRACT_ADDRESS);
+
+    const balance = await contract.methods.balanceOf(sponsorWalletAddress).call();
+    const formattedBalance = web3.utils.fromWei(balance, 'ether'); // Assuming the token has 18 decimals
+
+    return res.status(200).json({ totalMembers, members: memberDetails,f3Balance : formattedBalance });
   } catch (error) {
     console.error('Error fetching decentralized binary members:', error);
     return res.status(500).json({ error: 'An error occurred while fetching the members' });
   }
 });
-
-
 
 
 app.listen(PORT, '192.168.29.149', () => {
