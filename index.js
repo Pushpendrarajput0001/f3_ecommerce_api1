@@ -7509,7 +7509,7 @@ app.get('/deleteAndAddtheAddSlotRequestToApprovedBinaryHistory', async (req, res
       return res.status(404).json({ error: 'Request not found for the specified sponsorId' });
     }
 
-    const totalOccupiedSlots = Number(user.occupiedSlots) ?? 0
+    const totalOccupiedSlots = user.occupiedSlots ? Number(user.occupiedSlots) : 0;
     const addedSlots = (totalOccupiedSlots+1)
     // Copy the request and add txhash and timeOfApprove
     const placement = requestForBinary[sponsorId][0].placement;
