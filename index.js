@@ -7569,7 +7569,7 @@ app.get('/deleteAndAddtheAddSlotRequestToApprovedBinaryHistory', async (req, res
 
 app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
   try {
-    const { sponsorId,sponsorWalletAddress } = req.query;
+    const { sponsorId, sponsorWalletAddress } = req.query;
 
     if (!sponsorId) {
       return res.status(400).json({ error: 'sponsorId is required' });
@@ -7581,26 +7581,33 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
 
     // Find all users who have alreadyDecentralizedBinaryMember equal to sponsorId
     const users = await collection.find({ alreadyDecentralizedBinaryMember: sponsorId }).toArray();
-    const loggedUser = await collection.findOne({storeId : sponsorId});
+    const loggedUser = await collection.findOne({ storeId: sponsorId });
+
+    if (!loggedUser) {
+      return res.status(404).json({ error: 'Sponsor not found' });
+    }
 
     if (!users.length) {
       return res.status(404).json({ error: 'No members found for the specified sponsorId' });
     }
 
-    const alreadySlot = Number(loggedUser.occupiedSlots) ?? 0
+    // Handle alreadySlot ensuring it's a valid number
+    const alreadySlot = loggedUser.occupiedSlots ? Number(loggedUser.occupiedSlots) : 0;
+
     // Map over the users and extract the required fields
     const memberDetails = users.map(user => ({
       storeId: user.storeId,
       grabbedF3Price: user.grabbedF3PriceDecentralizedBinary,
-      position : user.positionInDecentralizedBinary,
-      placement : user.placementInDecentralizedBinary,
-      slotNumber : user.slotNumberInDecentralizedBinary,
+      position: user.positionInDecentralizedBinary,
+      placement: user.placementInDecentralizedBinary,
+      slotNumber: user.slotNumberInDecentralizedBinary,
       email: user.email,
       dateOfBecomeBinaryMember: user.dateOfBecomeBinaryMember
     }));
 
+    // Calculate totalMembers
     const totalMembers = memberDetails.length;
-    const finalMembers = (totalMembers+alreadySlot)
+    const finalMembers = totalMembers + alreadySlot;
 
     const TOKEN_CONTRACT_ADDRESS = '0xfB265e16e882d3d32639253ffcfC4b0a2E861467';
     const BSC_RPC_URL = 'https://bsc-dataseed.binance.org/';
@@ -7618,7 +7625,11 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
     const balance = await contract.methods.balanceOf(sponsorWalletAddress).call();
     const formattedBalance = web3.utils.fromWei(balance, 'ether'); // Assuming the token has 18 decimals
 
-    return res.status(200).json({ totalMembers : finalMembers, members: memberDetails,f3Balance : formattedBalance });
+    return res.status(200).json({
+      totalMembers: finalMembers,
+      members: memberDetails,
+      f3Balance: formattedBalance
+    });
   } catch (error) {
     console.error('Error fetching decentralized binary members:', error);
     return res.status(500).json({ error: 'An error occurred while fetching the members' });
