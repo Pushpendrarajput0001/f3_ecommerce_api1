@@ -596,6 +596,7 @@ app.get('/userCartProducts', async (req, res) => {
       const productDetail = user.userCartsProductsDetails[key];
       const productDetails = await db.collection('users').findOne({ 'products._id': productDetail._id }, { projection: { 'products.$': 1 } });
       const product = productDetails?.products?.[0] ?? {}; 
+      const isFromRedundant = productDetail.fromRedundantBinary ?? 'No'
       //console.log(`product Details : ${productDetails._id}`);
       console.log(productDetails)
       const formattedProductDetails = {
@@ -614,6 +615,7 @@ app.get('/userCartProducts', async (req, res) => {
         resellers_reward: productDetail.resellers_reward,
         numberOfStocks: product.numberOfStocks ?? productDetail.numberOfStocks, 
         totalsolds: product.totalsolds ?? productDetail.totalsolds,
+        isFromRedundant : isFromRedundant,
         images: productDetail.images,
       };
       cartProducts.push(formattedProductDetails);
@@ -796,7 +798,7 @@ app.get('/getBuyCheckedOutApproval', async (req, res) => {
     for (const products of Object.values(checkoutapproval)) {
       // Iterate over each product in the store
       for (const product of Object.values(products)) {
-        const { productId, quantity, totalPrice } = product;
+        const { productId, quantity, totalPrice,fromRedundantBinary } = product;
 
         // Fetch product details from MongoDB
         const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
@@ -806,6 +808,7 @@ app.get('/getBuyCheckedOutApproval', async (req, res) => {
           productId,
           totalQuantity: quantity,
           totalPrice,
+          fromRedundantBinary : fromRedundantBinary ?? 'No',
           ...productDetails
         });
       }
@@ -858,7 +861,7 @@ app.get('/getSellerProductsCheckoutById', async (req, res) => {
           const { productId, quantity, totalPrice, productName, startedPrice,
             f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected,
             description, totalsolds, storeId, offer, storeIdBuyer, walletAddressBuyer,
-            flagWord, storeName, images, resellers_reward } = checkoutApproval;
+            flagWord, storeName, images, resellers_reward,fromRedundantBinary } = checkoutApproval;
 
           // Fetch product details from MongoDB
           const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
@@ -879,6 +882,7 @@ app.get('/getSellerProductsCheckoutById', async (req, res) => {
             storeId,
             offer,
             resellers_reward,
+            fromRedundantBinary : fromRedundantBinary ?? 'No',
             storeIdBuyer,
             walletAddressBuyer,
             flagWord,
@@ -1172,7 +1176,7 @@ app.get('/getSellerSectionApprovedCheckout', async (req, res) => {
             productName, startedPrice,
             f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected,
             description, totalsolds, storeId, offer, storeIdBuyer, walletAddressBuyer,
-            flagWord, storeName, dateOfApprovalCheckout } = approvalcheckout;
+            flagWord, storeName, dateOfApprovalCheckout,fromRedundantBinary } = approvalcheckout;
 
           // Fetch product details from MongoDB
           //const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
@@ -1195,6 +1199,7 @@ app.get('/getSellerSectionApprovedCheckout', async (req, res) => {
             storeIdBuyer: user.storeId,
             offer,
             walletAddressBuyer: user.walletAddress,
+            fromRedundantBinary : fromRedundantBinary ?? 'No',
             flagWord,
             storeName,
             images : 'images',
@@ -1255,7 +1260,7 @@ app.get('/getBuyersSectionApprovedCheckout', async (req, res) => {
           productName, startedPrice,
           f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected,
           description, totalsolds, storeId, offer, storeIdBuyer, walletAddressBuyer,
-          flagWord, storeName, dateOfApprovalCheckout } = approvalcheckout;
+          flagWord, storeName, dateOfApprovalCheckout,fromRedundantBinary } = approvalcheckout;
 
         // Fetch product details from MongoDB
         const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
@@ -1277,6 +1282,7 @@ app.get('/getBuyersSectionApprovedCheckout', async (req, res) => {
           storeId,
           flagWord,
           offer,
+          fromRedundantBinary : fromRedundantBinary ?? 'No',
           storeName,
           images : 'images',
           dateOfApprovalCheckout
@@ -7010,6 +7016,7 @@ app.post('/addProductToCartFromRedudantBinay', async (req, res) => {
     const productDetails = { ...product.products[0] };
 
     productDetails.startedPrice = startedPrice;
+    productDetails.fromRedundantBinary = 'Yes'
     // Add product details to userCartsProductsDetails map using the generated UUID as key
     user.userCartsProductsDetails[newObjectKey] = productDetails;
     // Update the user document in the database
