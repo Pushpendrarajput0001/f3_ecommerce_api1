@@ -7587,9 +7587,9 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
       return res.status(404).json({ error: 'Sponsor not found' });
     }
 
-    if (!users.length) {
-      return res.status(404).json({ error: 'No members found for the specified sponsorId' });
-    }
+    // if (!users.length) {
+    //   return res.status(404).json({ error: 'No members found for the specified sponsorId' });
+    // }
 
     // Handle alreadySlot ensuring it's a valid number
     const alreadySlot = loggedUser.occupiedSlots ? Number(loggedUser.occupiedSlots) : 0;
