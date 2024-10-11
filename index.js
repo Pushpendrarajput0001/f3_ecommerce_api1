@@ -2465,6 +2465,95 @@ app.get('/getRequestsOfPayments', async (req, res) => {
       }
     }
 
+    let sponsorUserBinaryForSlots = {};
+    if (user.requestForAddSlotDecentralizedBinary) {
+      const storeIds = Object.keys(user.requestForAddSlotDecentralizedBinary);
+      for (const storeId of storeIds) {
+        const sellerStore = user.requestForAddSlotDecentralizedBinary[storeId][0].sellerId;
+        const SellerUser = await collection.findOne({ storeId: sellerStore });
+        sponsorUserBinaryForSlots[storeId] = SellerUser;
+      }
+
+      // Process buyer requests
+      for (const storeId of storeIds) {
+        const SellerUser = sponsorUserBinaryForSlots[storeId];
+        const sponsorUser = await collection.findOne({ storeId: storeId });
+        // const buyerProducts = user.requestForDecentralizedBinary[storeId].map(product => ({
+        //   productId: 'product.productId',
+        //   quantity: 'product.quantity',
+        //   totalPrice: product.totalPrice,
+        //   totalF3: product.totalF3Amount,
+        //   totalGc: product.totalGc,
+        //   sellerWalletAddress: product.sellerId,
+        //   dateAndTime: product.dateAndTime,
+        //   startedDateAndTime: product.startedDateAndTime
+        // }));
+
+        // const buyerRequest = {
+        //   totalF3: user.paymentRequestBoosterFeeDroplet[storeId][0].totalF3Amount,
+        //   totalGc: user.paymentRequestBoosterFeeDroplet[storeId][0].totalGc,
+        //   storeId: user.paymentRequestBoosterFeeDroplet[storeId][0].sellerId,
+        //   sellerWalletAddress: SellerUser.walletAddress,
+        //   buyerWalletAddress: user.walletAddress,
+        //   requestType: 'Booster Fee',
+        //   products: buyerProducts
+        // };
+
+        const simpleJson = [
+          {
+            "id": 1,
+            "name": "John Doe",
+            "email": "john.doe@example.com",
+            "age": 25
+          },
+          {
+            "id": 2,
+            "name": "Jane Smith",
+            "email": "jane.smith@example.com",
+            "age": 30
+          },
+          {
+            "id": 3,
+            "name": "Emily Johnson",
+            "email": "emily.johnson@example.com",
+            "age": 22
+          },
+          {
+            "id": 4,
+            "name": "Michael Brown",
+            "email": "michael.brown@example.com",
+            "age": 35
+          },
+          {
+            "id": 5,
+            "name": "Sarah Davis",
+            "email": "sarah.davis@example.com",
+            "age": 28
+          }
+        ];
+        const decentralizedBinaryRequest = {
+          loggedUserWallet: user.walletAddress,
+          totalF3: user.requestForAddSlotDecentralizedBinary[storeId][0].sponsorAmountF3,
+          sponsorAmount: user.requestForAddSlotDecentralizedBinary[storeId][0].sponsorAmount,
+          appAmountF3: user.requestForAddSlotDecentralizedBinary[storeId][0].appAmountF3,
+          dateAndTime: user.requestForAddSlotDecentralizedBinary[storeId][0].dateAndTime,
+          sponsorId : user.requestForAddSlotDecentralizedBinary[storeId][0].sponsorId,
+          sponsorWalletAddress : user.requestForAddSlotDecentralizedBinary[storeId][0].sponsorWallet,
+          appWallet : user.requestForAddSlotDecentralizedBinary[storeId][0].appWallet,
+          storeId: user.storeId,
+          sellerWalletAddress: sponsorUser.walletAddress,
+          grabbedF3Price : user.requestForAddSlotDecentralizedBinary[storeId][0].grabbedF3Price,
+          buyerWalletAddress: user.walletAddress,
+          receiverWalletAddress: user.requestForAddSlotDecentralizedBinary[storeId][0].sponsorWallet,
+          appWallet : user.requestForAddSlotDecentralizedBinary[storeId][0].appWallet,
+          requestType: 'Slot Referral',
+          products: simpleJson
+        };
+        response.requests.push(decentralizedBinaryRequest);
+      }
+    }
+    
+
     // if (user.paymentRequestResellersReward) {
     //   const walletAddresses = Object.keys(user.paymentRequestResellersReward);
     //   for (const walletAddress of walletAddresses) {
