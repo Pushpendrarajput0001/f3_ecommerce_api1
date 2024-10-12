@@ -7302,7 +7302,7 @@ app.get('/deleteMemberRequestDecentralizedBinary', async (req, res) => {
 
 app.get('/deleteAndAddtheRequestToApprovedBinaryHistory', async (req, res) => {
   try {
-    const { walletAddress, sponsorId, txhash, timeOfApprove,grabbedF3Price } = req.query;
+    const { walletAddress, sponsorId, txhash, timeOfApprove,grabbedF3Price,txHashApp } = req.query;
 
     if (!walletAddress || !sponsorId || !txhash || !timeOfApprove) {
       return res.status(400).json({ error: 'userId, sponsorId, txhash, and timeOfApprove are required' });
@@ -7333,6 +7333,7 @@ app.get('/deleteAndAddtheRequestToApprovedBinaryHistory', async (req, res) => {
     const approvedRequest = {
       ...requestForBinary[sponsorId][0], // Copy the first element from the request array
       txhash,
+      txHashApp,
       timeOfApprove
     };
 
@@ -7486,7 +7487,7 @@ app.get('/deleteSlotRequestDecentralizedBinary', async (req, res) => {
 
 app.get('/deleteAndAddtheAddSlotRequestToApprovedBinaryHistory', async (req, res) => {
   try {
-    const { walletAddress, sponsorId, txhash, timeOfApprove,grabbedF3Price } = req.query;
+    const { walletAddress, sponsorId, txhash, timeOfApprove,grabbedF3Price,txHashApp } = req.query;
 
     if (!walletAddress || !sponsorId || !txhash || !timeOfApprove) {
       return res.status(400).json({ error: 'userId, sponsorId, txhash, and timeOfApprove are required' });
@@ -7519,6 +7520,7 @@ app.get('/deleteAndAddtheAddSlotRequestToApprovedBinaryHistory', async (req, res
     const approvedRequest = {
       ...requestForBinary[sponsorId][0], // Copy the first element from the request array
       txhash,
+      txHashApp,
       timeOfApprove
     };
 
@@ -7568,6 +7570,75 @@ app.get('/deleteAndAddtheAddSlotRequestToApprovedBinaryHistory', async (req, res
 });
 
 app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
+  try {
+    const { sponsorId, sponsorWalletAddress } = req.query;
+
+    if (!sponsorId) {
+      return res.status(400).json({ error: 'sponsorId is required' });
+    }
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find all users who have alreadyDecentralizedBinaryMember equal to sponsorId
+    const users = await collection.find({ alreadyDecentralizedBinaryMember: sponsorId }).toArray();
+    const loggedUser = await collection.findOne({ storeId: sponsorId });
+
+    if (!loggedUser) {
+      return res.status(404).json({ error: 'Sponsor not found' });
+    }
+
+    // if (!users.length) {
+    //   return res.status(404).json({ error: 'No members found for the specified sponsorId' });
+    // }
+
+    // Handle alreadySlot ensuring it's a valid number
+    const alreadySlot = loggedUser.occupiedSlots ? Number(loggedUser.occupiedSlots) : 0;
+
+    // Map over the users and extract the required fields
+    const memberDetails = users.map(user => ({
+      storeId: user.storeId,
+      grabbedF3Price: user.grabbedF3PriceDecentralizedBinary,
+      position: user.positionInDecentralizedBinary,
+      placement: user.placementInDecentralizedBinary,
+      slotNumber: user.slotNumberInDecentralizedBinary,
+      email: user.email,
+      dateOfBecomeBinaryMember: user.dateOfBecomeBinaryMember
+    }));
+
+    // Calculate totalMembers
+    const totalMembers = memberDetails.length;
+    const finalMembers = totalMembers + alreadySlot;
+
+    const TOKEN_CONTRACT_ADDRESS = '0xfB265e16e882d3d32639253ffcfC4b0a2E861467';
+    const BSC_RPC_URL = 'https://bsc-dataseed.binance.org/';
+    const web3 = new Web3(new Web3.providers.HttpProvider(BSC_RPC_URL));
+    const contract = new web3.eth.Contract([
+      {
+        constant: true,
+        inputs: [{ name: "_owner", type: "address" }],
+        name: "balanceOf",
+        outputs: [{ name: "balance", type: "uint256" }],
+        type: "function"
+      }
+    ], TOKEN_CONTRACT_ADDRESS);
+
+    const balance = await contract.methods.balanceOf(sponsorWalletAddress).call();
+    const formattedBalance = web3.utils.fromWei(balance, 'ether'); // Assuming the token has 18 decimals
+
+    return res.status(200).json({
+      totalMembers: finalMembers,
+      members: memberDetails,
+      f3Balance: formattedBalance
+    });
+  } catch (error) {
+    console.error('Error fetching decentralized binary members:', error);
+    return res.status(500).json({ error: 'An error occurred while fetching the members' });
+  }
+});
+
+app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => {
   try {
     const { sponsorId, sponsorWalletAddress } = req.query;
 
