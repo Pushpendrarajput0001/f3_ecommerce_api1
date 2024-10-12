@@ -7487,17 +7487,17 @@ app.get('/deleteSlotRequestDecentralizedBinary', async (req, res) => {
 
 app.get('/deleteAndAddtheAddSlotRequestToApprovedBinaryHistory', async (req, res) => {
   try {
-    const { walletAddress, sponsorId, txhash, timeOfApprove,grabbedF3Price,txHashApp } = req.query;
+    const { walletAddress, sponsorId, txhash, timeOfApprove, grabbedF3Price, txHashApp,sponsorWalletAddress } = req.query;
 
     if (!walletAddress || !sponsorId || !txhash || !timeOfApprove) {
-      return res.status(400).json({ error: 'userId, sponsorId, txhash, and timeOfApprove are required' });
+      return res.status(400).json({ error: 'walletAddress, sponsorId, txhash, and timeOfApprove are required' });
     }
 
     const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
     const db = client.db('f3_ecommerce');
     const collection = db.collection('users');
 
-    // Find the user by userId
+    // Find the user by walletAddress
     const user = await collection.findOne({ walletAddress: walletAddress });
 
     if (!user) {
@@ -7511,8 +7511,9 @@ app.get('/deleteAndAddtheAddSlotRequestToApprovedBinaryHistory', async (req, res
     }
 
     const totalOccupiedSlots = user.occupiedSlots ? Number(user.occupiedSlots) : 0;
-    const addedSlots = (totalOccupiedSlots+1)
-    // Copy the request and add txhash and timeOfApprove
+    const addedSlots = totalOccupiedSlots + 1;
+
+    // Extract details from the request
     const placement = requestForBinary[sponsorId][0].placement;
     const position = requestForBinary[sponsorId][0].position;
     const slotNumber = requestForBinary[sponsorId][0].slotNumber;
@@ -7524,24 +7525,39 @@ app.get('/deleteAndAddtheAddSlotRequestToApprovedBinaryHistory', async (req, res
       timeOfApprove
     };
 
-    // Check if the ApprovedDecentralizedBinaryMemberRequest map exists, if not create it
+    // Check if ApprovedDecentralizedBinarySlotRequest map exists, if not create it
     if (!user.ApprovedDecentralizedBinarySlotRequest) {
       user.ApprovedDecentralizedBinarySlotRequest = {};
     }
 
-    // Save the modified request to ApprovedDecentralizedBinaryMemberRequest
+    // Save the modified request to ApprovedDecentralizedBinarySlotRequest
     user.ApprovedDecentralizedBinarySlotRequest[sponsorId] = [approvedRequest];
 
-    // Delete the original request from requestForDecentralizedBinary
+    // Delete the original request from requestForAddSlotDecentralizedBinary
     delete user.requestForAddSlotDecentralizedBinary[sponsorId];
 
-    // Set the new fields in the user document
-    // user.alreadyDecentralizedBinaryMember = sponsorId;
-    // user.dateOfBecomeBinaryMember = timeOfApprove;
-    // user.grabbedF3PriceDecentralizedBinary = grabbedF3Price;
-    // user.positionInDecentralizedBinary = position;
-    // user.placementInDecentralizedBinary = placement;
-    // user.slotNumberInDecentralizedBinary = slotNumber;
+    // Create a new slot object
+    const newSlot = {
+      sponsorWalletAddress : sponsorWalletAddress,
+      walletAddress : walletAddress,
+      storeId : user.storeId,
+      email : user.email,
+      dateOfBecomeBinaryMember: timeOfApprove,
+      grabbedF3PriceDecentralizedBinary: grabbedF3Price,
+      positionInDecentralizedBinary: position,
+      placementInDecentralizedBinary: placement,
+      slotNumberInDecentralizedBinary: slotNumber
+    };
+
+    // Check if the occupiedSlotsAddedSlots map exists, if not create it
+    if (!user.occupiedSlotsAddedSlots) {
+      user.occupiedSlotsAddedSlots = [];
+    }
+
+    // Push the new slot object into the map
+    user.occupiedSlotsAddedSlots.push(newSlot);
+
+    // Update the occupiedSlots count
     user.occupiedSlots = addedSlots;
 
     // Update the user document in the database with all changes
@@ -7549,20 +7565,15 @@ app.get('/deleteAndAddtheAddSlotRequestToApprovedBinaryHistory', async (req, res
       { walletAddress: walletAddress },
       {
         $set: {
-          requestForDecentralizedBinary: user.requestForDecentralizedBinary,
-          ApprovedDecentralizedBinaryMemberRequest: user.ApprovedDecentralizedBinaryMemberRequest,
-          alreadyDecentralizedBinaryMember: sponsorId,
-          dateOfBecomeBinaryMember: timeOfApprove,
-          occupiedSlots : addedSlots
-          // positionInDecentralizedBinary : position,
-          // placementInDecentralizedBinary : placement,
-          // slotNumberInDecentralizedBinary : slotNumber,
-          // grabbedF3Price : grabbedF3Price
+          ApprovedDecentralizedBinarySlotRequest: user.ApprovedDecentralizedBinarySlotRequest,
+          requestForAddSlotDecentralizedBinary: user.requestForAddSlotDecentralizedBinary,
+          occupiedSlots: addedSlots,
+          occupiedSlotsAddedSlots: user.occupiedSlotsAddedSlots // Save the slots map
         }
       }
     );
 
-    return res.status(200).json(`Request for sponsorId ${sponsorId} and userId : ${userId} has been approved, user updated, and moved to history`);
+    return res.status(200).json(`Request for sponsorId ${sponsorId} and walletAddress ${walletAddress} has been approved, user updated, and moved to history`);
   } catch (error) {
     console.error('Error processing decentralized binary request:', error);
     return res.status(500).json({ error: 'An error occurred while processing the request' });
@@ -7589,9 +7600,8 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
       return res.status(404).json({ error: 'Sponsor not found' });
     }
 
-    // if (!users.length) {
-    //   return res.status(404).json({ error: 'No members found for the specified sponsorId' });
-    // }
+    // Extract occupiedSlotsAddedSlots from loggedUser
+    const occupiedSlots = loggedUser.occupiedSlotsAddedSlots || []; // Get the array, or send an empty array if it doesn't exist
 
     // Handle alreadySlot ensuring it's a valid number
     const alreadySlot = loggedUser.occupiedSlots ? Number(loggedUser.occupiedSlots) : 0;
@@ -7599,7 +7609,7 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
     // Map over the users and extract the required fields
     const memberDetails = users.map(user => ({
       storeId: user.storeId,
-      walletAddress : user.walletAddress,
+      walletAddress: user.walletAddress,
       grabbedF3Price: user.grabbedF3PriceDecentralizedBinary,
       position: user.positionInDecentralizedBinary,
       placement: user.placementInDecentralizedBinary,
@@ -7608,29 +7618,42 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
       dateOfBecomeBinaryMember: user.dateOfBecomeBinaryMember
     }));
 
-    // Calculate totalMembers
-    const totalMembers = memberDetails.length;
-    const finalMembers = totalMembers + alreadySlot;
+    // Map over the occupiedSlots and extract similar details for each
+    const occupiedSlotsDetails = occupiedSlots.map(slot => ({
+      storeId: slot.storeId,
+      walletAddress: slot.walletAddress,
+      sponsorWalletAddress : slot.sponsorWalletAddress,
+      grabbedF3Price: slot.grabbedF3PriceDecentralizedBinary,
+      position: slot.positionInDecentralizedBinary,
+      placement: slot.placementInDecentralizedBinary,
+      slotNumber: slot.slotNumberInDecentralizedBinary,
+      email: slot.email,
+      dateOfBecomeBinaryMember: slot.dateOfBecomeBinaryMember
+    }));
 
+    // Calculate totalMembers
+    const totalMembers = memberDetails.length + occupiedSlotsDetails.length;
+
+    // Interact with the BSC blockchain to get the balance
     const TOKEN_CONTRACT_ADDRESS = '0xfB265e16e882d3d32639253ffcfC4b0a2E861467';
     const BSC_RPC_URL = 'https://bsc-dataseed.binance.org/';
     const web3 = new Web3(new Web3.providers.HttpProvider(BSC_RPC_URL));
-    const contract = new web3.eth.Contract([
-      {
-        constant: true,
-        inputs: [{ name: "_owner", type: "address" }],
-        name: "balanceOf",
-        outputs: [{ name: "balance", type: "uint256" }],
-        type: "function"
-      }
-    ], TOKEN_CONTRACT_ADDRESS);
+    const contract = new web3.eth.Contract([{
+      constant: true,
+      inputs: [{ name: "_owner", type: "address" }],
+      name: "balanceOf",
+      outputs: [{ name: "balance", type: "uint256" }],
+      type: "function"
+    }], TOKEN_CONTRACT_ADDRESS);
 
     const balance = await contract.methods.balanceOf(sponsorWalletAddress).call();
     const formattedBalance = web3.utils.fromWei(balance, 'ether'); // Assuming the token has 18 decimals
 
+    // Return the total members, member details, f3Balance, and occupiedSlots in separate fields
     return res.status(200).json({
-      totalMembers: finalMembers,
-      members: memberDetails,
+      totalMembers: totalMembers,
+      members: memberDetails,           // Send the member details
+      occupiedSlots: occupiedSlotsDetails,  // Send the occupied slots separately
       f3Balance: formattedBalance
     });
   } catch (error) {
@@ -7659,9 +7682,8 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
       return res.status(404).json({ error: 'Sponsor not found' });
     }
 
-    // if (!users.length) {
-    //   return res.status(404).json({ error: 'No members found for the specified sponsorId' });
-    // }
+    // Extract occupiedSlotsAddedSlots from loggedUser
+    const occupiedSlots = loggedUser.occupiedSlotsAddedSlots || []; // Get the array, or send an empty array if it doesn't exist
 
     // Handle alreadySlot ensuring it's a valid number
     const alreadySlot = loggedUser.occupiedSlots ? Number(loggedUser.occupiedSlots) : 0;
@@ -7669,7 +7691,7 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
     // Map over the users and extract the required fields
     const memberDetails = users.map(user => ({
       storeId: user.storeId,
-      walletAddress : user.walletAddress,
+      walletAddress: user.walletAddress,
       grabbedF3Price: user.grabbedF3PriceDecentralizedBinary,
       position: user.positionInDecentralizedBinary,
       placement: user.placementInDecentralizedBinary,
@@ -7678,29 +7700,42 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
       dateOfBecomeBinaryMember: user.dateOfBecomeBinaryMember
     }));
 
-    // Calculate totalMembers
-    const totalMembers = memberDetails.length;
-    const finalMembers = totalMembers + alreadySlot;
+    // Map over the occupiedSlots and extract similar details for each
+    const occupiedSlotsDetails = occupiedSlots.map(slot => ({
+      storeId: slot.storeId,
+      walletAddress: slot.walletAddress,
+      sponsorWalletAddress : slot.sponsorWalletAddress,
+      grabbedF3Price: slot.grabbedF3PriceDecentralizedBinary,
+      position: slot.positionInDecentralizedBinary,
+      placement: slot.placementInDecentralizedBinary,
+      slotNumber: slot.slotNumberInDecentralizedBinary,
+      email: slot.email,
+      dateOfBecomeBinaryMember: slot.dateOfBecomeBinaryMember
+    }));
 
+    // Calculate totalMembers
+    const totalMembers = memberDetails.length + occupiedSlotsDetails.length;
+
+    // Interact with the BSC blockchain to get the balance
     const TOKEN_CONTRACT_ADDRESS = '0xfB265e16e882d3d32639253ffcfC4b0a2E861467';
     const BSC_RPC_URL = 'https://bsc-dataseed.binance.org/';
     const web3 = new Web3(new Web3.providers.HttpProvider(BSC_RPC_URL));
-    const contract = new web3.eth.Contract([
-      {
-        constant: true,
-        inputs: [{ name: "_owner", type: "address" }],
-        name: "balanceOf",
-        outputs: [{ name: "balance", type: "uint256" }],
-        type: "function"
-      }
-    ], TOKEN_CONTRACT_ADDRESS);
+    const contract = new web3.eth.Contract([{
+      constant: true,
+      inputs: [{ name: "_owner", type: "address" }],
+      name: "balanceOf",
+      outputs: [{ name: "balance", type: "uint256" }],
+      type: "function"
+    }], TOKEN_CONTRACT_ADDRESS);
 
     const balance = await contract.methods.balanceOf(sponsorWalletAddress).call();
     const formattedBalance = web3.utils.fromWei(balance, 'ether'); // Assuming the token has 18 decimals
 
+    // Return the total members, member details, f3Balance, and occupiedSlots in separate fields
     return res.status(200).json({
-      totalMembers: finalMembers,
-      members: memberDetails,
+      totalMembers: totalMembers,
+      members: memberDetails,           // Send the member details
+      occupiedSlots: occupiedSlotsDetails,  // Send the occupied slots separately
       f3Balance: formattedBalance
     });
   } catch (error) {
