@@ -7599,6 +7599,7 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
     // Map over the users and extract the required fields
     const memberDetails = users.map(user => ({
       storeId: user.storeId,
+      walletAddress : user.walletAddress,
       grabbedF3Price: user.grabbedF3PriceDecentralizedBinary,
       position: user.positionInDecentralizedBinary,
       placement: user.placementInDecentralizedBinary,
@@ -7668,6 +7669,7 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
     // Map over the users and extract the required fields
     const memberDetails = users.map(user => ({
       storeId: user.storeId,
+      walletAddress : user.walletAddress,
       grabbedF3Price: user.grabbedF3PriceDecentralizedBinary,
       position: user.positionInDecentralizedBinary,
       placement: user.placementInDecentralizedBinary,
