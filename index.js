@@ -7594,6 +7594,7 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
 
     // Find all users who have alreadyDecentralizedBinaryMember equal to sponsorId
     const users = await collection.find({ alreadyDecentralizedBinaryMember: sponsorId }).toArray();
+    console.log(`users : ${users}`);
     const loggedUser = await collection.findOne({ storeId: sponsorId });
 
     if (!loggedUser) {
