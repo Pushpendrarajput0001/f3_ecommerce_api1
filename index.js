@@ -7517,6 +7517,7 @@ app.get('/deleteAndAddtheAddSlotRequestToApprovedBinaryHistory', async (req, res
     const placement = requestForBinary[sponsorId][0].placement;
     const position = requestForBinary[sponsorId][0].position;
     const slotNumber = requestForBinary[sponsorId][0].slotNumber;
+    const sponsorWalletAddressget = requestForBinary[sponsorId][0].sponsorWallet;
 
     const approvedRequest = {
       ...requestForBinary[sponsorId][0], // Copy the first element from the request array
@@ -7538,7 +7539,7 @@ app.get('/deleteAndAddtheAddSlotRequestToApprovedBinaryHistory', async (req, res
 
     // Create a new slot object
     const newSlot = {
-      sponsorWalletAddress : sponsorWalletAddress,
+      sponsorWalletAddress : sponsorWalletAddressget,
       walletAddress : walletAddress,
       storeId : user.storeId,
       email : user.email,
