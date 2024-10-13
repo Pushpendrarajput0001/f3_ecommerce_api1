@@ -145,7 +145,7 @@ app.post('/login', async (req, res) => {
       usdRate: user.usdtRate,
       flagWord: user.flagWord,
       currencySymbol: user.currencySymbol,
-      currencyCode : user.currencyCode,
+      currencyCode: user.currencyCode,
       country: user.country,
       alpha3Code: user.alpha3Code,
       applicantId: user.applicantId,
@@ -595,7 +595,7 @@ app.get('/userCartProducts', async (req, res) => {
     for (let key of Object.keys(user.userCartsProductsDetails)) {
       const productDetail = user.userCartsProductsDetails[key];
       const productDetails = await db.collection('users').findOne({ 'products._id': productDetail._id }, { projection: { 'products.$': 1 } });
-      const product = productDetails?.products?.[0] ?? {}; 
+      const product = productDetails?.products?.[0] ?? {};
       const isFromRedundant = productDetail.fromRedundantBinary ?? 'No'
       //console.log(`product Details : ${productDetails._id}`);
       console.log(productDetails)
@@ -613,9 +613,9 @@ app.get('/userCartProducts', async (req, res) => {
         flagWord: productDetail.flagWord,
         sellerWalletAddress: productDetail.sellerWalletAddress,
         resellers_reward: productDetail.resellers_reward,
-        numberOfStocks: product.numberOfStocks ?? productDetail.numberOfStocks, 
+        numberOfStocks: product.numberOfStocks ?? productDetail.numberOfStocks,
         totalsolds: product.totalsolds ?? productDetail.totalsolds,
-        isFromRedundant : isFromRedundant,
+        isFromRedundant: isFromRedundant,
         images: productDetail.images,
       };
       cartProducts.push(formattedProductDetails);
@@ -798,7 +798,7 @@ app.get('/getBuyCheckedOutApproval', async (req, res) => {
     for (const products of Object.values(checkoutapproval)) {
       // Iterate over each product in the store
       for (const product of Object.values(products)) {
-        const { productId, quantity, totalPrice,fromRedundantBinary } = product;
+        const { productId, quantity, totalPrice, fromRedundantBinary } = product;
 
         // Fetch product details from MongoDB
         const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
@@ -808,7 +808,7 @@ app.get('/getBuyCheckedOutApproval', async (req, res) => {
           productId,
           totalQuantity: quantity,
           totalPrice,
-          fromRedundantBinary : fromRedundantBinary ?? 'No',
+          fromRedundantBinary: fromRedundantBinary ?? 'No',
           ...productDetails
         });
       }
@@ -861,7 +861,7 @@ app.get('/getSellerProductsCheckoutById', async (req, res) => {
           const { productId, quantity, totalPrice, productName, startedPrice,
             f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected,
             description, totalsolds, storeId, offer, storeIdBuyer, walletAddressBuyer,
-            flagWord, storeName, images, resellers_reward,fromRedundantBinary } = checkoutApproval;
+            flagWord, storeName, images, resellers_reward, fromRedundantBinary } = checkoutApproval;
 
           // Fetch product details from MongoDB
           const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
@@ -875,14 +875,14 @@ app.get('/getSellerProductsCheckoutById', async (req, res) => {
             startedPrice,
             f3MarketPrice,
             growthContribution,
-            numberOfStocks : productDetails.products[0].numberOfStocks ?? numberOfStocks,
+            numberOfStocks: productDetails.products[0].numberOfStocks ?? numberOfStocks,
             unitItemSelected,
             description,
-            totalsolds : productDetails.products[0].totalsolds ?? totalsolds,
+            totalsolds: productDetails.products[0].totalsolds ?? totalsolds,
             storeId,
             offer,
             resellers_reward,
-            fromRedundantBinary : fromRedundantBinary ?? 'No',
+            fromRedundantBinary: fromRedundantBinary ?? 'No',
             storeIdBuyer,
             walletAddressBuyer,
             flagWord,
@@ -990,8 +990,8 @@ app.get('/deleteAndapprovalcheckoutsStore', async (req, res) => {
     const date = new Date().toISOString().replace('T', ' ').slice(0, 19);
     console.log(date)
     const formattedDateOfApprovalCheckout = dateOfApprovalCheckout
-    ? dateOfApprovalCheckout
-    : date;
+      ? dateOfApprovalCheckout
+      : date;
 
     const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
     const db = client.db('f3_ecommerce');
@@ -1176,7 +1176,7 @@ app.get('/getSellerSectionApprovedCheckout', async (req, res) => {
             productName, startedPrice,
             f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected,
             description, totalsolds, storeId, offer, storeIdBuyer, walletAddressBuyer,
-            flagWord, storeName, dateOfApprovalCheckout,fromRedundantBinary } = approvalcheckout;
+            flagWord, storeName, dateOfApprovalCheckout, fromRedundantBinary } = approvalcheckout;
 
           // Fetch product details from MongoDB
           //const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
@@ -1199,10 +1199,10 @@ app.get('/getSellerSectionApprovedCheckout', async (req, res) => {
             storeIdBuyer: user.storeId,
             offer,
             walletAddressBuyer: user.walletAddress,
-            fromRedundantBinary : fromRedundantBinary ?? 'No',
+            fromRedundantBinary: fromRedundantBinary ?? 'No',
             flagWord,
             storeName,
-            images : 'images',
+            images: 'images',
             dateOfApprovalCheckout
           });
         }
@@ -1260,7 +1260,7 @@ app.get('/getBuyersSectionApprovedCheckout', async (req, res) => {
           productName, startedPrice,
           f3MarketPrice, growthContribution, numberOfStocks, unitItemSelected,
           description, totalsolds, storeId, offer, storeIdBuyer, walletAddressBuyer,
-          flagWord, storeName, dateOfApprovalCheckout,fromRedundantBinary } = approvalcheckout;
+          flagWord, storeName, dateOfApprovalCheckout, fromRedundantBinary } = approvalcheckout;
 
         // Fetch product details from MongoDB
         const productDetails = await db.collection('users').findOne({ 'products._id': productId }, { projection: { 'products.$': 1 } });
@@ -1282,9 +1282,9 @@ app.get('/getBuyersSectionApprovedCheckout', async (req, res) => {
           storeId,
           flagWord,
           offer,
-          fromRedundantBinary : fromRedundantBinary ?? 'No',
+          fromRedundantBinary: fromRedundantBinary ?? 'No',
           storeName,
-          images : 'images',
+          images: 'images',
           dateOfApprovalCheckout
         });
       }
@@ -2449,15 +2449,15 @@ app.get('/getRequestsOfPayments', async (req, res) => {
           sponsorAmount: user.requestForDecentralizedBinary[storeId][0].sponsorAmount,
           appAmountF3: user.requestForDecentralizedBinary[storeId][0].appAmountF3,
           dateAndTime: user.requestForDecentralizedBinary[storeId][0].dateAndTime,
-          sponsorId : user.requestForDecentralizedBinary[storeId][0].sponsorId,
-          sponsorWalletAddress : user.requestForDecentralizedBinary[storeId][0].sponsorWallet,
-          appWallet : user.requestForDecentralizedBinary[storeId][0].appWallet,
+          sponsorId: user.requestForDecentralizedBinary[storeId][0].sponsorId,
+          sponsorWalletAddress: user.requestForDecentralizedBinary[storeId][0].sponsorWallet,
+          appWallet: user.requestForDecentralizedBinary[storeId][0].appWallet,
           storeId: user.storeId,
           sellerWalletAddress: sponsorUser.walletAddress,
-          grabbedF3Price : user.requestForDecentralizedBinary[storeId][0].grabbedF3Price,
+          grabbedF3Price: user.requestForDecentralizedBinary[storeId][0].grabbedF3Price,
           buyerWalletAddress: user.walletAddress,
           receiverWalletAddress: user.requestForDecentralizedBinary[storeId][0].sponsorWallet,
-          appWallet : user.requestForDecentralizedBinary[storeId][0].appWallet,
+          appWallet: user.requestForDecentralizedBinary[storeId][0].appWallet,
           requestType: 'Direct Referral',
           products: simpleJson
         };
@@ -2537,22 +2537,22 @@ app.get('/getRequestsOfPayments', async (req, res) => {
           sponsorAmount: user.requestForAddSlotDecentralizedBinary[storeId][0].sponsorAmount,
           appAmountF3: user.requestForAddSlotDecentralizedBinary[storeId][0].appAmountF3,
           dateAndTime: user.requestForAddSlotDecentralizedBinary[storeId][0].dateAndTime,
-          sponsorId : user.requestForAddSlotDecentralizedBinary[storeId][0].sponsorId,
-          sponsorWalletAddress : user.requestForAddSlotDecentralizedBinary[storeId][0].sponsorWallet,
-          appWallet : user.requestForAddSlotDecentralizedBinary[storeId][0].appWallet,
+          sponsorId: user.requestForAddSlotDecentralizedBinary[storeId][0].sponsorId,
+          sponsorWalletAddress: user.requestForAddSlotDecentralizedBinary[storeId][0].sponsorWallet,
+          appWallet: user.requestForAddSlotDecentralizedBinary[storeId][0].appWallet,
           storeId: user.storeId,
           sellerWalletAddress: sponsorUser.walletAddress,
-          grabbedF3Price : user.requestForAddSlotDecentralizedBinary[storeId][0].grabbedF3Price,
+          grabbedF3Price: user.requestForAddSlotDecentralizedBinary[storeId][0].grabbedF3Price,
           buyerWalletAddress: user.walletAddress,
           receiverWalletAddress: user.requestForAddSlotDecentralizedBinary[storeId][0].sponsorWallet,
-          appWallet : user.requestForAddSlotDecentralizedBinary[storeId][0].appWallet,
+          appWallet: user.requestForAddSlotDecentralizedBinary[storeId][0].appWallet,
           requestType: 'Slot Referral',
           products: simpleJson
         };
         response.requests.push(decentralizedBinaryRequest);
       }
     }
-    
+
 
     // if (user.paymentRequestResellersReward) {
     //   const walletAddresses = Object.keys(user.paymentRequestResellersReward);
@@ -5112,7 +5112,7 @@ app.get('/addResellerMember', async (req, res) => {
       console.log(`Parsed Price Product: ${priceProduct}`);
     }
   });
-  
+
 
   const sponsorFullName = sponsorUser.fullName;
   const usdtRateSponsor = sponsorUser.usdtRate;
@@ -5704,12 +5704,12 @@ app.get('/getItemsProfitShares', async (req, res) => {
   }
 
   const client = new MongoClient(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
-  
+
   try {
     await client.connect();
     const db = client.db('f3_ecommerce');
     const collection = db.collection('users');
-    
+
     // Fetch all necessary data in parallel
     const [users, loggedInUser, usersWithApprovalsCheckoutSeller, userWithSalesHistorySeller] = await Promise.all([
       collection.find().toArray(),
@@ -5793,108 +5793,108 @@ app.get('/getItemsProfitShares', async (req, res) => {
 
       const processApprovalCheckouts = async () => {
         for (const user of usersWithApprovalsCheckoutSeller) {
-        if (user.approvalcheckout && user.approvalcheckout[storeIdUser]) {
-          const approvals = user.approvalcheckout[storeIdUser];
-          for (const approvalcheckout of approvals) {
-            let totalWithdrawalAmountUser = 0;
-            const { storeId, productId, quantity, totalPrice, productName, storeIdBuyer, walletAddressBuyer, dateAndTime, dateOfApprovalCheckout, resellers_reward } = approvalcheckout;
-            const seller = usersMap.get(storeId);
-            if (!seller) continue;
+          if (user.approvalcheckout && user.approvalcheckout[storeIdUser]) {
+            const approvals = user.approvalcheckout[storeIdUser];
+            for (const approvalcheckout of approvals) {
+              let totalWithdrawalAmountUser = 0;
+              const { storeId, productId, quantity, totalPrice, productName, storeIdBuyer, walletAddressBuyer, dateAndTime, dateOfApprovalCheckout, resellers_reward } = approvalcheckout;
+              const seller = usersMap.get(storeId);
+              if (!seller) continue;
 
-            const usdtRate = parseFloat(seller.usdtRate);
-            const resellerRewardValue = parseFloat(resellers_reward ?? 0.0);
-            const sellerWalletAddress = seller.walletAddress;
-            const totalSoldedPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
-            const totalSoldAmount = totalSoldedPrice / usdtRate;
-            totalSoldGlobalUsers += totalSoldAmount;
-            const shareStocks = ((resellerRewardValue / 100) * 3 * totalSoldAmount) ?? 0.0;
+              const usdtRate = parseFloat(seller.usdtRate);
+              const resellerRewardValue = parseFloat(resellers_reward ?? 0.0);
+              const sellerWalletAddress = seller.walletAddress;
+              const totalSoldedPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
+              const totalSoldAmount = totalSoldedPrice / usdtRate;
+              totalSoldGlobalUsers += totalSoldAmount;
+              const shareStocks = ((resellerRewardValue / 100) * 3 * totalSoldAmount) ?? 0.0;
 
-            // StoreRequests
-            const StoreRequests = seller.ApprovedPaymentRequestResellersReward;
-            if (StoreRequests) {
-              Object.values(StoreRequests).flat().forEach(storeRequest => {
-                storeRequest.requestProducts.forEach(reqProduct => {
-                  const withdrawal = reqProduct.receivableAmount.replace(/[^\d.-]/g, '');
-                  totalWithdrawalAmountUser += parseFloat(withdrawal);
+              // StoreRequests
+              const StoreRequests = seller.ApprovedPaymentRequestResellersReward;
+              if (StoreRequests) {
+                Object.values(StoreRequests).flat().forEach(storeRequest => {
+                  storeRequest.requestProducts.forEach(reqProduct => {
+                    const withdrawal = reqProduct.receivableAmount.replace(/[^\d.-]/g, '');
+                    totalWithdrawalAmountUser += parseFloat(withdrawal);
+                  });
                 });
+              }
+
+              allProductDetails.push({
+                sellerStoreId: storeId,
+                buyerStoreId: storeIdBuyer,
+                walletAddressBuyer: walletAddressBuyer,
+                sellerWalletAddress: sellerWalletAddress,
+                totalQuantity: quantity,
+                totalPrice: totalPrice,
+                usdValue: totalSoldAmount,
+                shareStocks: shareStocks,
+                productName: productName,
+                productId: productId,
+                resellers_reward: resellerRewardValue,
+                currencySymbol: seller.currencySymbol,
+                country: seller.country,
+                city: seller.cityAddress,
+                usdtRate: seller.usdtRate,
+                totalWithdrawalAmountUser,
+                dateAndTime: dateOfApprovalCheckout
               });
             }
-
-            allProductDetails.push({
-              sellerStoreId: storeId,
-              buyerStoreId: storeIdBuyer,
-              walletAddressBuyer: walletAddressBuyer,
-              sellerWalletAddress: sellerWalletAddress,
-              totalQuantity: quantity,
-              totalPrice: totalPrice,
-              usdValue: totalSoldAmount,
-              shareStocks: shareStocks,
-              productName: productName,
-              productId: productId,
-              resellers_reward: resellerRewardValue,
-              currencySymbol: seller.currencySymbol,
-              country: seller.country,
-              city: seller.cityAddress,
-              usdtRate: seller.usdtRate,
-              totalWithdrawalAmountUser,
-              dateAndTime: dateOfApprovalCheckout
-            });
           }
         }
-      }
       };
 
       const processSalesHistory = async () => {
         for (const user of userWithSalesHistorySeller) {
-        if (user.salesHistorySeller && user.salesHistorySeller[storeIdUser]) {
-          const approvals = user.salesHistorySeller[storeIdUser];
-          for (const salesHistorySeller of approvals) {
-            let totalWithdrawalAmountUser = 0;
-            const { storeId, productId, quantity, totalPrice, productName, storeIdBuyer, walletAddressBuyer, dateOfApprovalCheckout, dateAndTime, resellers_reward } = salesHistorySeller;
-            const seller = usersMap.get(storeId);
-            if (!seller) continue;
+          if (user.salesHistorySeller && user.salesHistorySeller[storeIdUser]) {
+            const approvals = user.salesHistorySeller[storeIdUser];
+            for (const salesHistorySeller of approvals) {
+              let totalWithdrawalAmountUser = 0;
+              const { storeId, productId, quantity, totalPrice, productName, storeIdBuyer, walletAddressBuyer, dateOfApprovalCheckout, dateAndTime, resellers_reward } = salesHistorySeller;
+              const seller = usersMap.get(storeId);
+              if (!seller) continue;
 
-            const usdtRate = parseFloat(seller.usdtRate);
-            const resellerRewardValue = parseFloat(resellers_reward ?? 0.0);
-            const sellerWalletAddress = seller.walletAddress;
-            const totalSoldedPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
-            const totalSoldAmount = totalSoldedPrice / usdtRate;
-            totalSoldGlobalUsers += totalSoldAmount;
-            const shareStocks = ((resellerRewardValue / 100) * 3 * totalSoldAmount) ?? 0.0;
+              const usdtRate = parseFloat(seller.usdtRate);
+              const resellerRewardValue = parseFloat(resellers_reward ?? 0.0);
+              const sellerWalletAddress = seller.walletAddress;
+              const totalSoldedPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
+              const totalSoldAmount = totalSoldedPrice / usdtRate;
+              totalSoldGlobalUsers += totalSoldAmount;
+              const shareStocks = ((resellerRewardValue / 100) * 3 * totalSoldAmount) ?? 0.0;
 
-            // StoreRequests
-            const StoreRequests = seller.ApprovedPaymentRequestResellersReward;
-            if (StoreRequests) {
-              Object.values(StoreRequests).flat().forEach(storeRequest => {
-                storeRequest.requestProducts.forEach(reqProduct => {
-                  const withdrawal = reqProduct.receivableAmount.replace(/[^\d.-]/g, '');
-                  totalWithdrawalAmountUser += parseFloat(withdrawal);
+              // StoreRequests
+              const StoreRequests = seller.ApprovedPaymentRequestResellersReward;
+              if (StoreRequests) {
+                Object.values(StoreRequests).flat().forEach(storeRequest => {
+                  storeRequest.requestProducts.forEach(reqProduct => {
+                    const withdrawal = reqProduct.receivableAmount.replace(/[^\d.-]/g, '');
+                    totalWithdrawalAmountUser += parseFloat(withdrawal);
+                  });
                 });
+              }
+
+              allProductDetails.push({
+                sellerStoreId: storeId,
+                buyerStoreId: storeIdBuyer,
+                walletAddressBuyer: walletAddressBuyer,
+                sellerWalletAddress: sellerWalletAddress,
+                totalQuantity: quantity,
+                totalPrice: totalPrice,
+                usdValue: totalSoldAmount,
+                shareStocks: shareStocks,
+                productName: productName,
+                productId: productId,
+                resellers_reward: resellerRewardValue,
+                currencySymbol: seller.currencySymbol,
+                country: seller.country,
+                city: seller.cityAddress,
+                usdtRate: seller.usdtRate,
+                totalWithdrawalAmountUser,
+                dateAndTime: dateAndTime
               });
             }
-
-            allProductDetails.push({
-              sellerStoreId: storeId,
-              buyerStoreId: storeIdBuyer,
-              walletAddressBuyer: walletAddressBuyer,
-              sellerWalletAddress: sellerWalletAddress,
-              totalQuantity: quantity,
-              totalPrice: totalPrice,
-              usdValue: totalSoldAmount,
-              shareStocks: shareStocks,
-              productName: productName,
-              productId: productId,
-              resellers_reward: resellerRewardValue,
-              currencySymbol: seller.currencySymbol,
-              country: seller.country,
-              city: seller.cityAddress,
-              usdtRate: seller.usdtRate,
-              totalWithdrawalAmountUser,
-              dateAndTime: dateAndTime
-            });
           }
-        }
-      };
+        };
       };
 
       await Promise.all([processApprovalCheckouts(), processSalesHistory()]);
@@ -6935,7 +6935,7 @@ app.post('/addProductToRedundantBinary', async (req, res) => {
     // Update the user document in the database
     await collection.updateOne(
       { email },
-      { $set: { userRedundantBinary: user.userRedundantBinary} }
+      { $set: { userRedundantBinary: user.userRedundantBinary } }
     );
 
     // Close MongoDB connection
@@ -6965,19 +6965,19 @@ app.post('/removeProductFromRedundantBinary', async (req, res) => {
     }
 
     if (!user.userRedundantBinary) {
-      res.status(400).json({ error: 'User has no items in the Redundant Binary'});
+      res.status(400).json({ error: 'User has no items in the Redundant Binary' });
       return;
     }
 
-      if (!user.userRedundantBinary[productIds]) {
-        res.status(404).json({ error: `Product ${productId} not found in the Redundant` });
-        return;
-      }
-      delete user.userRedundantBinary[productIds];
+    if (!user.userRedundantBinary[productIds]) {
+      res.status(404).json({ error: `Product ${productId} not found in the Redundant` });
+      return;
+    }
+    delete user.userRedundantBinary[productIds];
 
     await collection.updateOne(
       { email },
-      { $set: { userRedundantBinary: user.userRedundantBinary} }
+      { $set: { userRedundantBinary: user.userRedundantBinary } }
     );
 
     await client.close();
@@ -7023,11 +7023,11 @@ app.get('/userRedundantProducts', async (req, res) => {
         { 'products._id': productId },
         { projection: { 'products.$': 1 } }
       );
-      const product = productDetails?.products?.[0] ?? {}; 
+      const product = productDetails?.products?.[0] ?? {};
       const finishedStartedPrice = product.startedPrice.replace(/[^\d.-]/g, '');
       const productPrice = parseFloat(finishedStartedPrice);
       console.log(productPrice);
-      const doublePrice = (productPrice*2)
+      const doublePrice = (productPrice * 2)
       console.log(productDetails);
 
       const formattedProductDetails = {
@@ -7063,7 +7063,7 @@ app.get('/userRedundantProducts', async (req, res) => {
 
 app.post('/addProductToCartFromRedudantBinay', async (req, res) => {
   try {
-    const { email, productId,startedPrice } = req.body;
+    const { email, productId, startedPrice } = req.body;
 
     // Connect to MongoDB
     const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -7128,7 +7128,7 @@ app.post('/addProductToCartFromRedudantBinay', async (req, res) => {
 //DecentralizedBinary
 app.get('/getuserLatestTransactionGrabF3', async (req, res) => {
   const { storeId } = req.query; // Extract storeId from the query string
-  
+
   if (!storeId) {
     return res.status(400).json({ error: 'storeId is required' });
   }
@@ -7143,7 +7143,7 @@ app.get('/getuserLatestTransactionGrabF3', async (req, res) => {
 
     // Ensure storeId is matched as per the type in the database (string)
     const user = await collection.findOne({ storeId: storeId });
-    
+
     if (!user) {
       return res.status(404).json({ error: `User doesn't exist with storeId ${storeId}` });
     }
@@ -7196,68 +7196,68 @@ app.get('/getuserLatestTransactionGrabF3', async (req, res) => {
 });
 
 //AddMember
-app.get('/addMemberInDecentralizedBinarySlot',async(req,res)=>{
-  try{
-  const {userId,sponsorId,sponsorWallet,appWallet,sponsorAmount,sponsorAmountF3,appAmount,appAmountF3,dateAndTime,grabbedF3Price,position,placement,slotNumber} = req.query;
+app.get('/addMemberInDecentralizedBinarySlot', async (req, res) => {
+  try {
+    const { userId, sponsorId, sponsorWallet, appWallet, sponsorAmount, sponsorAmountF3, appAmount, appAmountF3, dateAndTime, grabbedF3Price, position, placement, slotNumber } = req.query;
 
-  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
-  const db = client.db('f3_ecommerce');
-  const collection = db.collection('users');
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
 
-  // Find the user by email
-  const user = await collection.findOne({ storeId : userId });
-  const walletAddressUser = user.walletAddress;
-  const memberOfBinary = user.alreadyDecentralizedBinaryMember;
-  if (!user) {
-    res.status(404).json({ error: 'User not found' });
-    return;
+    // Find the user by email
+    const user = await collection.findOne({ storeId: userId });
+    const walletAddressUser = user.walletAddress;
+    const memberOfBinary = user.alreadyDecentralizedBinaryMember;
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    if (memberOfBinary) {
+      res.status(403).json({ error: 'User not found' });
+      return;
+    }
+
+    if (!user.requestForDecentralizedBinary) {
+      user.requestForDecentralizedBinary = {};
+    }
+
+    // Check if there's already a request with the same providerWalletAddress
+    if (user.requestForDecentralizedBinary[sponsorId]) {
+      return res.status(402).json({ error: 'Request with the same providerWalletAddress already exists' });
+    }
+
+    // Create the new request object
+    const newRequest = {
+      userId,
+      sponsorId,
+      sponsorWallet,
+      appWallet,
+      sponsorAmount,
+      appAmount,
+      sponsorAmountF3,
+      appAmountF3,
+      dateAndTime,
+      grabbedF3Price,
+      position,
+      placement,
+      slotNumber
+    };
+
+    // Add the new request to the providerWalletAddress array
+    user.requestForDecentralizedBinary[sponsorId] = [newRequest];
+
+    // Update the user document in the database
+    await collection.updateOne(
+      { walletAddress: walletAddressUser },
+      { $set: { requestForDecentralizedBinary: user.requestForDecentralizedBinary } }
+    );
+
+    return res.status(200).json(`Request Send Successfully to wallet address ${walletAddressUser}`)
+  } catch (error) {
+    console.error('Error adding member to Decentralized binary:', error);
+    res.status(500).json({ error: 'An error occurred while adding member to Decentralized binary' });
   }
-
-  if (memberOfBinary) {
-    res.status(403).json({ error: 'User not found' });
-    return;
-  }
-
-  if (!user.requestForDecentralizedBinary) {
-    user.requestForDecentralizedBinary = {};
-  }
-
-  // Check if there's already a request with the same providerWalletAddress
-  if (user.requestForDecentralizedBinary[sponsorId]) {
-    return res.status(402).json({ error: 'Request with the same providerWalletAddress already exists' });
-  }
-
-  // Create the new request object
-  const newRequest = {
-    userId,
-    sponsorId,
-    sponsorWallet,
-    appWallet,
-    sponsorAmount,
-    appAmount,
-    sponsorAmountF3,
-    appAmountF3,
-    dateAndTime,
-    grabbedF3Price,
-    position,
-    placement,
-    slotNumber
-  };
-
-  // Add the new request to the providerWalletAddress array
-  user.requestForDecentralizedBinary[sponsorId] = [newRequest];
-
-  // Update the user document in the database
-  await collection.updateOne(
-    { walletAddress: walletAddressUser },
-    { $set: { requestForDecentralizedBinary: user.requestForDecentralizedBinary } }
-  );
-
-  return res.status(200).json(`Request Send Successfully to wallet address ${walletAddressUser}`)
-} catch (error) {
-  console.error('Error adding member to Decentralized binary:', error);
-  res.status(500).json({ error: 'An error occurred while adding member to Decentralized binary' });
-}
 });
 
 app.get('/deleteMemberRequestDecentralizedBinary', async (req, res) => {
@@ -7302,7 +7302,7 @@ app.get('/deleteMemberRequestDecentralizedBinary', async (req, res) => {
 
 app.get('/deleteAndAddtheRequestToApprovedBinaryHistory', async (req, res) => {
   try {
-    const { walletAddress, sponsorId, txhash, timeOfApprove,grabbedF3Price,txHashApp } = req.query;
+    const { walletAddress, sponsorId, txhash, timeOfApprove, grabbedF3Price, txHashApp } = req.query;
 
     if (!walletAddress || !sponsorId || !txhash || !timeOfApprove) {
       return res.status(400).json({ error: 'userId, sponsorId, txhash, and timeOfApprove are required' });
@@ -7365,10 +7365,10 @@ app.get('/deleteAndAddtheRequestToApprovedBinaryHistory', async (req, res) => {
           ApprovedDecentralizedBinaryMemberRequest: user.ApprovedDecentralizedBinaryMemberRequest,
           alreadyDecentralizedBinaryMember: sponsorId,
           dateOfBecomeBinaryMember: timeOfApprove,
-          positionInDecentralizedBinary : position,
-          placementInDecentralizedBinary : placement,
-          slotNumberInDecentralizedBinary : slotNumber,
-          grabbedF3Price : grabbedF3Price
+          positionInDecentralizedBinary: position,
+          placementInDecentralizedBinary: placement,
+          slotNumberInDecentralizedBinary: slotNumber,
+          grabbedF3Price: grabbedF3Price
         }
       }
     );
@@ -7381,68 +7381,68 @@ app.get('/deleteAndAddtheRequestToApprovedBinaryHistory', async (req, res) => {
 });
 
 //AddSlot
-app.get('/addSlotInDecentralizedBinarySlot',async(req,res)=>{
-  try{
-  const {userId,sponsorId,sponsorWallet,appWallet,sponsorAmount,sponsorAmountF3,appAmount,appAmountF3,dateAndTime,grabbedF3Price,position,placement,slotNumber} = req.query;
+app.get('/addSlotInDecentralizedBinarySlot', async (req, res) => {
+  try {
+    const { userId, sponsorId, sponsorWallet, appWallet, sponsorAmount, sponsorAmountF3, appAmount, appAmountF3, dateAndTime, grabbedF3Price, position, placement, slotNumber } = req.query;
 
-  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
-  const db = client.db('f3_ecommerce');
-  const collection = db.collection('users');
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
 
-  // Find the user by email
-  const user = await collection.findOne({ storeId : userId });
-  const walletAddressUser = user.walletAddress;
-  const memberOfBinary = user.alreadyDecentralizedBinaryMember;
-  if (!user) {
-    res.status(404).json({ error: 'User not found' });
-    return;
+    // Find the user by email
+    const user = await collection.findOne({ storeId: userId });
+    const walletAddressUser = user.walletAddress;
+    const memberOfBinary = user.alreadyDecentralizedBinaryMember;
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    // if (memberOfBinary) {
+    //   res.status(403).json({ error: 'User not found' });
+    //   return;
+    // }
+
+    if (!user.requestForAddSlotDecentralizedBinary) {
+      user.requestForAddSlotDecentralizedBinary = {};
+    }
+
+    // Check if there's already a request with the same providerWalletAddress
+    if (user.requestForAddSlotDecentralizedBinary[sponsorId]) {
+      return res.status(402).json({ error: 'Request with the same sponsorId already exists' });
+    }
+
+    // Create the new request object
+    const newRequest = {
+      userId,
+      sponsorId,
+      sponsorWallet,
+      appWallet,
+      sponsorAmount,
+      appAmount,
+      sponsorAmountF3,
+      appAmountF3,
+      dateAndTime,
+      grabbedF3Price,
+      position,
+      placement,
+      slotNumber
+    };
+
+    // Add the new request to the providerWalletAddress array
+    user.requestForAddSlotDecentralizedBinary[sponsorId] = [newRequest];
+
+    // Update the user document in the database
+    await collection.updateOne(
+      { walletAddress: walletAddressUser },
+      { $set: { requestForAddSlotDecentralizedBinary: user.requestForAddSlotDecentralizedBinary } }
+    );
+
+    return res.status(200).json(`Request Send Successfully to wallet address ${walletAddressUser}`)
+  } catch (error) {
+    console.error('Error adding member to Decentralized binary:', error);
+    res.status(500).json({ error: 'An error occurred while adding member to Decentralized binary' });
   }
-
-  // if (memberOfBinary) {
-  //   res.status(403).json({ error: 'User not found' });
-  //   return;
-  // }
-
-  if (!user.requestForAddSlotDecentralizedBinary) {
-    user.requestForAddSlotDecentralizedBinary = {};
-  }
-
-  // Check if there's already a request with the same providerWalletAddress
-  if (user.requestForAddSlotDecentralizedBinary[sponsorId]) {
-    return res.status(402).json({ error: 'Request with the same sponsorId already exists' });
-  }
-
-  // Create the new request object
-  const newRequest = {
-    userId,
-    sponsorId,
-    sponsorWallet,
-    appWallet,
-    sponsorAmount,
-    appAmount,
-    sponsorAmountF3,
-    appAmountF3,
-    dateAndTime,
-    grabbedF3Price,
-    position,
-    placement,
-    slotNumber
-  };
-
-  // Add the new request to the providerWalletAddress array
-  user.requestForAddSlotDecentralizedBinary[sponsorId] = [newRequest];
-
-  // Update the user document in the database
-  await collection.updateOne(
-    { walletAddress: walletAddressUser },
-    { $set: { requestForAddSlotDecentralizedBinary: user.requestForAddSlotDecentralizedBinary } }
-  );
-
-  return res.status(200).json(`Request Send Successfully to wallet address ${walletAddressUser}`)
-} catch (error) {
-  console.error('Error adding member to Decentralized binary:', error);
-  res.status(500).json({ error: 'An error occurred while adding member to Decentralized binary' });
-}
 });
 
 app.get('/deleteSlotRequestDecentralizedBinary', async (req, res) => {
@@ -7487,7 +7487,7 @@ app.get('/deleteSlotRequestDecentralizedBinary', async (req, res) => {
 
 app.get('/deleteAndAddtheAddSlotRequestToApprovedBinaryHistory', async (req, res) => {
   try {
-    const { walletAddress, sponsorId, txhash, timeOfApprove, grabbedF3Price, txHashApp,sponsorWalletAddress } = req.query;
+    const { walletAddress, sponsorId, txhash, timeOfApprove, grabbedF3Price, txHashApp, sponsorWalletAddress } = req.query;
 
     if (!walletAddress || !sponsorId || !txhash || !timeOfApprove) {
       return res.status(400).json({ error: 'walletAddress, sponsorId, txhash, and timeOfApprove are required' });
@@ -7539,10 +7539,10 @@ app.get('/deleteAndAddtheAddSlotRequestToApprovedBinaryHistory', async (req, res
 
     // Create a new slot object
     const newSlot = {
-      sponsorWalletAddress : sponsorWalletAddressget,
-      walletAddress : walletAddress,
-      storeId : user.storeId,
-      email : user.email,
+      sponsorWalletAddress: sponsorWalletAddressget,
+      walletAddress: walletAddress,
+      storeId: user.storeId,
+      email: user.email,
       dateOfBecomeBinaryMember: timeOfApprove,
       grabbedF3PriceDecentralizedBinary: grabbedF3Price,
       positionInDecentralizedBinary: position,
@@ -7581,7 +7581,8 @@ app.get('/deleteAndAddtheAddSlotRequestToApprovedBinaryHistory', async (req, res
   }
 });
 
-app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
+//DummyOne
+app.get('/getAllDecentralizedBinaryMembersDummy', async (req, res) => {
   try {
     const { sponsorId, sponsorWalletAddress } = req.query;
 
@@ -7603,14 +7604,13 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
     }
     const isLoggedMemberAlready = loggedUser.alreadyDecentralizedBinaryMember;
 
-    if(!isLoggedMemberAlready && sponsorId != '77715423'){
-      return res.status(405).json({error : 'Sponsor Is not member yet!'});
+    if (!isLoggedMemberAlready && sponsorId != '77715423') {
+      return res.status(405).json({ error: 'Sponsor is not a member yet!' });
     }
 
-    const SlotSponsor = await collection.findOne({storeId : isLoggedMemberAlready});
-    const slotSponsorWallet = SlotSponsor.walletAddress ?? '0xa847A9126c585CC8dBA330192Ad03Aa19DE70b20';
-    const finalSlotSponsor = (sponsorId === '77715423') ? '17365376' : isLoggedMemberAlready;
-
+    const SlotSponsor = await collection.findOne({ storeId: isLoggedMemberAlready });
+    const slotSponsorWallet = SlotSponsor?.walletAddress || '0xa847A9126c585CC8dBA330192Ad03Aa19DE70b20';
+    const finalSlotSponsor = sponsorId === '77715423' ? '17365376' : isLoggedMemberAlready;
 
     // Extract occupiedSlotsAddedSlots from loggedUser
     const occupiedSlots = loggedUser.occupiedSlotsAddedSlots || []; // Get the array, or send an empty array if it doesn't exist
@@ -7622,7 +7622,7 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
     const memberDetails = users.map(user => ({
       storeId: user.storeId,
       walletAddress: user.walletAddress,
-      sponsorWalletAddress : loggedUser.walletAddress,
+      sponsorWalletAddress: loggedUser.walletAddress,
       grabbedF3Price: user.grabbedF3PriceDecentralizedBinary,
       position: user.positionInDecentralizedBinary,
       placement: user.placementInDecentralizedBinary,
@@ -7635,7 +7635,7 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
     const occupiedSlotsDetails = occupiedSlots.map(slot => ({
       storeId: slot.storeId,
       walletAddress: slot.walletAddress,
-      sponsorWalletAddress : slot.sponsorWalletAddress,
+      sponsorWalletAddress: slot.sponsorWalletAddress,
       grabbedF3Price: slot.grabbedF3PriceDecentralizedBinary,
       position: slot.positionInDecentralizedBinary,
       placement: slot.placementInDecentralizedBinary,
@@ -7643,9 +7643,216 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
       email: slot.email,
       dateOfBecomeBinaryMember: slot.dateOfBecomeBinaryMember
     }));
+    const combinedDetails = [...memberDetails, ...occupiedSlotsDetails];
+
+    // Identify TopLeftSlot and TopRightSlot from memberDetails
+    const TopLeftSlot = memberDetails.find(slot => slot.position === 'Top' && slot.placement === 'Left');
+    const TopRightSlot = memberDetails.find(slot => slot.position === 'Top' && slot.placement === 'Right');
+
+    // Function to fetch slots by placement, position, and sponsor's wallet address
+    const fetchSlotsForUser = async (sponsorId, slotNumber) => {
+      const users = await collection.find({ alreadyDecentralizedBinaryMember: sponsorId }).toArray();
+      const loggedUser = await collection.findOne({ storeId: sponsorId });
+      const occupiedSlots = loggedUser.occupiedSlotsAddedSlots || []; // Get the array, or send an empty array if it doesn't exist
+      const memberDetails = users.map(user => ({
+        storeId: user.storeId,
+        walletAddress: user.walletAddress,
+        sponsorWalletAddress: loggedUser.walletAddress,
+        grabbedF3Price: user.grabbedF3PriceDecentralizedBinary,
+        position: user.positionInDecentralizedBinary,
+        placement: user.placementInDecentralizedBinary,
+        slotNumber: user.slotNumberInDecentralizedBinary,
+        email: user.email,
+        dateOfBecomeBinaryMember: user.dateOfBecomeBinaryMember
+      }));
+      const occupiedSlotsDetails = occupiedSlots.map(slot => ({
+        storeId: slot.storeId,
+        walletAddress: slot.walletAddress,
+        sponsorWalletAddress: slot.sponsorWalletAddress,
+        grabbedF3Price: slot.grabbedF3PriceDecentralizedBinary,
+        position: slot.positionInDecentralizedBinary,
+        placement: slot.placementInDecentralizedBinary,
+        slotNumber: slot.slotNumberInDecentralizedBinary,
+        email: slot.email,
+        dateOfBecomeBinaryMember: slot.dateOfBecomeBinaryMember
+      }));
+      const combinedDetails = [...memberDetails, ...occupiedSlotsDetails];
+      console.log(`insideUsersCombined`, combinedDetails);
+      return combinedDetails.find(slot => slot.slotNumber === slotNumber);
+    };
+
+    let LeftLeftSlot, LeftRightSlot, RightLeftSlot, RightRightSlot;
+
+    // If both TopLeftSlot and TopRightSlot are found, fetch the specific child slots
+    if (TopLeftSlot || TopRightSlot) {
+      if (TopLeftSlot && TopRightSlot) {
+        LeftLeftSlot = await fetchSlotsForUser(TopLeftSlot.storeId, '1');
+        LeftRightSlot = await fetchSlotsForUser(TopLeftSlot.storeId, '2');
+        RightLeftSlot = await fetchSlotsForUser(TopRightSlot.storeId, '1');
+        RightRightSlot = await fetchSlotsForUser(TopRightSlot.storeId, '2');
+      } else if (TopLeftSlot) {
+        LeftLeftSlot = await fetchSlotsForUser(TopLeftSlot.storeId, '1');
+        LeftRightSlot = await fetchSlotsForUser(TopLeftSlot.storeId, '2');
+        RightLeftSlot = combinedDetails.find(slot => slot.slotNumber === '2');
+        RightRightSlot = combinedDetails.find(slot => slot.slotNumber === '3')
+      } else if (TopRightSlot) {
+        LeftLeftSlot = combinedDetails.find(slot => slot.slotNumber === '1');
+        LeftRightSlot = combinedDetails.find(slot => slot.slotNumber === '2');
+        RightLeftSlot = await fetchSlotsForUser(TopRightSlot.storeId, '1');
+        RightRightSlot = await fetchSlotsForUser(TopRightSlot.storeId, '2');
+      }
+    } else {
+      // If TopLeftSlot or TopRightSlot are missing, get the slots purely based on position and placement
+      LeftLeftSlot = combinedDetails.find(slot => slot.slotNumber === '2');
+      LeftRightSlot = combinedDetails.find(slot => slot.slotNumber === '3');
+      RightLeftSlot = combinedDetails.find(slot => slot.slotNumber === '5');
+      RightRightSlot = combinedDetails.find(slot => slot.slotNumber === '6');
+    }
+
+    // Collect the relevant slots
+    const specificSlots = [
+      TopLeftSlot || combinedDetails.find(slot => slot.slotNumber === '1'),
+      TopRightSlot || combinedDetails.find(slot => slot.slotNumber === '4'),
+      LeftLeftSlot || combinedDetails.find(slot => slot.slotNumber === '2'),
+      LeftRightSlot || combinedDetails.find(slot => slot.slotNumber === '3'),
+      RightLeftSlot || combinedDetails.find(slot => slot.slotNumber === '5'),
+      RightRightSlot || combinedDetails.find(slot => slot.slotNumber === '6'),
+    ].filter(slot => slot !== null && slot !== undefined); // Filter out null and undefined values
+
+
+    // Interact with the BSC blockchain to get the balance
+    const TOKEN_CONTRACT_ADDRESS = '0xfB265e16e882d3d32639253ffcfC4b0a2E861467';
+    const BSC_RPC_URL = 'https://bsc-dataseed.binance.org/';
+    const web3 = new Web3(new Web3.providers.HttpProvider(BSC_RPC_URL));
+    const contract = new web3.eth.Contract([{
+      constant: true,
+      inputs: [{ name: "_owner", type: "address" }],
+      name: "balanceOf",
+      outputs: [{ name: "balance", type: "uint256" }],
+      type: "function"
+    }], TOKEN_CONTRACT_ADDRESS);
+
+    const balance = await contract.methods.balanceOf(sponsorWalletAddress).call();
+    const formattedBalance = web3.utils.fromWei(balance, 'ether'); // Assuming the token has 18 decimals
+
+    // Return the total members, member details, f3Balance, and occupiedSlots in separate fields
+    return res.status(200).json({
+      totalMembers: specificSlots.length,
+      combinedDetails: specificSlots,
+      
+      f3Balance: formattedBalance,
+      slotSponsorWalletAddress: slotSponsorWallet,
+      slotSponsorStoreId: finalSlotSponsor
+    });
+  } catch (error) {
+    console.error('Error fetching decentralized binary members:', error);
+    return res.status(500).json({ error: 'An error occurred while fetching the members' });
+  }
+});
+
+//Originals
+app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
+  try {
+    const { sponsorId, sponsorWalletAddress } = req.query;
+
+    if (!sponsorId) {
+      return res.status(400).json({ error: 'sponsorId is required' });
+    }
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Initialize an array to hold all found users
+    let allMembers = [];
+    let AllMemberForSlots = [];
+
+    // Function to find members recursively
+    const findMembersAfter = async (currentSponsorId) => {
+      const users = await collection.find({ alreadyDecentralizedBinaryMember: currentSponsorId }).toArray();
+      allMembers = allMembers.concat(users);
+
+    };
+    const findMembers = async (currentSponsorId) => {
+      const users = await collection.find({ alreadyDecentralizedBinaryMember: currentSponsorId }).toArray();
+      allMembers = allMembers.concat(users);
+
+      const filteredUsers = users.filter(user => 
+    (user.positionInDecentralizedBinary === 'Top' && user.placementInDecentralizedBinary === 'Right') ||
+    (user.positionInDecentralizedBinary === 'Top' && user.placementInDecentralizedBinary === 'Left')
+      );
+
+      AllMemberForSlots = AllMemberForSlots.concat(filteredUsers);
+      for (const user of filteredUsers) {
+        await findMembersAfter(user.storeId); // Recursively find members for each user's storeId
+      }
+    };
+
+    // Start the recursive search
+    await findMembers(sponsorId);
+
+    const loggedUser = await collection.findOne({ storeId: sponsorId });
+
+    if (!loggedUser) {
+      return res.status(404).json({ error: 'Sponsor not found' });
+    }
+    const isLoggedMemberAlready = loggedUser.alreadyDecentralizedBinaryMember;
+
+    if (!isLoggedMemberAlready && sponsorId != '77715423') {
+      return res.status(405).json({ error: 'Sponsor is not a member yet!' });
+    }
+
+    const SlotSponsor = await collection.findOne({ storeId: isLoggedMemberAlready });
+    const slotSponsorWallet = SlotSponsor.walletAddress ?? '0xa847A9126c585CC8dBA330192Ad03Aa19DE70b20';
+    const finalSlotSponsor = (sponsorId === '77715423') ? '17365376' : isLoggedMemberAlready;
+
+    // Gather all occupied slots from all members including loggedUser
+    const occupiedSlotsDetails = [];
+
+    // Include occupied slots from loggedUser
+    if (loggedUser.occupiedSlotsAddedSlots) {
+      occupiedSlotsDetails.push(...loggedUser.occupiedSlotsAddedSlots);
+    }
+
+    // Include occupied slots from all members found
+    for (const member of AllMemberForSlots) {
+      if (member.occupiedSlotsAddedSlots) {
+        occupiedSlotsDetails.push(...member.occupiedSlotsAddedSlots);
+      }
+    }
+
+    // Map over the occupiedSlotsDetails and extract required fields, including whichUsersSlot
+    const detailedOccupiedSlots = occupiedSlotsDetails.map(slot => ({
+      'SlotType' : 'Yes',
+      storeId: slot.storeId,
+      walletAddress: slot.walletAddress,
+      sponsorWalletAddress: slot.sponsorWalletAddress,
+      grabbedF3Price: slot.grabbedF3PriceDecentralizedBinary,
+      position: slot.positionInDecentralizedBinary,
+      placement: slot.placementInDecentralizedBinary,
+      slotNumber: slot.slotNumberInDecentralizedBinary,
+      email: slot.email,
+      dateOfBecomeBinaryMember: slot.dateOfBecomeBinaryMember,
+      whichUsersSlot: slot.storeId // Add the storeId of the user for which the occupied slot belongs
+    }));
+
+    // Map over the allMembers and extract the required fields, including whichUsersMember
+    const memberDetails = allMembers.map(user => ({
+      'MemberType' : 'Yes',
+      storeId: user.storeId,
+      walletAddress: user.walletAddress,
+      sponsorWalletAddress: loggedUser.walletAddress,
+      grabbedF3Price: user.grabbedF3PriceDecentralizedBinary,
+      position: user.positionInDecentralizedBinary,
+      placement: user.placementInDecentralizedBinary,
+      slotNumber: user.slotNumberInDecentralizedBinary,
+      email: user.email,
+      dateOfBecomeBinaryMember: user.dateOfBecomeBinaryMember,
+      whichUsersMember: user.alreadyDecentralizedBinaryMember // Add the storeId of the sponsor for this member
+    }));
 
     // Calculate totalMembers
-    const totalMembers = memberDetails.length + occupiedSlotsDetails.length;
+    const totalMembers = memberDetails.length + detailedOccupiedSlots.length;
 
     // Interact with the BSC blockchain to get the balance
     const TOKEN_CONTRACT_ADDRESS = '0xfB265e16e882d3d32639253ffcfC4b0a2E861467';
@@ -7666,10 +7873,10 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
     return res.status(200).json({
       totalMembers: totalMembers,
       members: memberDetails,           // Send the member details
-      occupiedSlots: occupiedSlotsDetails,  // Send the occupied slots separately
+      occupiedSlots: detailedOccupiedSlots,  // Send the occupied slots separately
       f3Balance: formattedBalance,
-      slotSponsorWalletAddress : slotSponsorWallet,
-      slotSponsorStoreId : finalSlotSponsor
+      slotSponsorWalletAddress: slotSponsorWallet,
+      slotSponsorStoreId: finalSlotSponsor
     });
   } catch (error) {
     console.error('Error fetching decentralized binary members:', error);
@@ -7689,6 +7896,25 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
     const db = client.db('f3_ecommerce');
     const collection = db.collection('users');
 
+    let allMembers = [];
+    let AllMemberForSlots = [];
+   
+    const findMembers = async (currentSponsorId) => {
+      const users = await collection.find({ alreadyDecentralizedBinaryMember: currentSponsorId }).toArray();
+      allMembers = allMembers.concat(users);
+
+      const filteredUsers = users.filter(user => 
+    (user.positionInDecentralizedBinary === 'Top' && user.placementInDecentralizedBinary === 'Right') ||
+    (user.positionInDecentralizedBinary === 'Top' && user.placementInDecentralizedBinary === 'Left')
+      );
+
+      AllMemberForSlots = AllMemberForSlots.concat(filteredUsers);
+      for (const user of filteredUsers) {
+        await findMembersAfter(user.storeId); // Recursively find members for each user's storeId
+      }
+    };
+    // Start the recursive search
+    await findMembers(sponsorId);
     // Find all users who have alreadyDecentralizedBinaryMember equal to sponsorId
     const users = await collection.find({ alreadyDecentralizedBinaryMember: sponsorId }).toArray();
     const loggedUser = await collection.findOne({ storeId: sponsorId });
@@ -7713,21 +7939,23 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
     // Handle alreadySlot ensuring it's a valid number
     const alreadySlot = loggedUser.occupiedSlots ? Number(loggedUser.occupiedSlots) : 0;
 
-    // Map over the users and extract the required fields
-    let memberDetails = users.map(user => ({
-      storeId: user.storeId,
-      walletAddress: user.walletAddress,
-      sponsorWalletAddress : loggedUser.walletAddress,
-      grabbedF3Price: user.grabbedF3PriceDecentralizedBinary,
-      position: user.positionInDecentralizedBinary,
-      placement: user.placementInDecentralizedBinary,
-      slotNumber: user.slotNumberInDecentralizedBinary,
-      email: user.email,
-      dateOfBecomeBinaryMember: user.dateOfBecomeBinaryMember
-    }));
+    const occupiedSlotsDetails = [];
 
-    // Map over the occupiedSlots and extract similar details for each
-    let occupiedSlotsDetails = occupiedSlots.map(slot => ({
+    // Include occupied slots from loggedUser
+    if (loggedUser.occupiedSlotsAddedSlots) {
+      occupiedSlotsDetails.push(...loggedUser.occupiedSlotsAddedSlots);
+    }
+
+    // Include occupied slots from all members found
+    for (const member of AllMemberForSlots) {
+      if (member.occupiedSlotsAddedSlots) {
+        occupiedSlotsDetails.push(...member.occupiedSlotsAddedSlots);
+      }
+    }
+
+    // Map over the occupiedSlotsDetails and extract required fields, including whichUsersSlot
+    let detailedOccupiedSlots = occupiedSlotsDetails.map(slot => ({
+      'SlotType' : 'Yes',
       storeId: slot.storeId,
       walletAddress: slot.walletAddress,
       sponsorWalletAddress: slot.sponsorWalletAddress,
@@ -7736,17 +7964,33 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
       placement: slot.placementInDecentralizedBinary,
       slotNumber: slot.slotNumberInDecentralizedBinary,
       email: slot.email,
-      dateOfBecomeBinaryMember: slot.dateOfBecomeBinaryMember
+      dateOfBecomeBinaryMember: slot.dateOfBecomeBinaryMember,
+      whichUsersSlot: slot.storeId // Add the storeId of the user for which the occupied slot belongs
+    }));
+
+    // Map over the allMembers and extract the required fields, including whichUsersMember
+    let memberDetails = allMembers.map(user => ({
+      'MemberType' : 'Yes',
+      storeId: user.storeId,
+      walletAddress: user.walletAddress,
+      sponsorWalletAddress: loggedUser.walletAddress,
+      grabbedF3Price: user.grabbedF3PriceDecentralizedBinary,
+      position: user.positionInDecentralizedBinary,
+      placement: user.placementInDecentralizedBinary,
+      slotNumber: user.slotNumberInDecentralizedBinary,
+      email: user.email,
+      dateOfBecomeBinaryMember: user.dateOfBecomeBinaryMember,
+      whichUsersMember: user.alreadyDecentralizedBinaryMember // Add the storeId of the sponsor for this member
     }));
 
     if (isSlotting && !isNaN(isSlotting)) {
       const slottingValue = Number(isSlotting);
 
       memberDetails = memberDetails.filter(member => Number(member.slotNumber) > slottingValue);
-      occupiedSlotsDetails = occupiedSlotsDetails.filter(slot => Number(slot.slotNumber) > slottingValue);
+      detailedOccupiedSlots = detailedOccupiedSlots.filter(slot => Number(slot.slotNumber) > slottingValue);
     }
 
-    const totalMembers = memberDetails.length + occupiedSlotsDetails.length;
+    const totalMembers = memberDetails.length + detailedOccupiedSlots.length;
 
     const TOKEN_CONTRACT_ADDRESS = '0xfB265e16e882d3d32639253ffcfC4b0a2E861467';
     const BSC_RPC_URL = 'https://bsc-dataseed.binance.org/';
