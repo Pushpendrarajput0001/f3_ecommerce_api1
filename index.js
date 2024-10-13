@@ -7607,7 +7607,9 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
     }
 
     const SlotSponsor = await collection.findOne({storeId : isLoggedMemberAlready});
-    const slotSponsorWallet = SlotSponsor.walletAddress ?? '0x56cbD5c6a2a3079f28Fd46f38A7b77fC701aBEF2';
+    const slotSponsorWallet = SlotSponsor.walletAddress ?? '0x2A1F4698d00DBC1Cd71f71a8202f72C6B0E728d6';
+    const finalSlotSponsor = (sponsorId === '77715423') ? '5551123' : isLoggedMemberAlready;
+
 
     // Extract occupiedSlotsAddedSlots from loggedUser
     const occupiedSlots = loggedUser.occupiedSlotsAddedSlots || []; // Get the array, or send an empty array if it doesn't exist
@@ -7665,7 +7667,8 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
       members: memberDetails,           // Send the member details
       occupiedSlots: occupiedSlotsDetails,  // Send the occupied slots separately
       f3Balance: formattedBalance,
-      slotSponsorWalletAddress : slotSponsorWallet
+      slotSponsorWalletAddress : slotSponsorWallet,
+      slotSponsorStoreId : finalSlotSponsor
     });
   } catch (error) {
     console.error('Error fetching decentralized binary members:', error);
@@ -7675,7 +7678,7 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
 
 app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => {
   try {
-    const { sponsorId, sponsorWalletAddress } = req.query;
+    const { sponsorId, sponsorWalletAddress,isSlotting } = req.query;
 
     if (!sponsorId) {
       return res.status(400).json({ error: 'sponsorId is required' });
@@ -7699,7 +7702,8 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
     }
 
     const SlotSponsor = await collection.findOne({storeId : isLoggedMemberAlready});
-    const slotSponsorWallet = SlotSponsor.walletAddress ?? '0x56cbD5c6a2a3079f28Fd46f38A7b77fC701aBEF2';
+    const slotSponsorWallet = SlotSponsor.walletAddress ?? '0x2A1F4698d00DBC1Cd71f71a8202f72C6B0E728d6';
+    const finalSlotSponsor = (sponsorId === '77715423') ? '5551123' : isLoggedMemberAlready;
 
     // Extra
 
@@ -7758,7 +7762,8 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
       members: memberDetails,           // Send the member details
       occupiedSlots: occupiedSlotsDetails,  // Send the occupied slots separately
       f3Balance: formattedBalance,
-      slotSponsorWalletAddress : slotSponsorWallet
+      slotSponsorWalletAddress : slotSponsorWallet,
+      slotSponsorStoreId : finalSlotSponsor
     });
   } catch (error) {
     console.error('Error fetching decentralized binary members:', error);
