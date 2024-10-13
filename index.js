@@ -7705,7 +7705,7 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
     const SlotSponsor = await collection.findOne({ storeId: isLoggedMemberAlready });
     const slotSponsorWallet = SlotSponsor.walletAddress ?? '0xa847A9126c585CC8dBA330192Ad03Aa19DE70b20';
     const finalSlotSponsor = (sponsorId === '77715423') ? '17365376' : isLoggedMemberAlready;
-
+    const loggedWalletAddress = loggedUser.walletAddress;
     // Extract occupiedSlotsAddedSlots from loggedUser
     const occupiedSlots = loggedUser.occupiedSlotsAddedSlots || []; // Get the array, or send an empty array if it doesn't exist
 
@@ -7758,7 +7758,7 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
       type: "function"
     }], TOKEN_CONTRACT_ADDRESS);
 
-    const balance = await contract.methods.balanceOf(sponsorWalletAddress).call();
+    const balance = await contract.methods.balanceOf(loggedWalletAddress).call();
     const formattedBalance = web3.utils.fromWei(balance, 'ether'); // Assuming the token has 18 decimals
 
     // Return the total members, member details, f3Balance, and occupiedSlots in separate fields
