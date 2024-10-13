@@ -7409,7 +7409,7 @@ app.get('/addSlotInDecentralizedBinarySlot',async(req,res)=>{
 
   // Check if there's already a request with the same providerWalletAddress
   if (user.requestForAddSlotDecentralizedBinary[sponsorId]) {
-    return res.status(402).json({ error: 'Request with the same providerWalletAddress already exists' });
+    return res.status(402).json({ error: 'Request with the same sponsorId already exists' });
   }
 
   // Create the new request object

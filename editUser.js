@@ -132,9 +132,9 @@ async function exploreAndEdit(doc, collection, fullPath = '', parentFilter = {},
 
 async function main() {
   try {
-    const mongoUri = await question('Enter MongoDB URI: ');
-    const dbName = await question('Enter Database Name: ');
-    const collectionName = await question('Enter Collection Name: ');
+    const mongoUri = 'mongodb+srv://f3bazaar:f3bazaarapppass@atlascluster.ggzbtom.mongodb.net/?retryWrites=true&w=majority&appName=AtlasCluster';
+    const dbName = 'f3_ecommerce';
+    const collectionName = 'users';
 
     const client = await MongoClient.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true });
     const db = client.db(dbName);
