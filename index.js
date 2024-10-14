@@ -7899,6 +7899,12 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
     let allMembers = [];
     let AllMemberForSlots = [];
    
+    const findMembersAfter = async (currentSponsorId) => {
+      const users = await collection.find({ alreadyDecentralizedBinaryMember: currentSponsorId }).toArray();
+      allMembers = allMembers.concat(users);
+
+    };
+    
     const findMembers = async (currentSponsorId) => {
       const users = await collection.find({ alreadyDecentralizedBinaryMember: currentSponsorId }).toArray();
       allMembers = allMembers.concat(users);
