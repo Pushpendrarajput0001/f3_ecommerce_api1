@@ -8016,7 +8016,7 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
     return res.status(200).json({
       totalMembers: totalMembers,
       members: memberDetails,           // Send the member details
-      occupiedSlots: occupiedSlotsDetails,  // Send the occupied slots separately
+      occupiedSlots: detailedOccupiedSlots,  // Send the occupied slots separately
       f3Balance: formattedBalance,
       slotSponsorWalletAddress: slotSponsorWallet,
       slotSponsorStoreId: finalSlotSponsor
