@@ -2541,7 +2541,7 @@ app.get('/getRequestsOfPayments', async (req, res) => {
           sponsorWalletAddress: user.requestForAddSlotDecentralizedBinary[storeId][0].sponsorWallet,
           appWallet: user.requestForAddSlotDecentralizedBinary[storeId][0].appWallet,
           storeId: user.storeId,
-          sellerWalletAddress: sponsorUser.walletAddress,
+          sellerWalletAddress: user.requestForAddSlotDecentralizedBinary[storeId][0].sponsorWallet,
           grabbedF3Price: user.requestForAddSlotDecentralizedBinary[storeId][0].grabbedF3Price,
           buyerWalletAddress: user.walletAddress,
           receiverWalletAddress: user.requestForAddSlotDecentralizedBinary[storeId][0].sponsorWallet,
