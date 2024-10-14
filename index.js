@@ -7798,6 +7798,7 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
     }
     const isLoggedMemberAlready = loggedUser.alreadyDecentralizedBinaryMember;
     const mineSlotNumber = loggedUser.slotNumberInDecentralizedBinary;
+    const finalMineSlotNumber = (sponsorId === '77715423') ? '0' : mineSlotNumber;
 
     if (!isLoggedMemberAlready && sponsorId != '77715423') {
       return res.status(405).json({ error: 'Sponsor is not a member yet!' });
@@ -7872,7 +7873,7 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
 
     // Return the total members, member details, f3Balance, and occupiedSlots in separate fields
     return res.status(200).json({
-      mineSlotNumber : mineSlotNumber,
+      mineSlotNumber : finalMineSlotNumber,
       totalMembers: totalMembers,
       members: memberDetails,           // Send the member details
       occupiedSlots: detailedOccupiedSlots,  // Send the occupied slots separately
@@ -7888,7 +7889,7 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
 
 app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => {
   try {
-    const { sponsorId, sponsorWalletAddress, isSlotting } = req.query;
+    const { sponsorId, sponsorWalletAddress, isSlotting,isSlottingPlacement } = req.query;
 
     if (!sponsorId) {
       return res.status(400).json({ error: 'sponsorId is required' });
@@ -7991,8 +7992,9 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
       whichUsersMember: user.alreadyDecentralizedBinaryMember // Add the storeId of the sponsor for this member
     }));
 
-    if (isSlotting && !isNaN(isSlotting)) {
+    if ((isSlotting && !isNaN(isSlotting))) {
       const slottingValue = Number(isSlotting);
+      const placementValue = isSlottingPlacement;
 
       memberDetails = memberDetails.filter(member => Number(member.slotNumber) > slottingValue);
       detailedOccupiedSlots = detailedOccupiedSlots.filter(slot => Number(slot.slotNumber) > slottingValue);
