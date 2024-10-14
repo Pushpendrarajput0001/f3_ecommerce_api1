@@ -7797,6 +7797,7 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
       return res.status(404).json({ error: 'Sponsor not found' });
     }
     const isLoggedMemberAlready = loggedUser.alreadyDecentralizedBinaryMember;
+    const mineSlotNumber = loggedUser.slotNumberInDecentralizedBinary;
 
     if (!isLoggedMemberAlready && sponsorId != '77715423') {
       return res.status(405).json({ error: 'Sponsor is not a member yet!' });
@@ -7871,6 +7872,7 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
 
     // Return the total members, member details, f3Balance, and occupiedSlots in separate fields
     return res.status(200).json({
+      mineSlotNumber : mineSlotNumber,
       totalMembers: totalMembers,
       members: memberDetails,           // Send the member details
       occupiedSlots: detailedOccupiedSlots,  // Send the occupied slots separately
