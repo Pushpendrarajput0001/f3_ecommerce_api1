@@ -7985,8 +7985,8 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
       const slottingValue = Number(isSlotting);
       const placementValue = isSlottingPlacement;
 
-      memberDetails = memberDetails.filter(member => Number(member.slotNumber) > slottingValue && member.placement === placementValue);
-      detailedOccupiedSlots = detailedOccupiedSlots.filter(slot => Number(slot.slotNumber) > slottingValue && slot.placement === placementValue);
+      memberDetails = memberDetails.filter(member => Number(member.slotNumber) > slottingValue);
+      detailedOccupiedSlots = detailedOccupiedSlots.filter(slot => Number(slot.slotNumber) > slottingValue);
     }
 
     memberDetails.sort((a, b) => Number(a.slotNumber) - Number(b.slotNumber));
