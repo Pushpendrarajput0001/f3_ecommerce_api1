@@ -7763,39 +7763,36 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
     const db = client.db('f3_ecommerce');
     const collection = db.collection('users');
 
-    // Initialize an array to hold all found users
     let allMembers = [];
     let AllMemberForSlots = [];
 
-    // Function to find members recursively
     const findMembersAfter = async (currentSponsorId) => {
       const users = await collection.find({ alreadyDecentralizedBinaryMember: currentSponsorId }).toArray();
       allMembers = allMembers.concat(users);
-
     };
+
     const findMembers = async (currentSponsorId) => {
       const users = await collection.find({ alreadyDecentralizedBinaryMember: currentSponsorId }).toArray();
       allMembers = allMembers.concat(users);
 
       const filteredUsers = users.filter(user => 
-    (user.positionInDecentralizedBinary === 'Top' && user.placementInDecentralizedBinary === 'Right') ||
-    (user.positionInDecentralizedBinary === 'Top' && user.placementInDecentralizedBinary === 'Left')
+        (user.positionInDecentralizedBinary === 'Top' && user.placementInDecentralizedBinary === 'Right') ||
+        (user.positionInDecentralizedBinary === 'Top' && user.placementInDecentralizedBinary === 'Left')
       );
 
       AllMemberForSlots = AllMemberForSlots.concat(filteredUsers);
       for (const user of filteredUsers) {
-        await findMembersAfter(user.storeId); // Recursively find members for each user's storeId
+        await findMembersAfter(user.storeId);
       }
     };
 
-    // Start the recursive search
     await findMembers(sponsorId);
 
     const loggedUser = await collection.findOne({ storeId: sponsorId });
-
     if (!loggedUser) {
       return res.status(404).json({ error: 'Sponsor not found' });
     }
+
     const isLoggedMemberAlready = loggedUser.alreadyDecentralizedBinaryMember;
     const mineSlotNumber = loggedUser.slotNumberInDecentralizedBinary;
     const finalMineSlotNumber = (sponsorId === '77715423') ? '0' : mineSlotNumber;
@@ -7808,24 +7805,16 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
     const slotSponsorWallet = SlotSponsor.walletAddress ?? '0xa847A9126c585CC8dBA330192Ad03Aa19DE70b20';
     const finalSlotSponsor = (sponsorId === '77715423') ? '17365376' : isLoggedMemberAlready;
 
-    // Gather all occupied slots from all members including loggedUser
-    const occupiedSlotsDetails = [];
+    const occupiedSlotsDetails = loggedUser.occupiedSlotsAddedSlots ? [...loggedUser.occupiedSlotsAddedSlots] : [];
 
-    // Include occupied slots from loggedUser
-    if (loggedUser.occupiedSlotsAddedSlots) {
-      occupiedSlotsDetails.push(...loggedUser.occupiedSlotsAddedSlots);
-    }
-
-    // Include occupied slots from all members found
     for (const member of AllMemberForSlots) {
       if (member.occupiedSlotsAddedSlots) {
         occupiedSlotsDetails.push(...member.occupiedSlotsAddedSlots);
       }
     }
 
-    // Map over the occupiedSlotsDetails and extract required fields, including whichUsersSlot
-    const detailedOccupiedSlots = occupiedSlotsDetails.map(slot => ({
-      'SlotType' : 'Yes',
+    let detailedOccupiedSlots = occupiedSlotsDetails.map(slot => ({
+      'SlotType': 'Yes',
       storeId: slot.storeId,
       walletAddress: slot.walletAddress,
       sponsorWalletAddress: slot.sponsorWalletAddress,
@@ -7835,12 +7824,11 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
       slotNumber: slot.slotNumberInDecentralizedBinary,
       email: slot.email,
       dateOfBecomeBinaryMember: slot.dateOfBecomeBinaryMember,
-      whichUsersSlot: slot.storeId // Add the storeId of the user for which the occupied slot belongs
+      whichUsersSlot: slot.storeId
     }));
 
-    // Map over the allMembers and extract the required fields, including whichUsersMember
-    const memberDetails = allMembers.map(user => ({
-      'MemberType' : 'Yes',
+    let memberDetails = allMembers.map(user => ({
+      'MemberType': 'Yes',
       storeId: user.storeId,
       walletAddress: user.walletAddress,
       sponsorWalletAddress: loggedUser.walletAddress,
@@ -7850,13 +7838,15 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
       slotNumber: user.slotNumberInDecentralizedBinary,
       email: user.email,
       dateOfBecomeBinaryMember: user.dateOfBecomeBinaryMember,
-      whichUsersMember: user.alreadyDecentralizedBinaryMember // Add the storeId of the sponsor for this member
+      whichUsersMember: user.alreadyDecentralizedBinaryMember
     }));
 
-    // Calculate totalMembers
+    // Sort both arrays by `dateOfBecomeBinaryMember`
+    memberDetails = memberDetails.sort((a, b) => new Date(a.dateOfBecomeBinaryMember) - new Date(b.dateOfBecomeBinaryMember));
+    detailedOccupiedSlots = detailedOccupiedSlots.sort((a, b) => new Date(a.dateOfBecomeBinaryMember) - new Date(b.dateOfBecomeBinaryMember));
+
     const totalMembers = memberDetails.length + detailedOccupiedSlots.length;
 
-    // Interact with the BSC blockchain to get the balance
     const TOKEN_CONTRACT_ADDRESS = '0xfB265e16e882d3d32639253ffcfC4b0a2E861467';
     const BSC_RPC_URL = 'https://bsc-dataseed.binance.org/';
     const web3 = new Web3(new Web3.providers.HttpProvider(BSC_RPC_URL));
@@ -7869,14 +7859,13 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
     }], TOKEN_CONTRACT_ADDRESS);
 
     const balance = await contract.methods.balanceOf(sponsorWalletAddress).call();
-    const formattedBalance = web3.utils.fromWei(balance, 'ether'); // Assuming the token has 18 decimals
+    const formattedBalance = web3.utils.fromWei(balance, 'ether');
 
-    // Return the total members, member details, f3Balance, and occupiedSlots in separate fields
     return res.status(200).json({
-      mineSlotNumber : finalMineSlotNumber,
+      mineSlotNumber: finalMineSlotNumber,
       totalMembers: totalMembers,
-      members: memberDetails,           // Send the member details
-      occupiedSlots: detailedOccupiedSlots,  // Send the occupied slots separately
+      members: memberDetails,
+      occupiedSlots: detailedOccupiedSlots,
       f3Balance: formattedBalance,
       slotSponsorWalletAddress: slotSponsorWallet,
       slotSponsorStoreId: finalSlotSponsor
@@ -8000,6 +7989,9 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
       detailedOccupiedSlots = detailedOccupiedSlots.filter(slot => Number(slot.slotNumber) > slottingValue && slot.placement === placementValue);
     }
 
+    memberDetails.sort((a, b) => Number(a.slotNumber) - Number(b.slotNumber));
+    detailedOccupiedSlots.sort((a, b) => Number(a.slotNumber) - Number(b.slotNumber));
+    
     const totalMembers = memberDetails.length + detailedOccupiedSlots.length;
 
     const TOKEN_CONTRACT_ADDRESS = '0xfB265e16e882d3d32639253ffcfC4b0a2E861467';
