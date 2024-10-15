@@ -7169,7 +7169,7 @@ app.get('/getuserLatestTransactionGrabF3', async (req, res) => {
     const transactions = response.data.result;
 
     if (transactions.length === 0) {
-      return res.json({ message: 'No transactions found for this wallet address.' });
+      return res.status(402).json({ message: 'No transactions found for this wallet address.' });
     }
 
     // Extract relevant data from the latest transaction
@@ -7991,7 +7991,7 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
 
     memberDetails.sort((a, b) => Number(a.slotNumber) - Number(b.slotNumber));
     detailedOccupiedSlots.sort((a, b) => Number(a.slotNumber) - Number(b.slotNumber));
-    
+
     const totalMembers = memberDetails.length + detailedOccupiedSlots.length;
 
     const TOKEN_CONTRACT_ADDRESS = '0xfB265e16e882d3d32639253ffcfC4b0a2E861467';
