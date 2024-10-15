@@ -7812,6 +7812,7 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
     const isLoggedMemberAlready = loggedUser.alreadyDecentralizedBinaryMember;
     const mineSlotNumber = loggedUser.slotNumberInDecentralizedBinary;
     const finalMineSlotNumber = (sponsorId === '77715423') ? '0' : mineSlotNumber;
+    const mineUniqueId = loggedUser.uniqueIdBinarySlot;
 
     if (!isLoggedMemberAlready && sponsorId != '77715423') {
       return res.status(405).json({ error: 'Sponsor is not a member yet!' });
@@ -7883,6 +7884,7 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
 
     return res.status(200).json({
       mineSlotNumber: finalMineSlotNumber,
+      mineUniqueId : mineUniqueId,
       totalMembers: totalMembers,
       members: memberDetails,
       occupiedSlots: detailedOccupiedSlots,
@@ -7942,6 +7944,7 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
     }
 
     const isLoggedMemberAlready = loggedUser.alreadyDecentralizedBinaryMember;
+    const uniqueId = loggedUser.uniqueIdBinarySlot;
 
     if (!isLoggedMemberAlready && sponsorId != '77715423') {
       return res.status(405).json({ error: 'Sponsor is not a member yet!' });
@@ -8035,6 +8038,7 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
     // Return the total members, member details, f3Balance, and occupiedSlots in separate fields
     return res.status(200).json({
       totalMembers: totalMembers,
+      mineUniqueId : uniqueId,
       members: memberDetails,           // Send the member details
       occupiedSlots: detailedOccupiedSlots,  // Send the occupied slots separately
       f3Balance: formattedBalance,
