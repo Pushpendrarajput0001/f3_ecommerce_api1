@@ -7198,7 +7198,7 @@ app.get('/getuserLatestTransactionGrabF3', async (req, res) => {
 //AddMember
 app.get('/addMemberInDecentralizedBinarySlot', async (req, res) => {
   try {
-    const { userId, sponsorId, sponsorWallet, appWallet, sponsorAmount, sponsorAmountF3, appAmount, appAmountF3, dateAndTime, grabbedF3Price, position, placement, slotNumber } = req.query;
+    const { userId, sponsorId, sponsorWallet, appWallet, sponsorAmount, sponsorAmountF3, appAmount, appAmountF3, dateAndTime, grabbedF3Price, position, placement, slotNumber,underSlotId } = req.query;
 
     const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
     const db = client.db('f3_ecommerce');
@@ -7227,8 +7227,10 @@ app.get('/addMemberInDecentralizedBinarySlot', async (req, res) => {
       return res.status(402).json({ error: 'Request with the same providerWalletAddress already exists' });
     }
 
+    const uniqueId = uuidv4();
     // Create the new request object
     const newRequest = {
+      uniqueId,
       userId,
       sponsorId,
       sponsorWallet,
@@ -7239,6 +7241,7 @@ app.get('/addMemberInDecentralizedBinarySlot', async (req, res) => {
       appAmountF3,
       dateAndTime,
       grabbedF3Price,
+      underSlotId,
       position,
       placement,
       slotNumber
@@ -7329,6 +7332,8 @@ app.get('/deleteAndAddtheRequestToApprovedBinaryHistory', async (req, res) => {
     const placement = requestForBinary[sponsorId][0].placement;
     const position = requestForBinary[sponsorId][0].position;
     const slotNumber = requestForBinary[sponsorId][0].slotNumber;
+    const uniqueId = requestForBinary[sponsorId][0].uniqueId;
+    const underSlotId = requestForBinary[sponsorId][0].underSlotId;
 
     const approvedRequest = {
       ...requestForBinary[sponsorId][0], // Copy the first element from the request array
@@ -7355,6 +7360,8 @@ app.get('/deleteAndAddtheRequestToApprovedBinaryHistory', async (req, res) => {
     user.positionInDecentralizedBinary = position;
     user.placementInDecentralizedBinary = placement;
     user.slotNumberInDecentralizedBinary = slotNumber;
+    user.uniqueIdBinarySlot = uniqueId;
+    user.underSlotIdBinary = underSlotId;
 
     // Update the user document in the database with all changes
     await collection.updateOne(
@@ -7368,7 +7375,9 @@ app.get('/deleteAndAddtheRequestToApprovedBinaryHistory', async (req, res) => {
           positionInDecentralizedBinary: position,
           placementInDecentralizedBinary: placement,
           slotNumberInDecentralizedBinary: slotNumber,
-          grabbedF3Price: grabbedF3Price
+          grabbedF3Price: grabbedF3Price,
+          uniqueIdBinarySlot : uniqueId,
+          underSlotIdBinary : underSlotId,
         }
       }
     );
@@ -7383,7 +7392,7 @@ app.get('/deleteAndAddtheRequestToApprovedBinaryHistory', async (req, res) => {
 //AddSlot
 app.get('/addSlotInDecentralizedBinarySlot', async (req, res) => {
   try {
-    const { userId, sponsorId, sponsorWallet, appWallet, sponsorAmount, sponsorAmountF3, appAmount, appAmountF3, dateAndTime, grabbedF3Price, position, placement, slotNumber } = req.query;
+    const { userId, sponsorId, sponsorWallet, appWallet, sponsorAmount, sponsorAmountF3, appAmount, appAmountF3, dateAndTime, grabbedF3Price, position, placement, slotNumber,underSlotId } = req.query;
 
     const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
     const db = client.db('f3_ecommerce');
@@ -7412,8 +7421,11 @@ app.get('/addSlotInDecentralizedBinarySlot', async (req, res) => {
       return res.status(402).json({ error: 'Request with the same sponsorId already exists' });
     }
 
+    const uniqueId = uuidv4();
     // Create the new request object
     const newRequest = {
+      uniqueId,
+      underSlotId,
       userId,
       sponsorId,
       sponsorWallet,
@@ -7518,6 +7530,8 @@ app.get('/deleteAndAddtheAddSlotRequestToApprovedBinaryHistory', async (req, res
     const position = requestForBinary[sponsorId][0].position;
     const slotNumber = requestForBinary[sponsorId][0].slotNumber;
     const sponsorWalletAddressget = requestForBinary[sponsorId][0].sponsorWallet;
+    const uniqueId = requestForBinary[sponsorId][0].uniqueId;
+    const underSlotId = requestForBinary[sponsorId][0].underSlotId;
 
     const approvedRequest = {
       ...requestForBinary[sponsorId][0], // Copy the first element from the request array
@@ -7539,6 +7553,8 @@ app.get('/deleteAndAddtheAddSlotRequestToApprovedBinaryHistory', async (req, res
 
     // Create a new slot object
     const newSlot = {
+      uniqueId,
+      underSlotId,
       sponsorWalletAddress: sponsorWalletAddressget,
       walletAddress: walletAddress,
       storeId: user.storeId,
@@ -7815,6 +7831,8 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
 
     let detailedOccupiedSlots = occupiedSlotsDetails.map(slot => ({
       'SlotType': 'Yes',
+      uniqueId : slot.uniqueId,
+      underSlotId : slot.underSlotId,
       storeId: slot.storeId,
       walletAddress: slot.walletAddress,
       sponsorWalletAddress: slot.sponsorWalletAddress,
@@ -7829,6 +7847,8 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
 
     let memberDetails = allMembers.map(user => ({
       'MemberType': 'Yes',
+      uniqueId : user.uniqueIdBinarySlot,
+      underSlotId : user.underSlotIdBinary,
       storeId: user.storeId,
       walletAddress: user.walletAddress,
       sponsorWalletAddress: loggedUser.walletAddress,
@@ -7954,6 +7974,8 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
     // Map over the occupiedSlotsDetails and extract required fields, including whichUsersSlot
     let detailedOccupiedSlots = occupiedSlotsDetails.map(slot => ({
       'SlotType' : 'Yes',
+      uniqueId : slot.uniqueId,
+      underSlotId : slot.underSlotId,
       storeId: slot.storeId,
       walletAddress: slot.walletAddress,
       sponsorWalletAddress: slot.sponsorWalletAddress,
@@ -7969,6 +7991,8 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
     // Map over the allMembers and extract the required fields, including whichUsersMember
     let memberDetails = allMembers.map(user => ({
       'MemberType' : 'Yes',
+      uniqueId : user.uniqueIdBinarySlot,
+      underSlotId : user.underSlotIdBinary,
       storeId: user.storeId,
       walletAddress: user.walletAddress,
       sponsorWalletAddress: loggedUser.walletAddress,
