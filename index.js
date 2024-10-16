@@ -8016,11 +8016,11 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
       detailedOccupiedSlots = detailedOccupiedSlots.filter(slot => Number(slot.slotNumber) > slottingValue);
     }
 
-    if(underSlotId){
-      const id = underSlotId;
-      memberDetails = memberDetails.filter(member => (member.underSlotId) === id);
-      detailedOccupiedSlots = detailedOccupiedSlots.filter(slot => (slot.underSlotId) === id);
-    }
+    // if(underSlotId){
+    //   const id = underSlotId;
+    //   memberDetails = memberDetails.filter(member => (member.underSlotId) === id);
+    //   detailedOccupiedSlots = detailedOccupiedSlots.filter(slot => (slot.underSlotId) === id);
+    // }
 
     memberDetails.sort((a, b) => Number(a.slotNumber) - Number(b.slotNumber));
     detailedOccupiedSlots.sort((a, b) => Number(a.slotNumber) - Number(b.slotNumber));
