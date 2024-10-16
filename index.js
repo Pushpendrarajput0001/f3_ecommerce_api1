@@ -7828,8 +7828,8 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
     }
 
     const SlotSponsor = await collection.findOne({ storeId: isLoggedMemberAlready });
-    const slotSponsorWalletCorrect = loggedUser.ApprovedDecentralizedBinaryMemberRequest[isLoggedMemberAlready][0].sponsorWallet ?? '0xa847A9126c585CC8dBA330192Ad03Aa19DE70b20';
-    const slotSponsorWallet = SlotSponsor.walletAddress ?? '0xa847A9126c585CC8dBA330192Ad03Aa19DE70b20';
+    const slotSponsorWallet = loggedUser.ApprovedDecentralizedBinaryMemberRequest[isLoggedMemberAlready][0].sponsorWallet ?? '0xa847A9126c585CC8dBA330192Ad03Aa19DE70b20';
+    //const slotSponsorWallet = SlotSponsor.walletAddress ?? '0xa847A9126c585CC8dBA330192Ad03Aa19DE70b20';
     const finalSlotSponsor = (sponsorId === '77715423') ? '17365376' : isLoggedMemberAlready;
 
     const occupiedSlotsDetails = loggedUser.occupiedSlotsAddedSlots ? [...loggedUser.occupiedSlotsAddedSlots] : [];
@@ -7961,8 +7961,8 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
     }
 
     const SlotSponsor = await collection.findOne({ storeId: isLoggedMemberAlready });
-    const slotSponsorWalletCorrect = loggedUser.ApprovedDecentralizedBinaryMemberRequest[isLoggedMemberAlready][0].sponsorWallet ?? '0xa847A9126c585CC8dBA330192Ad03Aa19DE70b20';
-    const slotSponsorWallet = SlotSponsor.walletAddress ?? '0xa847A9126c585CC8dBA330192Ad03Aa19DE70b20';
+    const slotSponsorWallet = loggedUser.ApprovedDecentralizedBinaryMemberRequest[isLoggedMemberAlready][0].sponsorWallet ?? '0xa847A9126c585CC8dBA330192Ad03Aa19DE70b20';
+    //const slotSponsorWallet = SlotSponsor.walletAddress ?? '0xa847A9126c585CC8dBA330192Ad03Aa19DE70b20';
     const finalSlotSponsor = (sponsorId === '77715423') ? '17365376' : isLoggedMemberAlready;
     const loggedWalletAddress = loggedUser.walletAddress;
     // Extract occupiedSlotsAddedSlots from loggedUser
