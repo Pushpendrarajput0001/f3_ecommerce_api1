@@ -7900,7 +7900,7 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
 
 app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => {
   try {
-    const { sponsorId, sponsorWalletAddress, isSlotting,isSlottingPlacement } = req.query;
+    const { sponsorId, sponsorWalletAddress, isSlotting,isSlottingPlacement,underSlotId } = req.query;
 
     if (!sponsorId) {
       return res.status(400).json({ error: 'sponsorId is required' });
@@ -8014,6 +8014,12 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
 
       memberDetails = memberDetails.filter(member => Number(member.slotNumber) > slottingValue);
       detailedOccupiedSlots = detailedOccupiedSlots.filter(slot => Number(slot.slotNumber) > slottingValue);
+    }
+
+    if(underSlotId){
+      const id = underSlotId;
+      memberDetails = memberDetails.filter(member => (member.underSlotId) > id);
+      detailedOccupiedSlots = detailedOccupiedSlots.filter(slot => (slot.underSlotId) > id);
     }
 
     memberDetails.sort((a, b) => Number(a.slotNumber) - Number(b.slotNumber));
