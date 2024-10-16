@@ -7218,6 +7218,9 @@ app.get('/addMemberInDecentralizedBinarySlot', async (req, res) => {
       return;
     }
 
+    if(!underSlotId){
+      res.status(405).json({error: 'Under slot is blank'})
+    }
     if (!user.requestForDecentralizedBinary) {
       user.requestForDecentralizedBinary = {};
     }
