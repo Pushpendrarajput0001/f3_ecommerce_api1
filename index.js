@@ -7238,7 +7238,7 @@ app.get('/addMemberInDecentralizedBinarySlot', async (req, res) => {
     const newRequest = {
       uniqueId,
       userId,
-      sponsorId : correctSponsorId,
+      sponsorId,
       sponsorWallet,
       appWallet,
       sponsorAmount,
@@ -7440,7 +7440,7 @@ app.get('/addSlotInDecentralizedBinarySlot', async (req, res) => {
       uniqueId,
       underSlotId,
       userId,
-      sponsorId : correctSponsorId,
+      sponsorId,
       sponsorWallet,
       appWallet,
       sponsorAmount,
