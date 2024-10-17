@@ -7206,6 +7206,8 @@ app.get('/addMemberInDecentralizedBinarySlot', async (req, res) => {
 
     // Find the user by email
     const user = await collection.findOne({ storeId: userId });
+    const sponsorUser = await collection.findOne({ walletAddress : sponsorWallet});
+    const correctSponsorId = sponsorUser.storeId;
     const walletAddressUser = user.walletAddress;
     const memberOfBinary = user.alreadyDecentralizedBinaryMember;
     if (!user) {
@@ -7236,7 +7238,7 @@ app.get('/addMemberInDecentralizedBinarySlot', async (req, res) => {
     const newRequest = {
       uniqueId,
       userId,
-      sponsorId,
+      sponsorId : correctSponsorId,
       sponsorWallet,
       appWallet,
       sponsorAmount,
@@ -7404,6 +7406,8 @@ app.get('/addSlotInDecentralizedBinarySlot', async (req, res) => {
 
     // Find the user by email
     const user = await collection.findOne({ storeId: userId });
+    const sponsorUser = await collection.findOne({ walletAddress : sponsorWallet});
+    const correctSponsorId = sponsorUser.storeId;
     const walletAddressUser = user.walletAddress;
     const memberOfBinary = user.alreadyDecentralizedBinaryMember;
     if (!user) {
@@ -7436,7 +7440,7 @@ app.get('/addSlotInDecentralizedBinarySlot', async (req, res) => {
       uniqueId,
       underSlotId,
       userId,
-      sponsorId,
+      sponsorId : correctSponsorId,
       sponsorWallet,
       appWallet,
       sponsorAmount,
