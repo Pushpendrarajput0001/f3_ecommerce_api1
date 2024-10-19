@@ -137,6 +137,7 @@ app.post('/login', async (req, res) => {
     // Construct the user object to send back (excluding password)
     const userToSend = {
       email: user.email,
+      fullName : user.fullName,
       storeName: user.storeName,
       storeId: user.storeId,
       walletAddress: user.walletAddress,
@@ -7904,7 +7905,8 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
       occupiedSlots: detailedOccupiedSlots,
       f3Balance: formattedBalance,
       slotSponsorWalletAddress: slotSponsorWallet,
-      slotSponsorStoreId: finalSlotSponsor
+      slotSponsorStoreId: finalSlotSponsor,
+      fullNameUser : loggedUser.fullName,
     });
   } catch (error) {
     console.error('Error fetching decentralized binary members:', error);
@@ -8064,7 +8066,8 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
       occupiedSlots: detailedOccupiedSlots,  // Send the occupied slots separately
       f3Balance: formattedBalance,
       slotSponsorWalletAddress: slotSponsorWallet,
-      slotSponsorStoreId: finalSlotSponsor
+      slotSponsorStoreId: finalSlotSponsor,
+      fullNameUser : loggedUser.fullName,
     });
   } catch (error) {
     console.error('Error fetching decentralized binary members:', error);
