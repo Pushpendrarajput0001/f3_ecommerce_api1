@@ -8369,6 +8369,7 @@ app.get('/getDialogdDetailsBinary', async (req, res) => {
     return res.status(500).json({ error: 'An error occurred while fetching the members' });
   }
 });
+
 //BinaryPayout
 app.get('/getBinarianPayouts', async (req, res) => {
   const { userId, userWalletAddress } = req.query;
@@ -8379,6 +8380,6 @@ app.get('/getRedundantPayouts', async (req, res) => {
   const { userId, userWalletAddress } = req.query;
 });
 
-app.listen(PORT, '192.168.29.149', () => {
+app.listen('8000', '0.0.0', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`)
 });
