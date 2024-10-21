@@ -137,7 +137,7 @@ app.post('/login', async (req, res) => {
     // Construct the user object to send back (excluding password)
     const userToSend = {
       email: user.email,
-      fullName : user.fullName,
+      fullName: user.fullName,
       storeName: user.storeName,
       storeId: user.storeId,
       walletAddress: user.walletAddress,
@@ -7199,7 +7199,7 @@ app.get('/getuserLatestTransactionGrabF3', async (req, res) => {
 //AddMember
 app.get('/addMemberInDecentralizedBinarySlot', async (req, res) => {
   try {
-    const { userId, sponsorId, sponsorWallet, appWallet, sponsorAmount, sponsorAmountF3, appAmount, appAmountF3, dateAndTime, grabbedF3Price, position, placement, slotNumber,underSlotId } = req.query;
+    const { userId, sponsorId, sponsorWallet, appWallet, sponsorAmount, sponsorAmountF3, appAmount, appAmountF3, dateAndTime, grabbedF3Price, position, placement, slotNumber, underSlotId } = req.query;
 
     const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
     const db = client.db('f3_ecommerce');
@@ -7207,7 +7207,7 @@ app.get('/addMemberInDecentralizedBinarySlot', async (req, res) => {
 
     // Find the user by email
     const user = await collection.findOne({ storeId: userId });
-    const sponsorUser = await collection.findOne({ walletAddress : sponsorWallet});
+    const sponsorUser = await collection.findOne({ walletAddress: sponsorWallet });
     const correctSponsorId = sponsorUser.storeId;
     const walletAddressUser = user.walletAddress;
     const memberOfBinary = user.alreadyDecentralizedBinaryMember;
@@ -7221,8 +7221,8 @@ app.get('/addMemberInDecentralizedBinarySlot', async (req, res) => {
       return;
     }
 
-    if(!underSlotId){
-      res.status(405).json({error: 'Under slot is blank'})
+    if (!underSlotId) {
+      res.status(405).json({ error: 'Under slot is blank' })
       return;
     }
     if (!user.requestForDecentralizedBinary) {
@@ -7383,8 +7383,8 @@ app.get('/deleteAndAddtheRequestToApprovedBinaryHistory', async (req, res) => {
           placementInDecentralizedBinary: placement,
           slotNumberInDecentralizedBinary: slotNumber,
           grabbedF3Price: grabbedF3Price,
-          uniqueIdBinarySlot : uniqueId,
-          underSlotIdBinary : underSlotId,
+          uniqueIdBinarySlot: uniqueId,
+          underSlotIdBinary: underSlotId,
         }
       }
     );
@@ -7399,7 +7399,7 @@ app.get('/deleteAndAddtheRequestToApprovedBinaryHistory', async (req, res) => {
 //AddSlot
 app.get('/addSlotInDecentralizedBinarySlot', async (req, res) => {
   try {
-    const { userId, sponsorId, sponsorWallet, appWallet, sponsorAmount, sponsorAmountF3, appAmount, appAmountF3, dateAndTime, grabbedF3Price, position, placement, slotNumber,underSlotId } = req.query;
+    const { userId, sponsorId, sponsorWallet, appWallet, sponsorAmount, sponsorAmountF3, appAmount, appAmountF3, dateAndTime, grabbedF3Price, position, placement, slotNumber, underSlotId } = req.query;
 
     const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
     const db = client.db('f3_ecommerce');
@@ -7407,7 +7407,7 @@ app.get('/addSlotInDecentralizedBinarySlot', async (req, res) => {
 
     // Find the user by email
     const user = await collection.findOne({ storeId: userId });
-    const sponsorUser = await collection.findOne({ walletAddress : sponsorWallet});
+    const sponsorUser = await collection.findOne({ walletAddress: sponsorWallet });
     const correctSponsorId = sponsorUser.storeId;
     const walletAddressUser = user.walletAddress;
     const memberOfBinary = user.alreadyDecentralizedBinaryMember;
@@ -7421,11 +7421,11 @@ app.get('/addSlotInDecentralizedBinarySlot', async (req, res) => {
     //   return;
     // }
 
-    if(!underSlotId){
-      res.status(405).json({error: 'Under slot is blank'})
+    if (!underSlotId) {
+      res.status(405).json({ error: 'Under slot is blank' })
       return;
     }
-    
+
     if (!user.requestForAddSlotDecentralizedBinary) {
       user.requestForAddSlotDecentralizedBinary = {};
     }
@@ -7769,7 +7769,7 @@ app.get('/getAllDecentralizedBinaryMembersDummy', async (req, res) => {
     return res.status(200).json({
       totalMembers: specificSlots.length,
       combinedDetails: specificSlots,
-      
+
       f3Balance: formattedBalance,
       slotSponsorWalletAddress: slotSponsorWallet,
       slotSponsorStoreId: finalSlotSponsor
@@ -7805,7 +7805,7 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
       const users = await collection.find({ alreadyDecentralizedBinaryMember: currentSponsorId }).toArray();
       allMembers = allMembers.concat(users);
 
-      const filteredUsers = users.filter(user => 
+      const filteredUsers = users.filter(user =>
         (user.positionInDecentralizedBinary === 'Top' && user.placementInDecentralizedBinary === 'Right') ||
         (user.positionInDecentralizedBinary === 'Top' && user.placementInDecentralizedBinary === 'Left')
       );
@@ -7823,8 +7823,10 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
       return res.status(404).json({ error: 'Sponsor not found' });
     }
 
+    const usdtRate = loggedUser.usdtRate;
     const isLoggedMemberAlready = loggedUser.alreadyDecentralizedBinaryMember;
     const mineSlotNumber = loggedUser.slotNumberInDecentralizedBinary;
+    const loggedUniqueId = loggedUser.uniqueIdBinarySlot;
     const finalMineSlotNumber = (sponsorId === '77715423') ? '0' : mineSlotNumber;
     const mineUniqueId = loggedUser.uniqueIdBinarySlot;
 
@@ -7833,10 +7835,9 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
     }
 
     const SlotSponsor = await collection.findOne({ storeId: isLoggedMemberAlready });
-    const slotSponsorWallet = loggedUser.ApprovedDecentralizedBinaryMemberRequest[isLoggedMemberAlready][0].sponsorWallet ?? '0xa847A9126c585CC8dBA330192Ad03Aa19DE70b20';
     //const slotSponsorWallet = SlotSponsor.walletAddress ?? '0xa847A9126c585CC8dBA330192Ad03Aa19DE70b20';
     const finalSlotSponsor = (sponsorId === '77715423') ? '17365376' : isLoggedMemberAlready;
-
+    const slotSponsorWallet = (sponsorId === '77715423') ? '0xa847A9126c585CC8dBA330192Ad03Aa19DE70b20' : loggedUser.ApprovedDecentralizedBinaryMemberRequest[finalSlotSponsor][0].sponsorWallet;
     const occupiedSlotsDetails = loggedUser.occupiedSlotsAddedSlots ? [...loggedUser.occupiedSlotsAddedSlots] : [];
 
     for (const member of AllMemberForSlots) {
@@ -7847,8 +7848,8 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
 
     let detailedOccupiedSlots = occupiedSlotsDetails.map(slot => ({
       'SlotType': 'Yes',
-      uniqueId : slot.uniqueId,
-      underSlotId : slot.underSlotId,
+      uniqueId: slot.uniqueId,
+      underSlotId: slot.underSlotId,
       storeId: slot.storeId,
       walletAddress: slot.walletAddress,
       sponsorWalletAddress: slot.sponsorWalletAddress,
@@ -7863,8 +7864,8 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
 
     let memberDetails = allMembers.map(user => ({
       'MemberType': 'Yes',
-      uniqueId : user.uniqueIdBinarySlot,
-      underSlotId : user.underSlotIdBinary,
+      uniqueId: user.uniqueIdBinarySlot,
+      underSlotId: user.underSlotIdBinary,
       storeId: user.storeId,
       walletAddress: user.walletAddress,
       sponsorWalletAddress: loggedUser.walletAddress,
@@ -7882,6 +7883,7 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
     detailedOccupiedSlots = detailedOccupiedSlots.sort((a, b) => new Date(a.dateOfBecomeBinaryMember) - new Date(b.dateOfBecomeBinaryMember));
 
     const totalMembers = memberDetails.length + detailedOccupiedSlots.length;
+    const combinedDetails = [...memberDetails, ...detailedOccupiedSlots];
 
     const TOKEN_CONTRACT_ADDRESS = '0xfB265e16e882d3d32639253ffcfC4b0a2E861467';
     const BSC_RPC_URL = 'https://bsc-dataseed.binance.org/';
@@ -7899,14 +7901,14 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
 
     return res.status(200).json({
       mineSlotNumber: finalMineSlotNumber,
-      mineUniqueId : mineUniqueId,
+      mineUniqueId: mineUniqueId,
       totalMembers: totalMembers,
       members: memberDetails,
       occupiedSlots: detailedOccupiedSlots,
       f3Balance: formattedBalance,
       slotSponsorWalletAddress: slotSponsorWallet,
       slotSponsorStoreId: finalSlotSponsor,
-      fullNameUser : loggedUser.fullName,
+      fullNameUser: loggedUser.fullName,
     });
   } catch (error) {
     console.error('Error fetching decentralized binary members:', error);
@@ -7916,7 +7918,7 @@ app.get('/getAllDecentralizedBinaryMembers', async (req, res) => {
 
 app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => {
   try {
-    const { sponsorId, sponsorWalletAddress, isSlotting,isSlottingPlacement,underSlotId } = req.query;
+    const { sponsorId, sponsorWalletAddress, isSlotting, isSlottingPlacement, underSlotId } = req.query;
 
     if (!sponsorId) {
       return res.status(400).json({ error: 'sponsorId is required' });
@@ -7928,20 +7930,20 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
 
     let allMembers = [];
     let AllMemberForSlots = [];
-   
+
     const findMembersAfter = async (currentSponsorId) => {
       const users = await collection.find({ alreadyDecentralizedBinaryMember: currentSponsorId }).toArray();
       allMembers = allMembers.concat(users);
 
     };
-    
+
     const findMembers = async (currentSponsorId) => {
       const users = await collection.find({ alreadyDecentralizedBinaryMember: currentSponsorId }).toArray();
       allMembers = allMembers.concat(users);
 
-      const filteredUsers = users.filter(user => 
-    (user.positionInDecentralizedBinary === 'Top' && user.placementInDecentralizedBinary === 'Right') ||
-    (user.positionInDecentralizedBinary === 'Top' && user.placementInDecentralizedBinary === 'Left')
+      const filteredUsers = users.filter(user =>
+        (user.positionInDecentralizedBinary === 'Top' && user.placementInDecentralizedBinary === 'Right') ||
+        (user.positionInDecentralizedBinary === 'Top' && user.placementInDecentralizedBinary === 'Left')
       );
 
       AllMemberForSlots = AllMemberForSlots.concat(filteredUsers);
@@ -7993,9 +7995,9 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
 
     // Map over the occupiedSlotsDetails and extract required fields, including whichUsersSlot
     let detailedOccupiedSlots = occupiedSlotsDetails.map(slot => ({
-      'SlotType' : 'Yes',
-      uniqueId : slot.uniqueId,
-      underSlotId : slot.underSlotId,
+      'SlotType': 'Yes',
+      uniqueId: slot.uniqueId,
+      underSlotId: slot.underSlotId,
       storeId: slot.storeId,
       walletAddress: slot.walletAddress,
       sponsorWalletAddress: slot.sponsorWalletAddress,
@@ -8010,9 +8012,9 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
 
     // Map over the allMembers and extract the required fields, including whichUsersMember
     let memberDetails = allMembers.map(user => ({
-      'MemberType' : 'Yes',
-      uniqueId : user.uniqueIdBinarySlot,
-      underSlotId : user.underSlotIdBinary,
+      'MemberType': 'Yes',
+      uniqueId: user.uniqueIdBinarySlot,
+      underSlotId: user.underSlotIdBinary,
       storeId: user.storeId,
       walletAddress: user.walletAddress,
       sponsorWalletAddress: loggedUser.walletAddress,
@@ -8061,13 +8063,13 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
     // Return the total members, member details, f3Balance, and occupiedSlots in separate fields
     return res.status(200).json({
       totalMembers: totalMembers,
-      mineUniqueId : uniqueId,
+      mineUniqueId: uniqueId,
       members: memberDetails,           // Send the member details
       occupiedSlots: detailedOccupiedSlots,  // Send the occupied slots separately
       f3Balance: formattedBalance,
       slotSponsorWalletAddress: slotSponsorWallet,
       slotSponsorStoreId: finalSlotSponsor,
-      fullNameUser : loggedUser.fullName,
+      fullNameUser: loggedUser.fullName,
     });
   } catch (error) {
     console.error('Error fetching decentralized binary members:', error);
@@ -8075,6 +8077,307 @@ app.get('/getAllDecentralizedBinaryMembersOnClickingSlots', async (req, res) => 
   }
 });
 
+//Dialog
+app.get('/getDialogdDetailsBinary', async (req, res) => {
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  try {
+    const { sponsorId, sponsorWalletAddress } = req.query;
+
+    if (!sponsorId) {
+      return res.status(400).json({ error: 'sponsorId is required' });
+    }
+
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    const loggedUser = await collection.findOne({ storeId: sponsorId });
+    if (!loggedUser) {
+      return res.status(404).json({ error: 'Sponsor not found' });
+    }
+
+    const [usersWithApprovalsCheckoutSeller, userWithSalesHistorySeller, alreadyMembers] = await Promise.all([
+      collection.find({ 'approvalcheckout': { $exists: true } }).toArray(),
+      collection.find({ 'salesHistorySeller': { $exists: true } }).toArray(),
+      collection.find({ 'underSlotIdBinary': { $exists: true } }).toArray()
+    ]);
+
+    console.log(`AllMembers : ${alreadyMembers.length}`)
+    const usdtRate = loggedUser.usdtRate;
+    const isLoggedMemberAlready = loggedUser.alreadyDecentralizedBinaryMember;
+    const mineSlotNumber = sponsorId === '77715423' ? '0' : loggedUser.slotNumberInDecentralizedBinary;
+    const mineUniqueId = loggedUser.uniqueIdBinarySlot;
+
+    if (!isLoggedMemberAlready && sponsorId !== '77715423') {
+      return res.status(405).json({ error: 'Sponsor is not a member yet!' });
+    }
+
+    const finalSlotSponsor = sponsorId === '77715423' ? '17365376' : isLoggedMemberAlready;
+    const slotSponsorWallet = sponsorId === '77715423'
+      ? '0xa847A9126c585CC8dBA330192Ad03Aa19DE70b20'
+      : loggedUser.ApprovedDecentralizedBinaryMemberRequest[finalSlotSponsor][0].sponsorWallet;
+
+    let allMembersForSlots = [];
+
+    const findMembers = async (currentSponsorId) => {
+      const users = await collection.find({ alreadyDecentralizedBinaryMember: currentSponsorId }).toArray();
+      allMembersForSlots = [...allMembersForSlots, ...users];
+    };
+
+    await findMembers(sponsorId);
+
+    const occupiedSlotsDetails = loggedUser.occupiedSlotsAddedSlots || [];
+    const detailedOccupiedSlots = occupiedSlotsDetails.map(slot => ({
+      'SlotType': 'Yes',
+      uniqueId: slot.uniqueId,
+      underSlotId: slot.underSlotId,
+      storeId: slot.storeId,
+      walletAddress: slot.walletAddress,
+      sponsorWalletAddress: slot.sponsorWalletAddress,
+      grabbedF3Price: slot.grabbedF3PriceDecentralizedBinary,
+      position: slot.positionInDecentralizedBinary,
+      placement: slot.placementInDecentralizedBinary,
+      slotNumber: slot.slotNumberInDecentralizedBinary,
+      email: slot.email,
+      dateOfBecomeBinaryMember: slot.dateOfBecomeBinaryMember,
+      whichUsersSlot: slot.storeId
+    }));
+
+    const memberDetails = allMembersForSlots.map(user => ({
+      'MemberType': 'Yes',
+      uniqueId: user.uniqueIdBinarySlot,
+      underSlotId: user.underSlotIdBinary,
+      storeId: user.storeId,
+      walletAddress: user.walletAddress,
+      sponsorWalletAddress: loggedUser.walletAddress,
+      grabbedF3Price: user.grabbedF3PriceDecentralizedBinary,
+      position: user.positionInDecentralizedBinary,
+      placement: user.placementInDecentralizedBinary,
+      slotNumber: user.slotNumberInDecentralizedBinary,
+      email: user.email,
+      dateOfBecomeBinaryMember: user.dateOfBecomeBinaryMember,
+      whichUsersMember: user.alreadyDecentralizedBinaryMember
+    }));
+
+    const combinedDetails = [...memberDetails, ...detailedOccupiedSlots];
+    let newCombined = [];
+
+    // Left & Right Occupier Details
+    const loggedLeftOccupier = combinedDetails.find(item => item.position === "Top" && item.placement === "Left" && item.underSlotId === mineUniqueId);
+    const loggedRightOccupier = combinedDetails.find(item => item.position === "Top" && item.placement === "Right" && item.underSlotId === mineUniqueId);
+
+    let leftCount = 0;
+    let rightCount = 0;
+    let leftRedundant = 0;
+    let rightRedundant = 0;
+    let totalWithdrawal = 0;
+    let pairingBonus = 0;
+
+    const getOccupierDetails = async (occupier, side) => {
+      if (!occupier) return { count: 0, redundant: 0, withdrawal: 0 };
+      let allSideMembers = [];
+      let allSideMembersIncluding = [];
+      let occupiedSlotsDetails = [];
+      let redundantBinary = 0;
+      let withdrawalAmount = 0;
+      const leftLogged = await collection.findOne({ storeId: occupier.storeId });
+
+      const findMembersRecursive = async (currentSponsorId, slotNumber) => {
+        const users = await collection.find({ alreadyDecentralizedBinaryMember: currentSponsorId }).toArray();
+        allSideMembers = allSideMembers.concat(users);
+        allSideMembersIncluding = allSideMembersIncluding.concat(users);
+        console.log(`usersIn ${users}`);
+
+        const filteredUsers = users.filter(user => Number(user.slotNumberInDecentralizedBinary) > Number(slotNumber));
+        for (const user of filteredUsers) {
+          await findMembersRecursive(user.storeId, user.slotNumberInDecentralizedBinary);
+        }
+      };
+
+      await findMembersRecursive(occupier.storeId, occupier.slotNumber);
+
+      allSideMembersIncluding.push(leftLogged);
+      for (const member of allSideMembersIncluding) {
+        for (const user of usersWithApprovalsCheckoutSeller) {
+          if (user.approvalcheckout[member.storeId]) {
+            const sales = user.approvalcheckout[member.storeId];
+            for (const sale of sales) {
+              const { totalPrice, fromRedundantBinary } = sale;
+              const totalSoldPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
+              const totalSoldAmount = totalSoldPrice / usdtRate;
+              if (fromRedundantBinary === 'Yes') {
+                redundantBinary += totalSoldAmount;
+              }
+            }
+          }
+        }
+        for (const user of userWithSalesHistorySeller) {
+          if (user.salesHistorySeller[member.storeId]) {
+            const sales = user.salesHistorySeller[member.storeId];
+            for (const sale of sales) {
+              const { totalPrice, fromRedundantBinary } = sale;
+              const totalSoldPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
+              const totalSoldAmount = totalSoldPrice / usdtRate;
+              if (fromRedundantBinary === 'Yes') {
+                redundantBinary += totalSoldAmount;
+              }
+            }
+          }
+        }
+        if (member.approvedPairingBonusPayments) {
+          Object.values(occupier.approvedPairingBonusPayments).flat().forEach(storeRequestArray => {
+            storeRequestArray.forEach(storeRequest => {
+              storeRequest.requestProducts.forEach(reqProduct => {
+                const withdrawal = parseFloat(reqProduct.receivableAmountUSDT.replace(/[^\d.-]/g, ''));
+                withdrawalAmount += withdrawal;
+              });
+            });
+          });
+        }
+        if (member.occupiedSlotsAddedSlots) {
+          occupiedSlotsDetails.push(...member.occupiedSlotsAddedSlots);
+        }
+      }
+      // Pairing Bonus Calculation
+      let detailedOccupiedSlots = occupiedSlotsDetails.map(slot => ({
+        'SlotType': 'Yes',
+        uniqueId: slot.uniqueId,
+        underSlotId: slot.underSlotId,
+        storeId: slot.storeId,
+        walletAddress: slot.walletAddress,
+        sponsorWalletAddress: slot.sponsorWalletAddress,
+        grabbedF3Price: slot.grabbedF3PriceDecentralizedBinary,
+        position: slot.positionInDecentralizedBinary,
+        placement: slot.placementInDecentralizedBinary,
+        slotNumber: slot.slotNumberInDecentralizedBinary,
+        email: slot.email,
+        dateOfBecomeBinaryMember: slot.dateOfBecomeBinaryMember,
+        whichUsersSlot: slot.storeId
+      }));
+      let memberDetails = allSideMembersIncluding.map(user => ({
+        'MemberType': 'Yes',
+        uniqueId: user.uniqueIdBinarySlot,
+        underSlotId: user.underSlotIdBinary,
+        storeId: user.storeId,
+        walletAddress: user.walletAddress,
+        sponsorWalletAddress: loggedUser.walletAddress,
+        grabbedF3Price: user.grabbedF3PriceDecentralizedBinary,
+        position: user.positionInDecentralizedBinary,
+        placement: user.placementInDecentralizedBinary,
+        slotNumber: user.slotNumberInDecentralizedBinary,
+        email: user.email,
+        dateOfBecomeBinaryMember: user.dateOfBecomeBinaryMember,
+        whichUsersMember: user.alreadyDecentralizedBinaryMember
+      }));
+      const combinedDetails = [...detailedOccupiedSlots, ...memberDetails];
+      newCombined = combinedDetails;
+      // console.log(`combinedDetails : ${combinedDetails.length}`);
+      // console.log(`detailedOccupiedSlots : ${occupiedSlotsDetails.length}`);
+      // console.log(`memberDetails ${memberDetails.length}`);
+      // console.log(`allSideMembersIncluding : ${allSideMembersIncluding.length}`)
+      // console.log(`allSideMembersWithoutIncluding : ${allSideMembers.length}`)
+      let currentSlot = occupier; // Replace 'startingUniqueId' with the actual starting point
+      let slotsCount = 0;
+      function processSlots(initialSlot, combinedDetails) {
+        let slotsCount = 0;
+        const stack = [initialSlot]; // Start with the initial slot in the stack
+      
+        while (stack.length > 0) {
+          const currentSlot = stack.pop(); // Get the current slot to process
+      
+          // Find left and right slots
+          const leftSlot = combinedDetails.find(slot => slot.underSlotId === currentSlot.uniqueId && slot.placement === 'Left');
+          const rightSlot = combinedDetails.find(slot => slot.underSlotId === currentSlot.uniqueId && slot.placement === 'Right');
+      
+          // Check if left slot exists and has an underSlotId
+          if (leftSlot) {
+            if (!leftSlot.underSlotId) {
+              console.log(`Slot with uniqueId: ${leftSlot.uniqueId} does not have an underSlotId.`);
+            }
+            slotsCount++; // Increment count for left slot
+            stack.push(leftSlot); // Add the left slot to the stack for processing
+          } else {
+            console.log(`Slot with uniqueId: ${currentSlot.uniqueId} does not have a Left slot under it.`);
+          }
+      
+          // Check if right slot exists and has an underSlotId
+          if (rightSlot) {
+            if (!rightSlot.underSlotId) {
+              console.log(`Slot with uniqueId: ${rightSlot.uniqueId} does not have an underSlotId.`);
+            }
+            slotsCount++; // Increment count for right slot
+            stack.push(rightSlot); // Add the right slot to the stack for processing
+          } else {
+            console.log(`Slot with uniqueId: ${currentSlot.uniqueId} does not have a Right slot under it.`);
+          }
+      
+          // Log the current slot details
+          console.log(`Current Slot: ${currentSlot.uniqueId}, Left: ${leftSlot?.uniqueId || 'None'}, Right: ${rightSlot?.uniqueId || 'None'}`);
+        }
+      
+        console.log(`Total number of slots: ${slotsCount}`);
+      
+        // Return the result as expected
+        return slotsCount;
+      }
+      const totalSlots = processSlots(occupier,combinedDetails);
+      console.log(`Total number of slots: ${slotsCount}`);
+
+      return { count: (totalSlots+1), redundant: redundantBinary, withdrawal: withdrawalAmount };
+    };
+
+    if (loggedLeftOccupier) {
+      const leftDetails = await getOccupierDetails(loggedLeftOccupier, "left");
+      leftCount = leftDetails.count;
+      leftRedundant = leftDetails.redundant;
+      totalWithdrawal += leftDetails.withdrawal;
+    }
+    if (loggedRightOccupier) {
+      const rightDetails = await getOccupierDetails(loggedRightOccupier, "right");
+      rightCount = rightDetails.count;
+      rightRedundant = rightDetails.redundant;
+      totalWithdrawal += rightDetails.withdrawal;
+    }
+
+    if (leftRedundant > rightRedundant) {
+      const lessthan = (rightRedundant * 70 * 0.3)
+      const lessthan2 = (rightRedundant * 0.1)
+      const final = (lessthan + lessthan2);
+      pairingBonus === final
+    } else {
+      const lessthan = (leftRedundant * 70 * 0.3)
+      const lessthan2 = (leftRedundant * 0.1)
+      const final = (lessthan + lessthan2);
+      pairingBonus === final
+    }
+    const pairingBalance = (pairingBonus - totalWithdrawal);
+    return res.status(200).json({
+      mineSlotNumber: mineSlotNumber,
+      mineUniqueId: mineUniqueId,
+      leftCount: leftCount,
+      rightCount: rightCount,
+      leftRedundant: leftRedundant,
+      rightRedundant: rightRedundant,
+      pairingBonus: pairingBonus,
+      totalWithdrawal: totalWithdrawal,
+      pairingBalance: pairingBalance,
+      slotSponsorWalletAddress: slotSponsorWallet,
+      slotSponsorStoreId: finalSlotSponsor,
+      fullNameUser: loggedUser.fullName,
+    });
+  } catch (error) {
+    console.error('Error fetching decentralized binary members:', error);
+    return res.status(500).json({ error: 'An error occurred while fetching the members' });
+  }
+});
+//BinaryPayout
+app.get('/getBinarianPayouts', async (req, res) => {
+  const { userId, userWalletAddress } = req.query;
+});
+
+//RedundantPayout
+app.get('/getRedundantPayouts', async (req, res) => {
+  const { userId, userWalletAddress } = req.query;
+});
 
 app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`)
