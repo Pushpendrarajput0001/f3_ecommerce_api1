@@ -8380,6 +8380,6 @@ app.get('/getRedundantPayouts', async (req, res) => {
   const { userId, userWalletAddress } = req.query;
 });
 
-app.listen('8000', '0.0.0', () => {
+app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`)
 });
