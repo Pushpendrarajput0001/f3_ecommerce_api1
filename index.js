@@ -8401,7 +8401,7 @@ app.get('/getDialogdDetailsBinary', async (req, res) => {
           }
         }
         if (member.ApprovedBinarianPairingRequest) {
-          Object.values(occupier.approvedPairingBonusPayments).flat().forEach(storeRequestArray => {
+          Object.values(occupier.ApprovedBinarianPairingRequest).flat().forEach(storeRequestArray => {
             storeRequestArray.forEach(storeRequest => {
               storeRequest.requestProducts.forEach(reqProduct => {
                 const withdrawal = parseFloat(reqProduct.receivableAmountUSDT.replace(/[^\d.-]/g, ''));
@@ -8515,16 +8515,19 @@ app.get('/getDialogdDetailsBinary', async (req, res) => {
       totalWithdrawal += rightDetails.withdrawal;
     }
 
+    let pairing = 0;
     console.log(`leftCount ; ${leftCount} And rightCount ; ${rightCount}`)
     if (leftCount > rightCount) {
       const lessthan = (rightCount * 70 * 0.3)
       const lessthan2 = (rightCount * 0.1)
       const final = (lessthan + lessthan2);
+      pairing = (rightCount*0.06)
       pairingBonus = final
     } else {
       const lessthan = (leftCount * 70 * 0.3)
       const lessthan2 = (leftCount * 0.1)
       const final = (lessthan + lessthan2);
+      pairing = (rightCount*0.06)
       pairingBonus = final
     }
     const pairingBalance = (pairingBonus - totalWithdrawal);
@@ -8541,6 +8544,7 @@ app.get('/getDialogdDetailsBinary', async (req, res) => {
       slotSponsorWalletAddress: slotSponsorWallet,
       slotSponsorStoreId: finalSlotSponsor,
       fullNameUser: loggedUser.fullName,
+      pairing : pairing,
     });
   } catch (error) {
     console.error('Error fetching decentralized binary members:', error);
@@ -8550,7 +8554,183 @@ app.get('/getDialogdDetailsBinary', async (req, res) => {
 
 //BinaryPayout
 app.get('/getBinarianPayouts', async (req, res) => {
-  const { userId, userWalletAddress } = req.query;
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  try {
+    const { sponsorId, sponsorWalletAddress } = req.query;
+
+    if (!sponsorId) {
+      return res.status(400).json({ error: 'sponsorId is required' });
+    }
+
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    const loggedUser = await collection.findOne({ storeId: sponsorId });
+    if (!loggedUser) {
+      return res.status(404).json({ error: 'Sponsor not found' });
+    }
+
+    const isLoggedMemberAlready = loggedUser.alreadyDecentralizedBinaryMember;
+    const mineSlotNumber = sponsorId === '77715423' ? '0' : loggedUser.slotNumberInDecentralizedBinary;
+    const mineUniqueId = loggedUser.uniqueIdBinarySlot;
+
+    if (!isLoggedMemberAlready && sponsorId !== '77715423') {
+      return res.status(405).json({ error: 'Sponsor is not a member yet!' });
+    }
+
+    const finalSlotSponsor = sponsorId === '77715423' ? '17365376' : isLoggedMemberAlready;
+    const slotSponsorWallet = sponsorId === '77715423'
+      ? '0xa847A9126c585CC8dBA330192Ad03Aa19DE70b20'
+      : loggedUser.ApprovedDecentralizedBinaryMemberRequest[finalSlotSponsor][0].sponsorWallet;
+
+    let loggedUserTotalWithdawal = 0;
+    let loggedUserTotalBinary = 0;
+    if (loggedUser.ApprovedBinarianPairingRequest) {
+      Object.values(occupier.approvedPairingBonusPayments).flat().forEach(storeRequestArray => {
+        storeRequestArray.forEach(storeRequest => {
+          storeRequest.requestProducts.forEach(reqProduct => {
+            const withdrawal = parseFloat(reqProduct.receivableAmountUSDT.replace(/[^\d.-]/g, ''));
+            networkPaidPairing += withdrawal;
+            loggedUserTotalWithdawal += withdrawal;
+          });
+        });
+      });
+    }
+
+    //SalesAndCheckout
+    const [usersWithApprovalsCheckoutSeller, userWithSalesHistorySeller,] = await Promise.all([
+      collection.find({ 'approvalcheckout': { $exists: true } }).toArray(),
+      collection.find({ 'salesHistorySeller': { $exists: true } }).toArray(),
+    ]);
+    for (const user of usersWithApprovalsCheckoutSeller) {
+      if (user.approvalcheckout[loggedUser.storeId]) {
+        const sales = user.approvalcheckout[loggedUser.storeId];
+        for (const sale of sales) {
+          const { totalPrice, fromRedundantBinary } = sale;
+          const totalSoldPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
+          const totalSoldAmount = totalSoldPrice / usdtRate;
+          if (fromRedundantBinary === 'Yes') {
+            loggedUserTotalBinary += totalSoldAmount;
+          }
+        }
+      }
+    }
+    for (const user of userWithSalesHistorySeller) {
+      if (user.salesHistorySeller[loggedUser.storeId]) {
+        const sales = user.salesHistorySeller[loggedUser.storeId];
+        for (const sale of sales) {
+          const { totalPrice, fromRedundantBinary } = sale;
+          const totalSoldPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
+          const totalSoldAmount = totalSoldPrice / usdtRate;
+          if (fromRedundantBinary === 'Yes') {
+            loggedUserTotalBinary += totalSoldAmount;
+          }
+        }
+      }
+    }
+
+    let allMembersBoth = [];
+    const findMembers = async (currentSponsorId) => {
+      const users = await collection.find({ alreadyDecentralizedBinaryMember: currentSponsorId }).toArray();
+      allMembersBoth.concat(users);
+
+      for(const user of users){
+        await findMembers(user.storeId)
+      };
+    };
+
+    await findMembers(sponsorId);
+
+    let occupiedSlotsDetails = [];
+    let updatedMembersBoth = [];
+    for(const member of allMembersBoth){
+      let networkPaidPairingInMembers = 0;
+      if (member.ApprovedBinarianPairingRequest) {
+        Object.values(occupier.ApprovedBinarianPairingRequest).flat().forEach(storeRequestArray => {
+          storeRequestArray.forEach(storeRequest => {
+            storeRequest.requestProducts.forEach(reqProduct => {
+              const withdrawal = parseFloat(reqProduct.receivableAmountUSDT.replace(/[^\d.-]/g, ''));
+              networkPaidPairingInMembers += withdrawal;
+            });
+          });
+        });
+      }
+      if (member.occupiedSlotsAddedSlots) {
+        const slotCity = member.cityAddress;
+        const fullName = member.fullName;
+        //let networkPaidPairing =  0;
+        
+        const updatedOccupiedSlots = member.occupiedSlotsAddedSlots.map(slot => ({
+          ...slot,  
+          slotCity: slotCity,  
+          fullName: fullName, 
+          networkPaidPairing: networkPaidPairingInMembers  
+        }));
+        
+        occupiedSlotsDetails.push(...updatedOccupiedSlots);
+      }
+      updatedMembersBoth.push({
+        ...member,  
+        networkPaidPairing : networkPaidPairingInMembers  
+      });
+    };
+
+    const detailedOccupiedSlots = occupiedSlotsDetails.map(slot => ({
+      'SlotType': 'Yes',
+      uniqueId: slot.uniqueId,
+      underSlotId: slot.underSlotId,
+      storeId: slot.storeId,
+      walletAddress: slot.walletAddress,
+      sponsorWalletAddress: slot.sponsorWalletAddress,
+      grabbedF3Price: slot.grabbedF3PriceDecentralizedBinary,
+      position: slot.positionInDecentralizedBinary,
+      placement: slot.placementInDecentralizedBinary,
+      slotNumber: slot.slotNumberInDecentralizedBinary,
+      email: slot.email,
+      dateOfBecomeBinaryMember: slot.dateOfBecomeBinaryMember,
+      whichUsersSlot: slot.storeId,
+      //New
+      idNumber : slot.storeId,
+      cityUser : slot.slotCity,
+      networkPaid : slot.networkPaidPairing
+    }));
+
+    const memberDetails = allMembersBoth.map(user => ({
+      'MemberType': 'Yes',
+      uniqueId: user.uniqueIdBinarySlot,
+      underSlotId: user.underSlotIdBinary,
+      storeId: user.storeId,
+      walletAddress: user.walletAddress,
+      sponsorWalletAddress: loggedUser.walletAddress,
+      grabbedF3Price: user.grabbedF3PriceDecentralizedBinary,
+      position: user.positionInDecentralizedBinary,
+      placement: user.placementInDecentralizedBinary,
+      slotNumber: user.slotNumberInDecentralizedBinary,
+      email: user.email,
+      dateOfBecomeBinaryMember: user.dateOfBecomeBinaryMember,
+      whichUsersMember: user.alreadyDecentralizedBinaryMember,
+      //New
+      idNumber : user.storeId,
+      cityUser : user.cityAddress,
+      networkPaid : user.networkPaidPairing
+    }));
+
+    const combinedDetails = [...memberDetails, ...detailedOccupiedSlots];
+  
+    return res.status(200).json({
+      allDetails : combinedDetails,
+      mineSlotNumber: mineSlotNumber,
+      mineUniqueId: mineUniqueId,
+      slotSponsorWalletAddress: slotSponsorWallet,
+      slotSponsorStoreId: finalSlotSponsor,
+      fullNameUser: loggedUser.fullName,
+      loggedUserTotalWithdawal,
+      loggedUserTotalBinary
+    });
+  } catch (error) {
+    console.error('Error fetching Binarian Payout:', error);
+    return res.status(500).json({ error: 'An error occurred while fetching the binarian payouts' });
+  }
 });
 
 app.get('/requestForBinarianPairing', async (req, res) => {
@@ -8730,7 +8910,180 @@ app.get('/deleteAndAddtheRequestToApprovedBinarianPairing', async (req, res) => 
 
 //RedundantPayout
 app.get('/getRedundantPayouts', async (req, res) => {
-  const { userId, userWalletAddress } = req.query;
+  const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  try {
+    const { sponsorId, sponsorWalletAddress } = req.query;
+
+    if (!sponsorId) {
+      return res.status(400).json({ error: 'sponsorId is required' });
+    }
+
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    const loggedUser = await collection.findOne({ storeId: sponsorId });
+    if (!loggedUser) {
+      return res.status(404).json({ error: 'Sponsor not found' });
+    }
+
+    const isLoggedMemberAlready = loggedUser.alreadyDecentralizedBinaryMember;
+    const mineSlotNumber = sponsorId === '77715423' ? '0' : loggedUser.slotNumberInDecentralizedBinary;
+    const mineUniqueId = loggedUser.uniqueIdBinarySlot;
+
+    if (!isLoggedMemberAlready && sponsorId !== '77715423') {
+      return res.status(405).json({ error: 'Sponsor is not a member yet!' });
+    }
+
+    const finalSlotSponsor = sponsorId === '77715423' ? '17365376' : isLoggedMemberAlready;
+    const slotSponsorWallet = sponsorId === '77715423'
+      ? '0xa847A9126c585CC8dBA330192Ad03Aa19DE70b20'
+      : loggedUser.ApprovedDecentralizedBinaryMemberRequest[finalSlotSponsor][0].sponsorWallet;
+
+    let loggedUserTotalWithdawal = 0;
+    let loggedUserTotalBinary = 0;
+    if (loggedUser.ApprovedBinarianRedundantRequest) {
+      Object.values(occupier.ApprovedBinarianRedundantRequest).flat().forEach(storeRequestArray => {
+        storeRequestArray.forEach(storeRequest => {
+          storeRequest.requestProducts.forEach(reqProduct => {
+            const withdrawal = parseFloat(reqProduct.receivableAmountUSDT.replace(/[^\d.-]/g, ''));
+            loggedUserTotalWithdawal += withdrawal;
+          });
+        });
+      });
+    }
+
+    //SalesAndCheckout
+    const [usersWithApprovalsCheckoutSeller, userWithSalesHistorySeller,] = await Promise.all([
+      collection.find({ 'approvalcheckout': { $exists: true } }).toArray(),
+      collection.find({ 'salesHistorySeller': { $exists: true } }).toArray(),
+    ]);
+    for (const user of usersWithApprovalsCheckoutSeller) {
+      if (user.approvalcheckout[loggedUser.storeId]) {
+        const sales = user.approvalcheckout[loggedUser.storeId];
+        for (const sale of sales) {
+          const { totalPrice, fromRedundantBinary } = sale;
+          const totalSoldPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
+          const totalSoldAmount = totalSoldPrice / usdtRate;
+          if (fromRedundantBinary === 'Yes') {
+            loggedUserTotalBinary += totalSoldAmount;
+          }
+        }
+      }
+    }
+    for (const user of userWithSalesHistorySeller) {
+      if (user.salesHistorySeller[loggedUser.storeId]) {
+        const sales = user.salesHistorySeller[loggedUser.storeId];
+        for (const sale of sales) {
+          const { totalPrice, fromRedundantBinary } = sale;
+          const totalSoldPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
+          const totalSoldAmount = totalSoldPrice / usdtRate;
+          if (fromRedundantBinary === 'Yes') {
+            loggedUserTotalBinary += totalSoldAmount;
+          }
+        }
+      }
+    }
+
+    let allMembersBoth = [];
+    const findMembers = async (currentSponsorId) => {
+      const users = await collection.find({ alreadyDecentralizedBinaryMember: currentSponsorId }).toArray();
+      allMembersBoth.concat(users);
+
+      for(const user of users){
+        await findMembers(user.storeId)
+      };
+    };
+
+    await findMembers(sponsorId);
+
+    let occupiedSlotsDetails = [];
+    let updatedMembersBoth = [];
+    for(const member of allMembersBoth){
+      let networkPaidPairingInMembers = 0;
+      if (member.ApprovedBinarianRedundantRequest) {
+        Object.values(occupier.ApprovedBinarianRedundantRequest).flat().forEach(storeRequestArray => {
+          storeRequestArray.forEach(storeRequest => {
+            storeRequest.requestProducts.forEach(reqProduct => {
+              const withdrawal = parseFloat(reqProduct.receivableAmountUSDT.replace(/[^\d.-]/g, ''));
+              networkPaidPairingInMembers += withdrawal;
+            });
+          });
+        });
+      }
+      if (member.occupiedSlotsAddedSlots) {
+        const slotCity = member.cityAddress;
+        const fullName = member.fullName;
+        //let networkPaidPairing =  0;
+        
+        const updatedOccupiedSlots = member.occupiedSlotsAddedSlots.map(slot => ({
+          ...slot,  
+          slotCity: slotCity,  
+          fullName: fullName, 
+          networkPaidPairing: networkPaidPairingInMembers  
+        }));
+        
+        occupiedSlotsDetails.push(...updatedOccupiedSlots);
+      }
+      updatedMembersBoth.push({
+        ...member,  
+        networkPaidPairing : networkPaidPairingInMembers  
+      });
+    };
+
+    const detailedOccupiedSlots = occupiedSlotsDetails.map(slot => ({
+      'SlotType': 'Yes',
+      uniqueId: slot.uniqueId,
+      underSlotId: slot.underSlotId,
+      storeId: slot.storeId,
+      walletAddress: slot.walletAddress,
+      sponsorWalletAddress: slot.sponsorWalletAddress,
+      grabbedF3Price: slot.grabbedF3PriceDecentralizedBinary,
+      position: slot.positionInDecentralizedBinary,
+      placement: slot.placementInDecentralizedBinary,
+      slotNumber: slot.slotNumberInDecentralizedBinary,
+      email: slot.email,
+      dateOfBecomeBinaryMember: slot.dateOfBecomeBinaryMember,
+      whichUsersSlot: slot.storeId,
+      //New
+      idNumber : slot.storeId,
+      cityUser : slot.slotCity,
+      networkPaid : slot.networkPaidPairing
+    }));
+
+    const memberDetails = allMembersBoth.map(user => ({
+      'MemberType': 'Yes',
+      uniqueId: user.uniqueIdBinarySlot,
+      underSlotId: user.underSlotIdBinary,
+      storeId: user.storeId,
+      walletAddress: user.walletAddress,
+      sponsorWalletAddress: loggedUser.walletAddress,
+      grabbedF3Price: user.grabbedF3PriceDecentralizedBinary,
+      position: user.positionInDecentralizedBinary,
+      placement: user.placementInDecentralizedBinary,
+      slotNumber: user.slotNumberInDecentralizedBinary,
+      email: user.email,
+      dateOfBecomeBinaryMember: user.dateOfBecomeBinaryMember,
+      whichUsersMember: user.alreadyDecentralizedBinaryMember,
+      //New
+      idNumber : user.storeId,
+      cityUser : user.cityAddress,
+      networkPaid : user.networkPaidPairing
+    }));
+
+    const combinedDetails = [...memberDetails, ...detailedOccupiedSlots];
+  
+    return res.status(200).json({
+      allDetails : combinedDetails,
+      mineSlotNumber: mineSlotNumber,
+      mineUniqueId: mineUniqueId,
+      slotSponsorWalletAddress: slotSponsorWallet,
+      slotSponsorStoreId: finalSlotSponsor,
+      fullNameUser: loggedUser.fullName,
+    });
+  } catch (error) {
+    console.error('Error fetching Binarian Payout:', error);
+    return res.status(500).json({ error: 'An error occurred while fetching the binarian payouts' });
+  }
 });
 
 app.get('/requestForBinarianRedundant', async (req, res) => {
@@ -8908,6 +9261,6 @@ app.get('/deleteAndAddtheRequestToApprovedRedundant', async (req, res) => {
   }
 });
 
-app.listen(PORT, '192.168.29.149', () => {
+app.listen('8000', '0.0.0', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`)
 });
