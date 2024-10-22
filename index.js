@@ -2554,6 +2554,183 @@ app.get('/getRequestsOfPayments', async (req, res) => {
       }
     }
 
+    
+    let sponsorUserForBinarianPairing = {};
+    if (user.requestForBinarianPairing) {
+      const storeIds = Object.keys(user.requestForBinarianPairing);
+      for (const storeId of storeIds) {
+        const sellerStore = user.requestForBinarianPairing[storeId][0].sellerId;
+        const SellerUser = await collection.findOne({ storeId: sellerStore });
+        sponsorUserForBinarianPairing[storeId] = SellerUser;
+      }
+
+      // Process buyer requests
+      for (const storeId of storeIds) {
+        const SellerUser = sponsorUserForBinarianPairing[storeId];
+        const sponsorUser = await collection.findOne({ storeId: storeId });
+        // const buyerProducts = user.requestForDecentralizedBinary[storeId].map(product => ({
+        //   productId: 'product.productId',
+        //   quantity: 'product.quantity',
+        //   totalPrice: product.totalPrice,
+        //   totalF3: product.totalF3Amount,
+        //   totalGc: product.totalGc,
+        //   sellerWalletAddress: product.sellerId,
+        //   dateAndTime: product.dateAndTime,
+        //   startedDateAndTime: product.startedDateAndTime
+        // }));
+
+        // const buyerRequest = {
+        //   totalF3: user.paymentRequestBoosterFeeDroplet[storeId][0].totalF3Amount,
+        //   totalGc: user.paymentRequestBoosterFeeDroplet[storeId][0].totalGc,
+        //   storeId: user.paymentRequestBoosterFeeDroplet[storeId][0].sellerId,
+        //   sellerWalletAddress: SellerUser.walletAddress,
+        //   buyerWalletAddress: user.walletAddress,
+        //   requestType: 'Booster Fee',
+        //   products: buyerProducts
+        // };
+
+        const simpleJson = [
+          {
+            "id": 1,
+            "name": "John Doe",
+            "email": "john.doe@example.com",
+            "age": 25
+          },
+          {
+            "id": 2,
+            "name": "Jane Smith",
+            "email": "jane.smith@example.com",
+            "age": 30
+          },
+          {
+            "id": 3,
+            "name": "Emily Johnson",
+            "email": "emily.johnson@example.com",
+            "age": 22
+          },
+          {
+            "id": 4,
+            "name": "Michael Brown",
+            "email": "michael.brown@example.com",
+            "age": 35
+          },
+          {
+            "id": 5,
+            "name": "Sarah Davis",
+            "email": "sarah.davis@example.com",
+            "age": 28
+          }
+        ];
+        const decentralizedBinaryRequest = {
+          loggedUserWallet: user.walletAddress,
+          totalF3: user.requestForAddSlotDecentralizedBinary[storeId][0].sponsorAmountF3,
+          sponsorAmount: user.requestForAddSlotDecentralizedBinary[storeId][0].sponsorAmount,
+          appAmountF3: user.requestForAddSlotDecentralizedBinary[storeId][0].appAmountF3,
+          dateAndTime: user.requestForAddSlotDecentralizedBinary[storeId][0].dateAndTime,
+          sponsorId: user.requestForAddSlotDecentralizedBinary[storeId][0].sponsorId,
+          sponsorWalletAddress: user.requestForAddSlotDecentralizedBinary[storeId][0].sponsorWallet,
+          appWallet: user.requestForAddSlotDecentralizedBinary[storeId][0].appWallet,
+          storeId: user.storeId,
+          sellerWalletAddress: user.requestForAddSlotDecentralizedBinary[storeId][0].sponsorWallet,
+          grabbedF3Price: user.requestForAddSlotDecentralizedBinary[storeId][0].grabbedF3Price,
+          buyerWalletAddress: user.walletAddress,
+          receiverWalletAddress: user.requestForAddSlotDecentralizedBinary[storeId][0].sponsorWallet,
+          appWallet: user.requestForAddSlotDecentralizedBinary[storeId][0].appWallet,
+          requestType: 'Binarian Pairing',
+          products: simpleJson
+        };
+        response.requests.push(decentralizedBinaryRequest);
+      }
+    }
+
+    let sponsorUserForBinarianRedundant = {};
+    if (user.requestForBinarianRedundant) {
+      const storeIds = Object.keys(user.requestForBinarianRedundant);
+      for (const storeId of storeIds) {
+        const sellerStore = user.requestForBinarianRedundant[storeId][0].sellerId;
+        const SellerUser = await collection.findOne({ storeId: sellerStore });
+        sponsorUserForBinarianRedundant[storeId] = SellerUser;
+      }
+
+      // Process buyer requests
+      for (const storeId of storeIds) {
+        const SellerUser = sponsorUserForBinarianRedundant[storeId];
+        const sponsorUser = await collection.findOne({ storeId: storeId });
+        // const buyerProducts = user.requestForDecentralizedBinary[storeId].map(product => ({
+        //   productId: 'product.productId',
+        //   quantity: 'product.quantity',
+        //   totalPrice: product.totalPrice,
+        //   totalF3: product.totalF3Amount,
+        //   totalGc: product.totalGc,
+        //   sellerWalletAddress: product.sellerId,
+        //   dateAndTime: product.dateAndTime,
+        //   startedDateAndTime: product.startedDateAndTime
+        // }));
+
+        // const buyerRequest = {
+        //   totalF3: user.paymentRequestBoosterFeeDroplet[storeId][0].totalF3Amount,
+        //   totalGc: user.paymentRequestBoosterFeeDroplet[storeId][0].totalGc,
+        //   storeId: user.paymentRequestBoosterFeeDroplet[storeId][0].sellerId,
+        //   sellerWalletAddress: SellerUser.walletAddress,
+        //   buyerWalletAddress: user.walletAddress,
+        //   requestType: 'Booster Fee',
+        //   products: buyerProducts
+        // };
+
+        const simpleJson = [
+          {
+            "id": 1,
+            "name": "John Doe",
+            "email": "john.doe@example.com",
+            "age": 25
+          },
+          {
+            "id": 2,
+            "name": "Jane Smith",
+            "email": "jane.smith@example.com",
+            "age": 30
+          },
+          {
+            "id": 3,
+            "name": "Emily Johnson",
+            "email": "emily.johnson@example.com",
+            "age": 22
+          },
+          {
+            "id": 4,
+            "name": "Michael Brown",
+            "email": "michael.brown@example.com",
+            "age": 35
+          },
+          {
+            "id": 5,
+            "name": "Sarah Davis",
+            "email": "sarah.davis@example.com",
+            "age": 28
+          }
+        ];
+        const decentralizedBinaryRequest = {
+          loggedUserWallet: user.walletAddress,
+          totalF3: user.requestForAddSlotDecentralizedBinary[storeId][0].sponsorAmountF3,
+          sponsorAmount: user.requestForAddSlotDecentralizedBinary[storeId][0].sponsorAmount,
+          appAmountF3: user.requestForAddSlotDecentralizedBinary[storeId][0].appAmountF3,
+          dateAndTime: user.requestForAddSlotDecentralizedBinary[storeId][0].dateAndTime,
+          sponsorId: user.requestForAddSlotDecentralizedBinary[storeId][0].sponsorId,
+          sponsorWalletAddress: user.requestForAddSlotDecentralizedBinary[storeId][0].sponsorWallet,
+          appWallet: user.requestForAddSlotDecentralizedBinary[storeId][0].appWallet,
+          storeId: user.storeId,
+          sellerWalletAddress: user.requestForAddSlotDecentralizedBinary[storeId][0].sponsorWallet,
+          grabbedF3Price: user.requestForAddSlotDecentralizedBinary[storeId][0].grabbedF3Price,
+          buyerWalletAddress: user.walletAddress,
+          receiverWalletAddress: user.requestForAddSlotDecentralizedBinary[storeId][0].sponsorWallet,
+          appWallet: user.requestForAddSlotDecentralizedBinary[storeId][0].appWallet,
+          requestType: 'Binarian Redundant',
+          products: simpleJson
+        };
+        response.requests.push(decentralizedBinaryRequest);
+      }
+    }
+
 
     // if (user.paymentRequestResellersReward) {
     //   const walletAddresses = Object.keys(user.paymentRequestResellersReward);
@@ -8223,7 +8400,7 @@ app.get('/getDialogdDetailsBinary', async (req, res) => {
             }
           }
         }
-        if (member.approvedPairingBonusPayments) {
+        if (member.ApprovedBinarianPairingRequest) {
           Object.values(occupier.approvedPairingBonusPayments).flat().forEach(storeRequestArray => {
             storeRequestArray.forEach(storeRequest => {
               storeRequest.requestProducts.forEach(reqProduct => {
@@ -8376,11 +8553,361 @@ app.get('/getBinarianPayouts', async (req, res) => {
   const { userId, userWalletAddress } = req.query;
 });
 
+app.get('/requestForBinarianPairing', async (req, res) => {
+  try {
+    const { userId, sponsorId, sponsorWallet, appWallet, sponsorAmount, sponsorAmountF3, appAmount, appAmountF3, dateAndTime, grabbedF3Price, position, placement, slotNumber, underSlotId } = req.query;
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by email
+    const user = await collection.findOne({ storeId: userId });
+    const sponsorUser = await collection.findOne({ walletAddress: sponsorWallet });
+    const correctSponsorId = sponsorUser.storeId;
+    const walletAddressUser = user.walletAddress;
+    //const memberOfBinary = user.alreadyDecentralizedBinaryMember;
+    // if (!user) {
+    //   res.status(404).json({ error: 'User not found' });
+    //   return;
+    // }
+
+    // if (memberOfBinary) {
+    //   res.status(403).json({ error: 'User not found' });
+    //   return;
+    // }
+
+    // if (!underSlotId) {
+    //   res.status(405).json({ error: 'Under slot is blank' })
+    //   return;
+    // }
+    if (!user.requestForBinarianPairing) {
+      user.requestForBinarianPairing = {};
+    }
+
+    // Check if there's already a request with the same providerWalletAddress
+    if (user.requestForBinarianPairing[sponsorId]) {
+      return res.status(402).json({ error: 'Request with the same providerWalletAddress already exists' });
+    }
+
+    const uniqueId = uuidv4();
+    // Create the new request object
+    const newRequest = {
+      uniqueId,
+      userId,
+      sponsorId,
+      sponsorWallet,
+      appWallet,
+      receivableAmountUSDT : sponsorAmount,
+      sponsorAmount,
+      appAmount,
+      sponsorAmountF3,
+      appAmountF3,
+      dateAndTime,
+      grabbedF3Price,
+      underSlotId,
+      position,
+      placement,
+      slotNumber
+    };
+
+    // Add the new request to the providerWalletAddress array
+    user.requestForBinarianPairing[sponsorId] = [newRequest];
+
+    // Update the user document in the database
+    await collection.updateOne(
+      { walletAddress: walletAddressUser },
+      { $set: { requestForBinarianPairing: user.requestForBinarianPairing } }
+    );
+
+    return res.status(200).json(`Request Send Successfully to wallet address ${walletAddressUser}`)
+  } catch (error) {
+    console.error('Error Requesting For Binarian Pairing:', error);
+    res.status(500).json({ error: 'An error occurred while requesting binarian pairing' });
+  }
+});
+
+app.get('/deleteBinarianPairingRequest', async (req, res) => {
+  try {
+    const { userWallet, sponsorId } = req.query;
+
+    if (!userWallet || !sponsorId) {
+      return res.status(400).json({ error: 'userId and sponsorId are required' });
+    }
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by userId (or storeId if it's the same thing)
+    const user = await collection.findOne({ walletAddress: userWallet });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if the user has decentralized binary requests
+    if (!user.requestForBinarianPairing || !user.requestForBinarianPairing[sponsorId]) {
+      return res.status(404).json({ error: 'Request not found for the specified sponsorId' });
+    }
+
+    // Delete the request for the specified sponsorId
+    delete user.requestForBinarianPairing[sponsorId];
+
+    // Update the user document in the database
+    await collection.updateOne(
+      { walletAddress: userWallet },
+      { $set: { requestForBinarianPairing: user.requestForBinarianPairing } }
+    );
+
+    return res.status(200).json(`Request from sponsorId ${sponsorId} and userId : ${userId} deleted successfully`);
+  } catch (error) {
+    console.error('Error deleting decentralized binary request:', error);
+    return res.status(500).json({ error: 'An error occurred while deleting the request' });
+  }
+});
+
+app.get('/deleteAndAddtheRequestToApprovedBinarianPairing', async (req, res) => {
+  try {
+    const { walletAddress, sponsorId, txhash, timeOfApprove, grabbedF3Price, txHashApp } = req.query;
+
+    if (!walletAddress || !sponsorId || !txhash || !timeOfApprove) {
+      return res.status(400).json({ error: 'userId, sponsorId, txhash, and timeOfApprove are required' });
+    }
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by userId
+    const user = await collection.findOne({ walletAddress: walletAddress });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if the user has decentralized binary requests
+    const requestForBinarianPairing = user.requestForBinarianPairing;
+    if (!requestForBinarianPairing || !requestForBinarianPairing[sponsorId]) {
+      return res.status(404).json({ error: 'Request not found for the specified sponsorId' });
+    }
+
+    const approvedRequest = {
+      ...requestForBinary[sponsorId][0], // Copy the first element from the request array
+      txhash,
+      txHashApp,
+      timeOfApprove
+    };
+
+    // Check if the ApprovedBinarianPairingRequest map exists, if not create it
+    if (!user.ApprovedBinarianPairingRequest) {
+      user.ApprovedBinarianPairingRequest = {};
+    }
+
+    // Save the modified request to ApprovedBinarianPairingRequest
+    user.ApprovedBinarianPairingRequest[sponsorId] = [approvedRequest];
+
+    // Delete the original request from requestForBinarianPairing
+    delete user.requestForBinarianPairing[sponsorId];
+
+    // Update the user document in the database with all changes
+    await collection.updateOne(
+      { walletAddress: walletAddress },
+      {
+        $set: {
+          requestForBinarianPairing: user.requestForBinarianPairing,
+          ApprovedBinarianPairingRequest: user.ApprovedBinarianPairingRequest,
+        }
+      }
+    );
+
+    return res.status(200).json(`Request for sponsorId ${sponsorId} has been approved, user updated, and moved to history`);
+  } catch (error) {
+    console.error('Error processing binarian pairing request:', error);
+    return res.status(500).json({ error: 'An error occurred while processing the request' });
+  }
+});
+
 //RedundantPayout
 app.get('/getRedundantPayouts', async (req, res) => {
   const { userId, userWalletAddress } = req.query;
 });
 
-app.listen('8000', '0.0.0', () => {
+app.get('/requestForBinarianRedundant', async (req, res) => {
+  try {
+    const { userId, sponsorId, sponsorWallet, appWallet, sponsorAmount, sponsorAmountF3, appAmount, appAmountF3, dateAndTime, grabbedF3Price, position, placement, slotNumber, underSlotId } = req.query;
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by email
+    const user = await collection.findOne({ storeId: userId });
+    const sponsorUser = await collection.findOne({ walletAddress: sponsorWallet });
+    const correctSponsorId = sponsorUser.storeId;
+    const walletAddressUser = user.walletAddress;
+    //const memberOfBinary = user.alreadyDecentralizedBinaryMember;
+    // if (!user) {
+    //   res.status(404).json({ error: 'User not found' });
+    //   return;
+    // }
+
+    // if (memberOfBinary) {
+    //   res.status(403).json({ error: 'User not found' });
+    //   return;
+    // }
+
+    // if (!underSlotId) {
+    //   res.status(405).json({ error: 'Under slot is blank' })
+    //   return;
+    // }
+    if (!user.requestForBinarianRedundant) {
+      user.requestForBinarianRedundant = {};
+    }
+
+    // Check if there's already a request with the same providerWalletAddress
+    if (user.requestForBinarianRedundant[sponsorId]) {
+      return res.status(402).json({ error: 'Request with the same providerWalletAddress already exists' });
+    }
+
+    const uniqueId = uuidv4();
+    // Create the new request object
+    const newRequest = {
+      uniqueId,
+      userId,
+      sponsorId,
+      sponsorWallet,
+      appWallet,
+      receivableAmountUSDT : sponsorAmount,
+      sponsorAmount,
+      appAmount,
+      sponsorAmountF3,
+      appAmountF3,
+      dateAndTime,
+      grabbedF3Price,
+      underSlotId,
+      position,
+      placement,
+      slotNumber
+    };
+
+    // Add the new request to the providerWalletAddress array
+    user.requestForBinarianRedundant[sponsorId] = [newRequest];
+
+    // Update the user document in the database
+    await collection.updateOne(
+      { walletAddress: walletAddressUser },
+      { $set: { requestForBinarianRedundant: user.requestForBinarianRedundant } }
+    );
+
+    return res.status(200).json(`Request Send Successfully to wallet address ${walletAddressUser}`)
+  } catch (error) {
+    console.error('Error Requesting For Binarian Pairing:', error);
+    res.status(500).json({ error: 'An error occurred while requesting binarian pairing' });
+  }
+});
+
+app.get('/deleteBinarianRedundantRequest', async (req, res) => {
+  try {
+    const { userWallet, sponsorId } = req.query;
+
+    if (!userWallet || !sponsorId) {
+      return res.status(400).json({ error: 'userId and sponsorId are required' });
+    }
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by userId (or storeId if it's the same thing)
+    const user = await collection.findOne({ walletAddress: userWallet });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if the user has decentralized binary requests
+    if (!user.requestForBinarianRedundant || !user.requestForBinarianRedundant[sponsorId]) {
+      return res.status(404).json({ error: 'Request not found for the specified sponsorId' });
+    }
+
+    // Delete the request for the specified sponsorId
+    delete user.requestForBinarianRedundant[sponsorId];
+
+    // Update the user document in the database
+    await collection.updateOne(
+      { walletAddress: userWallet },
+      { $set: { requestForBinarianRedundant: user.requestForBinarianRedundant } }
+    );
+
+    return res.status(200).json(`Request from sponsorId ${sponsorId} and userId : ${userId} deleted successfully`);
+  } catch (error) {
+    console.error('Error deleting decentralized binary request:', error);
+    return res.status(500).json({ error: 'An error occurred while deleting the request' });
+  }
+});
+
+app.get('/deleteAndAddtheRequestToApprovedRedundant', async (req, res) => {
+  try {
+    const { walletAddress, sponsorId, txhash, timeOfApprove, grabbedF3Price, txHashApp } = req.query;
+
+    if (!walletAddress || !sponsorId || !txhash || !timeOfApprove) {
+      return res.status(400).json({ error: 'userId, sponsorId, txhash, and timeOfApprove are required' });
+    }
+
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('f3_ecommerce');
+    const collection = db.collection('users');
+
+    // Find the user by userId
+    const user = await collection.findOne({ walletAddress: walletAddress });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if the user has decentralized binary requests
+    const requestForBinarianRedundant = user.requestForBinarianRedundant;
+    if (!requestForBinarianRedundant || !requestForBinarianRedundant[sponsorId]) {
+      return res.status(404).json({ error: 'Request not found for the specified sponsorId' });
+    }
+
+    const approvedRequest = {
+      ...requestForBinary[sponsorId][0], // Copy the first element from the request array
+      txhash,
+      txHashApp,
+      timeOfApprove
+    };
+
+    // Check if the ApprovedBinarianPairingRequest map exists, if not create it
+    if (!user.ApprovedBinarianRedundantRequest) {
+      user.ApprovedBinarianRedundantRequest = {};
+    }
+
+    // Save the modified request to ApprovedBinarianPairingRequest
+    user.ApprovedBinarianRedundantRequest[sponsorId] = [approvedRequest];
+
+    // Delete the original request from requestForBinarianPairing
+    delete user.requestForBinarianRedundant[sponsorId];
+
+    // Update the user document in the database with all changes
+    await collection.updateOne(
+      { walletAddress: walletAddress },
+      {
+        $set: {
+          requestForBinarianRedundant: user.requestForBinarianRedundant,
+          ApprovedBinarianRedundantRequest: user.ApprovedBinarianRedundantRequest,
+        }
+      }
+    );
+
+    return res.status(200).json(`Request for sponsorId ${sponsorId} has been approved, user updated, and moved to history`);
+  } catch (error) {
+    console.error('Error processing binarian pairing request:', error);
+    return res.status(500).json({ error: 'An error occurred while processing the request' });
+  }
+});
+
+app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`)
 });
