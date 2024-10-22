@@ -8338,14 +8338,14 @@ app.get('/getDialogdDetailsBinary', async (req, res) => {
       totalWithdrawal += rightDetails.withdrawal;
     }
 
-    if (leftRedundant > rightRedundant) {
-      const lessthan = (rightRedundant * 70 * 0.3)
-      const lessthan2 = (rightRedundant * 0.1)
+    if (leftCount > rightCount) {
+      const lessthan = (rightCount * 70 * 0.3)
+      const lessthan2 = (rightCount * 0.1)
       const final = (lessthan + lessthan2);
       pairingBonus === final
     } else {
-      const lessthan = (leftRedundant * 70 * 0.3)
-      const lessthan2 = (leftRedundant * 0.1)
+      const lessthan = (leftCount * 70 * 0.3)
+      const lessthan2 = (leftCount * 0.1)
       const final = (lessthan + lessthan2);
       pairingBonus === final
     }
@@ -8380,6 +8380,6 @@ app.get('/getRedundantPayouts', async (req, res) => {
   const { userId, userWalletAddress } = req.query;
 });
 
-app.listen(PORT, '192.168.29.149', () => {
+app.listen('8000', '0.0.0', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`)
 });
