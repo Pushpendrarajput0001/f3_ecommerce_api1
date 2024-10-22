@@ -8338,16 +8338,17 @@ app.get('/getDialogdDetailsBinary', async (req, res) => {
       totalWithdrawal += rightDetails.withdrawal;
     }
 
+    console.log(`leftCount ; ${leftCount} And rightCount ; ${rightCount}`)
     if (leftCount > rightCount) {
       const lessthan = (rightCount * 70 * 0.3)
       const lessthan2 = (rightCount * 0.1)
       const final = (lessthan + lessthan2);
-      pairingBonus === final
+      pairingBonus = final
     } else {
       const lessthan = (leftCount * 70 * 0.3)
       const lessthan2 = (leftCount * 0.1)
       const final = (lessthan + lessthan2);
-      pairingBonus === final
+      pairingBonus = final
     }
     const pairingBalance = (pairingBonus - totalWithdrawal);
     return res.status(200).json({
