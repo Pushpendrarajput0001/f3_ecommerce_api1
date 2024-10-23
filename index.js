@@ -8634,7 +8634,8 @@ app.get('/getBinarianPayouts', async (req, res) => {
     let allMembersBoth = [];
     const findMembers = async (currentSponsorId) => {
       const users = await collection.find({ alreadyDecentralizedBinaryMember: currentSponsorId }).toArray();
-      allMembersBoth.concat(users);
+      //allMembersBoth.concat(users);
+      allMembersBoth = [...allMembersBoth, ...users];
 
       for(const user of users){
         await findMembers(user.storeId)
@@ -8677,6 +8678,8 @@ app.get('/getBinarianPayouts', async (req, res) => {
       });
     };
 
+    console.log(`allMembersBoth : ${allMembersBoth}`);
+    console.log(`updatedMembersBoth : ${updatedMembersBoth}`);
     // const detailedOccupiedSlots = occupiedSlotsDetails.map(slot => ({
     //   'SlotType': 'Yes',
     //   uniqueId: slot.uniqueId,
@@ -8991,7 +8994,8 @@ app.get('/getRedundantPayouts', async (req, res) => {
     let allMembersBoth = [];
     const findMembers = async (currentSponsorId) => {
       const users = await collection.find({ alreadyDecentralizedBinaryMember: currentSponsorId }).toArray();
-      allMembersBoth.concat(users);
+      //allMembersBoth.concat(users);
+      allMembersBoth = [...allMembersBoth,...users];
 
       for(const user of users){
         await findMembers(user.storeId)
@@ -9265,6 +9269,6 @@ app.get('/deleteAndAddtheRequestToApprovedRedundant', async (req, res) => {
   }
 });
 
-app.listen(PORT, '192.168.29.149', () => {
+app.listen('8000', '0.0.0', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`)
 });
