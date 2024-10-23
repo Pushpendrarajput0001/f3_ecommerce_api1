@@ -8655,47 +8655,47 @@ app.get('/getBinarianPayouts', async (req, res) => {
           });
         });
       }
-      if (member.occupiedSlotsAddedSlots) {
-        const slotCity = member.cityAddress;
-        const fullName = member.fullName;
-        //let networkPaidPairing =  0;
+      // if (member.occupiedSlotsAddedSlots) {
+      //   const slotCity = member.cityAddress;
+      //   const fullName = member.fullName;
+      //   //let networkPaidPairing =  0;
         
-        const updatedOccupiedSlots = member.occupiedSlotsAddedSlots.map(slot => ({
-          ...slot,  
-          slotCity: slotCity,  
-          fullName: fullName, 
-          networkPaidPairing: networkPaidPairingInMembers  
-        }));
+      //   const updatedOccupiedSlots = member.occupiedSlotsAddedSlots.map(slot => ({
+      //     ...slot,  
+      //     slotCity: slotCity,  
+      //     fullName: fullName, 
+      //     networkPaidPairing: networkPaidPairingInMembers  
+      //   }));
         
-        occupiedSlotsDetails.push(...updatedOccupiedSlots);
-      }
+      //   occupiedSlotsDetails.push(...updatedOccupiedSlots);
+      // }
       updatedMembersBoth.push({
         ...member,  
         networkPaidPairing : networkPaidPairingInMembers  
       });
     };
 
-    const detailedOccupiedSlots = occupiedSlotsDetails.map(slot => ({
-      'SlotType': 'Yes',
-      uniqueId: slot.uniqueId,
-      underSlotId: slot.underSlotId,
-      storeId: slot.storeId,
-      walletAddress: slot.walletAddress,
-      sponsorWalletAddress: slot.sponsorWalletAddress,
-      grabbedF3Price: slot.grabbedF3PriceDecentralizedBinary,
-      position: slot.positionInDecentralizedBinary,
-      placement: slot.placementInDecentralizedBinary,
-      slotNumber: slot.slotNumberInDecentralizedBinary,
-      email: slot.email,
-      dateOfBecomeBinaryMember: slot.dateOfBecomeBinaryMember,
-      whichUsersSlot: slot.storeId,
-      //New
-      idNumber : slot.storeId,
-      cityUser : slot.slotCity,
-      networkPaid : slot.networkPaidPairing
-    }));
+    // const detailedOccupiedSlots = occupiedSlotsDetails.map(slot => ({
+    //   'SlotType': 'Yes',
+    //   uniqueId: slot.uniqueId,
+    //   underSlotId: slot.underSlotId,
+    //   storeId: slot.storeId,
+    //   walletAddress: slot.walletAddress,
+    //   sponsorWalletAddress: slot.sponsorWalletAddress,
+    //   grabbedF3Price: slot.grabbedF3PriceDecentralizedBinary,
+    //   position: slot.positionInDecentralizedBinary,
+    //   placement: slot.placementInDecentralizedBinary,
+    //   slotNumber: slot.slotNumberInDecentralizedBinary,
+    //   email: slot.email,
+    //   dateOfBecomeBinaryMember: slot.dateOfBecomeBinaryMember,
+    //   whichUsersSlot: slot.storeId,
+    //   //New
+    //   idNumber : slot.storeId,
+    //   cityUser : slot.slotCity,
+    //   networkPaid : slot.networkPaidPairing
+    // }));
 
-    const memberDetails = allMembersBoth.map(user => ({
+    const memberDetails = updatedMembersBoth.map(user => ({
       'MemberType': 'Yes',
       uniqueId: user.uniqueIdBinarySlot,
       underSlotId: user.underSlotIdBinary,
@@ -8715,7 +8715,7 @@ app.get('/getBinarianPayouts', async (req, res) => {
       networkPaid : user.networkPaidPairing
     }));
 
-    const combinedDetails = [...memberDetails, ...detailedOccupiedSlots];
+    const combinedDetails = [...memberDetails];
   
     return res.status(200).json({
       allDetails : combinedDetails,
@@ -9010,47 +9010,47 @@ app.get('/getRedundantPayouts', async (req, res) => {
           });
         });
       }
-      if (member.occupiedSlotsAddedSlots) {
-        const slotCity = member.cityAddress;
-        const fullName = member.fullName;
-        //let networkPaidPairing =  0;
+      // if (member.occupiedSlotsAddedSlots) {
+      //   const slotCity = member.cityAddress;
+      //   const fullName = member.fullName;
+      //   //let networkPaidPairing =  0;
         
-        const updatedOccupiedSlots = member.occupiedSlotsAddedSlots.map(slot => ({
-          ...slot,  
-          slotCity: slotCity,  
-          fullName: fullName, 
-          networkPaidPairing: networkPaidPairingInMembers  
-        }));
+      //   const updatedOccupiedSlots = member.occupiedSlotsAddedSlots.map(slot => ({
+      //     ...slot,  
+      //     slotCity: slotCity,  
+      //     fullName: fullName, 
+      //     networkPaidPairing: networkPaidPairingInMembers  
+      //   }));
         
-        occupiedSlotsDetails.push(...updatedOccupiedSlots);
-      }
+      //   occupiedSlotsDetails.push(...updatedOccupiedSlots);
+      // }
       updatedMembersBoth.push({
         ...member,  
         networkPaidPairing : networkPaidPairingInMembers  
       });
     };
 
-    const detailedOccupiedSlots = occupiedSlotsDetails.map(slot => ({
-      'SlotType': 'Yes',
-      uniqueId: slot.uniqueId,
-      underSlotId: slot.underSlotId,
-      storeId: slot.storeId,
-      walletAddress: slot.walletAddress,
-      sponsorWalletAddress: slot.sponsorWalletAddress,
-      grabbedF3Price: slot.grabbedF3PriceDecentralizedBinary,
-      position: slot.positionInDecentralizedBinary,
-      placement: slot.placementInDecentralizedBinary,
-      slotNumber: slot.slotNumberInDecentralizedBinary,
-      email: slot.email,
-      dateOfBecomeBinaryMember: slot.dateOfBecomeBinaryMember,
-      whichUsersSlot: slot.storeId,
-      //New
-      idNumber : slot.storeId,
-      cityUser : slot.slotCity,
-      networkPaid : slot.networkPaidPairing
-    }));
+    // const detailedOccupiedSlots = occupiedSlotsDetails.map(slot => ({
+    //   'SlotType': 'Yes',
+    //   uniqueId: slot.uniqueId,
+    //   underSlotId: slot.underSlotId,
+    //   storeId: slot.storeId,
+    //   walletAddress: slot.walletAddress,
+    //   sponsorWalletAddress: slot.sponsorWalletAddress,
+    //   grabbedF3Price: slot.grabbedF3PriceDecentralizedBinary,
+    //   position: slot.positionInDecentralizedBinary,
+    //   placement: slot.placementInDecentralizedBinary,
+    //   slotNumber: slot.slotNumberInDecentralizedBinary,
+    //   email: slot.email,
+    //   dateOfBecomeBinaryMember: slot.dateOfBecomeBinaryMember,
+    //   whichUsersSlot: slot.storeId,
+    //   //New
+    //   idNumber : slot.storeId,
+    //   cityUser : slot.slotCity,
+    //   networkPaid : slot.networkPaidPairing
+    // }));
 
-    const memberDetails = allMembersBoth.map(user => ({
+    const memberDetails = updatedMembersBoth.map(user => ({
       'MemberType': 'Yes',
       uniqueId: user.uniqueIdBinarySlot,
       underSlotId: user.underSlotIdBinary,
