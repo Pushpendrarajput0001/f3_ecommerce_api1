@@ -8674,8 +8674,10 @@ app.get('/getBinarianPayouts', async (req, res) => {
       // }
       updatedMembersBoth.push({
         ...member,  
+        grabbedF3PriceDecentralizedBinary : member.grabbedF3PriceDecentralizedBinary,
         networkPaidPairing : networkPaidPairingInMembers  
       });
+      console.log(`grabbed : ${member.grabbedF3PriceDecentralizedBinary}`);
     };
 
     console.log(`allMembersBoth : ${allMembersBoth}`);
@@ -8707,7 +8709,7 @@ app.get('/getBinarianPayouts', async (req, res) => {
       storeId: user.storeId,
       walletAddress: user.walletAddress,
       sponsorWalletAddress: loggedUser.walletAddress,
-      grabbedF3Price: user.grabbedF3PriceDecentralizedBinary,
+      grabbedF3Price: user.grabbedF3Price,
       position: user.positionInDecentralizedBinary,
       placement: user.placementInDecentralizedBinary,
       slotNumber: user.slotNumberInDecentralizedBinary,
@@ -9065,7 +9067,7 @@ app.get('/getRedundantPayouts', async (req, res) => {
       storeId: user.storeId,
       walletAddress: user.walletAddress,
       sponsorWalletAddress: loggedUser.walletAddress,
-      grabbedF3Price: user.grabbedF3PriceDecentralizedBinary,
+      grabbedF3Price: user.grabbedF3Price,
       position: user.positionInDecentralizedBinary,
       placement: user.placementInDecentralizedBinary,
       slotNumber: user.slotNumberInDecentralizedBinary,
@@ -9269,6 +9271,6 @@ app.get('/deleteAndAddtheRequestToApprovedRedundant', async (req, res) => {
   }
 });
 
-app.listen('8000', '0.0.0', () => {
+app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`)
 });
