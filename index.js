@@ -8674,7 +8674,6 @@ app.get('/getBinarianPayouts', async (req, res) => {
       // }
       updatedMembersBoth.push({
         ...member,  
-        grabbedF3PriceDecentralizedBinary : member.grabbedF3PriceDecentralizedBinary,
         networkPaidPairing : networkPaidPairingInMembers  
       });
       console.log(`grabbed : ${member.grabbedF3PriceDecentralizedBinary}`);
@@ -9271,6 +9270,6 @@ app.get('/deleteAndAddtheRequestToApprovedRedundant', async (req, res) => {
   }
 });
 
-app.listen(PORT, '192.168.29.149', () => {
+app.listen('8000', '0.0.0', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`)
 });
