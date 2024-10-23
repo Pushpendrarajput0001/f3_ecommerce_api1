@@ -8607,6 +8607,7 @@ app.get('/getBinarianPayouts', async (req, res) => {
         const sales = user.approvalcheckout[loggedUser.storeId];
         for (const sale of sales) {
           const { totalPrice, fromRedundantBinary } = sale;
+          const usdtRate = parseFloat(user.usdtRate);
           const totalSoldPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
           const totalSoldAmount = totalSoldPrice / usdtRate;
           if (fromRedundantBinary === 'Yes') {
@@ -8620,6 +8621,7 @@ app.get('/getBinarianPayouts', async (req, res) => {
         const sales = user.salesHistorySeller[loggedUser.storeId];
         for (const sale of sales) {
           const { totalPrice, fromRedundantBinary } = sale;
+          const usdtRate = parseFloat(user.usdtRate);
           const totalSoldPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
           const totalSoldAmount = totalSoldPrice / usdtRate;
           if (fromRedundantBinary === 'Yes') {
@@ -8962,6 +8964,7 @@ app.get('/getRedundantPayouts', async (req, res) => {
         const sales = user.approvalcheckout[loggedUser.storeId];
         for (const sale of sales) {
           const { totalPrice, fromRedundantBinary } = sale;
+          const usdtRate = parseFloat(user.usdtRate);
           const totalSoldPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
           const totalSoldAmount = totalSoldPrice / usdtRate;
           if (fromRedundantBinary === 'Yes') {
@@ -8975,6 +8978,7 @@ app.get('/getRedundantPayouts', async (req, res) => {
         const sales = user.salesHistorySeller[loggedUser.storeId];
         for (const sale of sales) {
           const { totalPrice, fromRedundantBinary } = sale;
+          const usdtRate = parseFloat(user.usdtRate);
           const totalSoldPrice = parseFloat(totalPrice.replace(/[^\d.-]/g, ''));
           const totalSoldAmount = totalSoldPrice / usdtRate;
           if (fromRedundantBinary === 'Yes') {
@@ -9261,6 +9265,6 @@ app.get('/deleteAndAddtheRequestToApprovedRedundant', async (req, res) => {
   }
 });
 
-app.listen('8000', '0.0.0', () => {
+app.listen(PORT, '192.168.29.149', () => {
   console.log(`Server is running on http://192.168.29.149:${PORT}`)
 });
